@@ -1,3 +1,3 @@
 # senjs
 
-Alpha version
+Demo version.
