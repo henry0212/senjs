@@ -1,0 +1,87 @@
+
+
+
+@-webkit-keyframes scaleOpen95 {
+    from {
+        -webkit-transform: scale(0.95);
+        opacity: 0;
+    }
+
+    to {
+        -webkit-transform: scale(1);
+        opacity: 1;
+    }
+}
+
+@keyframes scale_in_95 {
+    from {
+        transform: scale(0.95);
+        opacity: 0;
+    }
+
+    to {
+        transform: scale(1);
+        opacity: 1;
+    }
+}
+
+@keyframes scale_in_95 {
+    from {
+        transform: scale(0.9);
+        opacity: 0;
+    }
+
+    to {
+        transform: scale(1);
+        opacity: 1;
+    }
+}
+
+@-webkit-keyframes scale_out_95 {
+    from {
+        -webkit-transform: scale(1);
+        opacity: 1;
+    }
+
+    to {
+        -webkit-transform: scale(0.95);
+        opacity: 0;
+    }
+}
+
+
+@keyframes scale_out_95 {
+    from {
+        transform: scale(1);
+        opacity: 1;
+    }
+
+    to {
+        transform: scale(0.95);
+        opacity: 0;
+    }
+}
+
+
+
+.dialog_in{
+    animation-name: scale_in_95;
+    animation-duration: .2s;
+    animation-fill-mode: forwards;
+    animation-timing-function: "ease-in";
+    -webkit-animation-name: scale_in_95;
+    -webkit-animation-duration: .2s;
+    -webkit-animation-fill-mode: forwards;
+    -webkit-animation-timing-function: "ease-out";
+}
+
+.dialog_out{
+    animation-name: scale_out_95;
+    animation-duration: .2s;
+    animation-fill-mode: forwards;
+    animation-timing-function: "ease-in";
+    -webkit-animation-name: scale_out_95;
+    -webkit-animation-duration: .2s;
+    -webkit-animation-fill-mode: forwards;
+    -webkit-animation-timing-function: "ease-out";
+}
