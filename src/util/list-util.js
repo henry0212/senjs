@@ -82,11 +82,11 @@ export class List {
     }
 
     removeRange(from, to) {
-        return dh.List(this.src_array.splice(from, to - from + 1));
+        return new List(this.src_array.splice(from, to - from + 1));
     }
 
     removeAll(listObject) {
-        if (listObject instanceof dh.List) {
+        if (listObject instanceof  List) {
             listObject = listObject.toArray();
         }
         for (var i = 0; i < listObject.length; i++) {
@@ -100,7 +100,7 @@ export class List {
     }
 
     clone() {
-        return new dh.List(this.src_array.slice(0));
+        return new  List(this.src_array.slice(0));
     }
 
     set(index, value) {
@@ -117,7 +117,7 @@ export class List {
     }
 
     take(from, to) {
-        return dh.List(this.src_array.slice(from, to + 1));
+        return new List(this.src_array.slice(from, to + 1));
     }
 
 
@@ -137,7 +137,7 @@ export class List {
 
 
     entityToList(entity_key) {
-        return dh.List(this.src_array.map(function (item) {
+        return new List(this.src_array.map(function (item) {
             return item[entity_key];
         }));
     }
@@ -323,14 +323,14 @@ export class List {
 
 
     groupBy(key) {
-        var array = dh.List(this.src_array.reduce(function (array, item) {
+        var array = new List(this.src_array.reduce(function (array, item) {
             (array[item[key]] = array[item[key]] || []).push(item);
             return array;
         }
             , {
             }
         )).toArray();
-        var result = new dh.List();
+        var result = new  List();
         var keys = Object.keys(array);
         for (var i = 0;
             i < keys.length;
@@ -342,7 +342,7 @@ export class List {
 
 
     orderByDescending(key) {
-        return dh.List(this.src_array.sort(function (a, b) {
+        return new List(this.src_array.sort(function (a, b) {
             return b[key] - a[key];
         }
         ));
@@ -350,7 +350,7 @@ export class List {
 
 
     orderByAscending(key) {
-        return dh.List(this.src_array.sort(function (a, b) {
+        return List(this.src_array.sort(function (a, b) {
             return a[key] - b[key];
         }
         ));
@@ -359,7 +359,7 @@ export class List {
 
     addNewItems(key, newList) {
         var cloneNew = newList.clone();
-        var newItems = new dh.List();
+        var newItems = new List();
         var newItem;
         while (cloneOld.size() > 0) {
             newItem = cloneNew.shift();

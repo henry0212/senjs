@@ -1,9 +1,9 @@
-import { dh } from '../src/index.js'
+import { senjs } from '../src/index.js'
 import { View } from '../src/core/view.js';
 import { MapPage } from './pages/map-page.js';
 import { GalleryPage } from './pages/gallery-page.js';
 
-const list_menu = new dh.util.List(["Widget", "Dialog", "Sample Google Map", "Sample Gallery"]);
+const list_menu = new senjs.util.List(["Sample Google Map", "Sample Gallery"]);
 
 var ia_context = {
     mainPage: null,
@@ -12,7 +12,7 @@ var ia_context = {
     left_menu_layout: null
 }
 
-dh.app.onStart((mainPage) => {
+senjs.app.onStart((mainPage) => {
     ia_context.mainPage = mainPage;
     mainPage
         .addView(initMainPage())
@@ -22,6 +22,7 @@ dh.app.onStart((mainPage) => {
 
 function registerNewPage(title) {
     return ia_context.main_story_layout.newPage(title);
+    
 }
 
 
@@ -33,35 +34,31 @@ function setToobarTitle(title) {
     return ia_context.main_story_layout.setToolbarHeader(title);
 }
 
-
-
 function initMainPage() {
-    ia_context.main_story_layout = new dh.layout.StoryLayout().toFillParent();
-    ia_context.main_story_layout.setToolbarHeader("Dh Framework");
+    ia_context.main_story_layout = new senjs.layout.StoryLayout().toFillParent();
+    ia_context.main_story_layout.setToolbarHeader("Senjs");
     ia_context.frame_dashboard = ia_context.main_story_layout.getPageOpening();
     ia_context.main_story_layout.setToolbarLeftIcon("dashboard");
 
     ia_context.main_story_layout.setOnToolbarLeftIconClicked((view, currentPage) => {
         if (currentPage == 0) {
-            console.log("clicked");
             ia_context.left_menu_layout.openPage();
             return true;
         }
         return false;
     })
-
     return ia_context.main_story_layout;
 }
 
 
 function initLeftMenu() {
-    var drawerLeftMenu = new dh.layout.DrawerLayout("70%", "100%");
-    drawerLeftMenu.setDirection(dh.constant.Direction.LEFT);
+    var drawerLeftMenu = new senjs.layout.DrawerLayout("70%", "100%");
+    drawerLeftMenu.setDirection(senjs.constant.Direction.LEFT);
 
-    var listView = new dh.widget.ListView().toFillParent();
-    var adapter_menu = new dh.adapter.BaseAdapter(list_menu);
+    var listView = new senjs.widget.ListView().toFillParent();
+    var adapter_menu = new senjs.adapter.BaseAdapter(list_menu);
     adapter_menu.setView(function (dataItem, position, convertView) {
-        return new dh.widget.TextView().setText(dataItem).setLeft("10%").setPadding(10);
+        return new senjs.widget.TextView().setText(dataItem).setLeft("10%").setPadding(10);
     })
 
     listView.setAdapter(adapter_menu);
@@ -72,10 +69,10 @@ function initLeftMenu() {
         drawerLeftMenu.closePage();
         console.log(position);
         switch (position) {
-            case 2:
+            case 0:
                 page = new MapPage();
                 break;
-            case 3:
+            case 1:
                 page = new GalleryPage();
                 break;
         }

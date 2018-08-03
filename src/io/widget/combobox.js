@@ -8,9 +8,7 @@ import { app_constant } from '../../res/constant.js';
 import { app_theme, material_colors } from '../../res/theme.js';
 import { StickyLayout } from '../layout/sticky-layout.js';
 import { List } from '../../util/list-util.js';
-import { Adapter } from '../../adapter/adapter.js';
 import { BaseAdapter } from '../../adapter/base-adapter.js';
-import { RecyclerAdapter } from '../../adapter/recycler-adapter.js';
 
 export class Combobox extends LinearLayout {
     constructor() {

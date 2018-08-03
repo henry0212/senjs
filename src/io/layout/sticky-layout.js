@@ -1,7 +1,7 @@
 
 import { app_constant, app_animation } from "../../res/constant.js";
 import { app_theme } from "../../res/theme.js";
-import { app, dhCts } from "../../core/app-context.js";
+import { app, senjsCts } from "../../core/app-context.js";
 import { BaseLayout } from "./base-layout.js";
 import { app_size } from "../../res/dimen.js";
 
@@ -82,7 +82,7 @@ export class StickyLayout extends BaseLayout {
             }
         }
 
-        this._cache.view_parents = dhCts.allParents(this._view.focusView.info.id).filter(function (parent) { return parent.info.isScrollY == true || parent.info.isScrollX == true; });
+        this._cache.view_parents = senjsCts.allParents(this._view.focusView.info.id).filter(function (parent) { return parent.info.isScrollY == true || parent.info.isScrollX == true; });
         var currentParentScrollY = 0;
         if (this._cache.view_parents.size() > 0) {
             this._cache.view_parents.foreach(function (parent, idx) {

@@ -7,7 +7,7 @@ import adapter from './adapter/index.js';
 import lib from './libs/index.js';
 import dialog from './io/dialog/index.js';
 
-export const dh = {
+export const senjs = {
     app: core.app,
     dialog: dialog,
     layout: layout,

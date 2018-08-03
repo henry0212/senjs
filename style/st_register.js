@@ -1,4 +1,0 @@
-﻿
-var st_register = {
-    
-}

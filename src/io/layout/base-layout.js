@@ -1,6 +1,6 @@
 import { View } from '../../core/view.js'
 import { List } from '../../util/list-util.js'
-import { app, dhCts } from '../../core/app-context.js'
+import { app, senjsCts } from '../../core/app-context.js'
 import { Thread } from '../../core/thread.js';
 
 export class BaseLayout extends View {
@@ -20,7 +20,7 @@ export class BaseLayout extends View {
 
     showLoading() {
         if (this._cache.loadingView == null) {
-            this._cache.loadingView = dh.IO.loadingForComponent(this);
+            this._cache.loadingView = senjs.IO.loadingForComponent(this);
             this._cache.loadingView.show();
         }
     }
@@ -106,7 +106,7 @@ class QuiclyLayout extends BaseLayout {
             if (blurView != null) {
                 blurView.opacity(1).setAnimation("opacity_open");
             }
-            var childs = dhCts.allRootChilds(self.info.id);
+            var childs = senjsCts.allRootChilds(self.info.id);
             if (childs.size() == childs.filter(function (c) { return c != null && c.info.isCreated; }).size() || limit_count > 5) {
                 limit_count++;
                 thread.remove();
@@ -143,7 +143,7 @@ class QuiclyLayout extends BaseLayout {
             return;
         }
         switch (iaTouchEvent.action) {
-            case dh.event.touch.TOUCH_DOWN:
+            case senjs.event.touch.TOUCH_DOWN:
                 this.self_config.range_prevent_move = (view.control.offsetWidth + view.control.offsetHeight) / 2 * 0.08;
                 view.setTransitionAll("0");
                 movable = (this.self_config.swipe_to_close == 0 && iaTouchEvent.touchX < view.getRelativeLeft() + view.control.offsetWidth * 0.1)
@@ -152,7 +152,7 @@ class QuiclyLayout extends BaseLayout {
                     || (this.self_config.swipe_to_close == 2 && iaTouchEvent.touchY > view.getRelativeTop() + view.control.offsetHeight * 0.9);
                 this.flag.has_active_touch = false;
                 return false;
-            case dh.event.touch.TOUCH_MOVE:
+            case senjs.event.touch.TOUCH_MOVE:
                 if (!movable) {
                     return false;
                 }
@@ -174,8 +174,8 @@ class QuiclyLayout extends BaseLayout {
                     view.setTranslateY(iaTouchEvent.touch_height * 1.2 - this.self_config.range_prevent_move);
                 }
                 return this.flag.has_active_touch;
-            case dh.event.touch.TOUCH_UP:
-            case dh.event.touch.TOUCH_CANCEL:
+            case senjs.event.touch.TOUCH_UP:
+            case senjs.event.touch.TOUCH_CANCEL:
                 if (!this.flag.has_active_touch) {
                     return false;
                 }

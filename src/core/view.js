@@ -1,5 +1,5 @@
 
-import { app, Thread, Waiter, isMobile, dhCts, brownserType } from './app-context.js'
+import { app, Thread, Waiter, isMobile, senjsCts, brownserType } from './app-context.js'
 import { app_constant, app_animation } from '../res/constant.js'
 import { List } from '../util/list-util.js';
 import { StringUtil } from '../util/string-util.js';
@@ -22,7 +22,7 @@ export class View {
         this.setDisplayType(app_constant.Display.BLOCK)
             .setBoxSizing("border-box");
         if (this.info.id == -1) {
-            dhCts.add(this);
+            senjsCts.add(this);
         }
     }
 
@@ -398,7 +398,7 @@ export class View {
                     }
                     this.measured();
                     if (self.events.override.variables.resumeCallback.size() > 0) {
-                        let delay = dhCts.allParents(self.info.id).reduce((a, item) => {
+                        let delay = senjsCts.allParents(self.info.id).reduce((a, item) => {
                             return a < item.getAnimationDuration() ? item.getAnimationDuration() : a;
                         }, 0);
                         if (delay > 0) {
@@ -438,7 +438,7 @@ export class View {
                         p.events.override.variables.onRemovedChild.foreach(function (call, position) {
                             call(p, self);
                         });
-                        //app.dh_viewPool.allRootChilds(p.info.id).foreach(function (child, position) {
+                        //app.senjs_viewPool.allRootChilds(p.info.id).foreach(function (child, position) {
                         //    console.log("Destroy Child: " + child.info.id);
                         //});
                     }
@@ -447,14 +447,14 @@ export class View {
                             item(self);
                         }
                     }, 0);
-                    var rootChilds = app.dh_viewPool.allRootChilds(self.info.id);
+                    var rootChilds = app.senjs_viewPool.allRootChilds(self.info.id);
                     if (rootChilds.size() > 0) {
                         rootChilds.foreach(function (removeChild, i) {
                             removeChild.info.isDestroy = true;
                             if (removeChild.info.uid != null) {
                                 app.idPool.remove(removeChild.info.id);
                             }
-                            app.dh_viewPool.remove(removeChild.info.id);
+                            app.senjs_viewPool.remove(removeChild.info.id);
                         });
 
                         /* detect all childs that exist callback after destroy, get all call event */
@@ -477,7 +477,7 @@ export class View {
                     self.info.stackPostDelay.foreach(function (delayFunc) {
                         delayFunc.remove();
                     });
-                    app.dh_viewPool.remove(self.info.id);
+                    app.senjs_viewPool.remove(self.info.id);
                     return self;
                 },
                 pause: function () {
@@ -491,7 +491,7 @@ export class View {
                         self_thread.resume.remove();
                     }
 
-                    var allRootChilds = app.dh_viewPool.allRootChilds(self.info.id).filter(function (item) {
+                    var allRootChilds = app.senjs_viewPool.allRootChilds(self.info.id).filter(function (item) {
                         item.info.state = app_constant.VIEW_STATE.pause;
                         return item.events.override.variables.pauseCallback.size() > 0;
                     });
@@ -523,7 +523,7 @@ export class View {
                     self.info.isPaused = false;
                     var count = 0;
                     var i = 0;
-                    var allRootChilds = app.dh_viewPool.allRootChilds(self.info.id).filter(function (item) {
+                    var allRootChilds = app.senjs_viewPool.allRootChilds(self.info.id).filter(function (item) {
                         item.info.state = app_constant.VIEW_STATE.running;
                         return item.events.override.variables.resumeCallback.size() > 0;
                     });
@@ -607,7 +607,7 @@ export class View {
                     perform: listener,
                     f_desc: desc || ""
                 });
-                //    dh_func_desc[fuction_name] = desc;
+                //    senjs_func_desc[fuction_name] = desc;
                 self[fuction_name] = new_dcr.perform;
             },
             find_declared: function (func_name) {
@@ -771,7 +771,7 @@ export class View {
                 this.info.bgColor = color;
             }
             if (info.manualBackground != "" && info.manualBackground != color && color != "transparent" && !this.info.noChangeBackground && (this.info.bgColor.indexOf("rgba") == -1)) {
-                this._dom.style.background = this.info.lumenManualColor == null ? info.manualBackground : dh.Util.colorWithLuminance(info.manualBackground, this.info.lumenManualColor);
+                this._dom.style.background = this.info.lumenManualColor == null ? info.manualBackground : senjs.Util.colorWithLuminance(info.manualBackground, this.info.lumenManualColor);
                 this.TextColor(info.manualTextColor);
                 return this;
             }
@@ -787,7 +787,7 @@ export class View {
             }
             if (this.info.isAutoTextColor && info.manualTextColor != "") {
                 if (color != null) {
-                    this.TextColor(dh.Util.colorWithLuminance(color, info.DEFAULT_AUTO_TEXT_COLOR));
+                    this.TextColor(senjs.Util.colorWithLuminance(color, info.DEFAULT_AUTO_TEXT_COLOR));
                 }
             }
         }
@@ -852,7 +852,7 @@ export class View {
 
     getViewAt(index) {
         if (this.childCount() > 0) {
-            return app.dh_viewPool.get(this.info.childControls[index]);
+            return app.senjs_viewPool.get(this.info.childControls[index]);
         }
         else {
             return null;
@@ -860,37 +860,37 @@ export class View {
     }
 
     getAllViews() {
-        return app.dh_viewPool.allChilds(this.info.id);
+        return app.senjs_viewPool.allChilds(this.info.id);
     }
 
     getParentView() {
-        return app.dh_viewPool.get(this.info.parent);
+        return app.senjs_viewPool.get(this.info.parent);
     }
 
 
     allParents() {
-        return app.dh_viewPool.allParents(this.info.id);
+        return app.senjs_viewPool.allParents(this.info.id);
     }
 
     setMarginTop(size) {
-        this._dom.style.marginTop = app.utils.ScreenUtil.convertScreenSize(size) + app_constant.SIZE_UNIT;
+        this._dom.style.marginTop = size + app_constant.SIZE_UNIT;
         return this;
     }
 
 
     setMarginBottom(size) {
-        this._dom.style.marginBottom = app.utils.ScreenUtil.convertScreenSize(size) + app_constant.SIZE_UNIT;
+        this._dom.style.marginBottom = size + app_constant.SIZE_UNIT;
         return this;
     }
 
     setMarginLeft(size) {
-        this._dom.style.marginLeft = app.utils.ScreenUtil.convertScreenSize(size) + app_constant.SIZE_UNIT;
+        this._dom.style.marginLeft = size + app_constant.SIZE_UNIT;
         return this;
     }
 
 
     setMarginRight(size) {
-        this._dom.style.marginRight = app.utils.ScreenUtil.convertScreenSize(size) + app_constant.SIZE_UNIT;
+        this._dom.style.marginRight = size + app_constant.SIZE_UNIT;
         return this;
     }
 
@@ -1113,11 +1113,11 @@ export class View {
         if (this.info.childControls.length > 0) {
             this.info.childControlId++;
             view.info.prevent_trash_cleaner = this.info.prevent_trash_cleaner;
-            var control = app.dh_viewPool.get(this.info.childControls[index]);
+            var control = app.senjs_viewPool.get(this.info.childControls[index]);
             this._dom.insertBefore(view.control, control.control);
             this.info.childControls.splice(index, 0, view.info.id);
             if (view.info.id == -1) {
-                app.dh_viewPool.add(view);
+                app.senjs_viewPool.add(view);
             }
             if (view.info.isModifiedId) {
                 app.idPool.add(view.info.uid, view.info.id);
@@ -1126,7 +1126,7 @@ export class View {
             if (this.info.isCreated && this.info.id != -1) {
                 view.info.isDestroy = this.info.isDestroy;
                 view.info.parent = this.info.id;
-                dh.event.setOnCreated(view, function (v) {
+                senjs.event.setOnCreated(view, function (v) {
                     v.events.system.created();
                 }
                 );
@@ -1145,7 +1145,7 @@ export class View {
                     if (self.isPaused()) {
                         view.events.system.pause();
                     }
-                    dh.event.setOnCreated(view, function (v) {
+                    senjs.event.setOnCreated(view, function (v) {
                         v.events.system.created();
                     }
                     );
@@ -1268,7 +1268,7 @@ export class View {
     getLeft() {
         var left = 0;
         if (this.info.left == -1) {
-            if (dh.IOUtil.isAbsouteOrFixed(this)) {
+            if (senjs.IOUtil.isAbsouteOrFixed(this)) {
                 left = parseInt(this._dom.style.left);
             }
             else {
@@ -1283,7 +1283,7 @@ export class View {
 
 
     getRight() {
-        if (dh.IOUtil.isAbsouteOrFixed(this)) {
+        if (senjs.IOUtil.isAbsouteOrFixed(this)) {
             return parseInt(this._dom.style.right);
         }
         else {
@@ -1295,7 +1295,7 @@ export class View {
     getTop() {
         var top = 0;
         if (this.info.top == -1) {
-            if (dh.IOUtil.isAbsouteOrFixed(this)) {
+            if (senjs.IOUtil.isAbsouteOrFixed(this)) {
                 top = parseInt(this._dom.style.top);
             }
             else {
@@ -1310,7 +1310,7 @@ export class View {
 
 
     getBottom() {
-        if (dh.IOUtil.isAbsouteOrFixed(this)) {
+        if (senjs.IOUtil.isAbsouteOrFixed(this)) {
             return parseInt(this._dom.style.bottom);
         }
         else {
@@ -1321,7 +1321,7 @@ export class View {
 
     setLeft(value) {
         if (isNaN(value)) {
-            if (dh.IOUtil.isAbsouteOrFixed(this)) {
+            if (senjs.IOUtil.isAbsouteOrFixed(this)) {
                 this._dom.style.left = value;
             }
             else {
@@ -1330,11 +1330,11 @@ export class View {
         }
         else {
             this.info.pushLeft = this.info.pushLeft == -1 ? value : this.info.pushLeft;
-            if (dh.IOUtil.isAbsouteOrFixed(this)) {
+            if (senjs.IOUtil.isAbsouteOrFixed(this)) {
                 this._dom.style.left = parseInt(value) + app_constant.SIZE_UNIT;
             }
             else {
-                this._dom.style.marginLeft = app.utils.ScreenUtil.convertScreenSize(parseInt(value)) + app_constant.SIZE_UNIT;
+                this._dom.style.marginLeft = parseInt(value) + app_constant.SIZE_UNIT;
             }
         }
         this.events.system.reLayout();
@@ -1344,7 +1344,7 @@ export class View {
 
     setRight(value) {
         if (isNaN(value)) {
-            if (dh.IOUtil.isAbsouteOrFixed(this)) {
+            if (senjs.IOUtil.isAbsouteOrFixed(this)) {
                 this._dom.style.right = value;
             }
             else {
@@ -1353,11 +1353,11 @@ export class View {
         }
         else {
             this.info.pushRight = (this.info.pushRight == -1) ? value : this.info.pushRight;
-            if (dh.IOUtil.isAbsouteOrFixed(this)) {
+            if (senjs.IOUtil.isAbsouteOrFixed(this)) {
                 this._dom.style.right = parseInt(value) + app_constant.SIZE_UNIT;
             }
             else {
-                this._dom.style.marginRight = app.utils.ScreenUtil.convertScreenSize(parseInt(value)) + app_constant.SIZE_UNIT;
+                this._dom.style.marginRight = parseInt(value) + app_constant.SIZE_UNIT;
             }
         }
         this.events.system.reLayout();
@@ -1367,7 +1367,7 @@ export class View {
 
     setTop(value) {
         if (isNaN(value)) {
-            if (dh.IOUtil.isAbsouteOrFixed(this)) {
+            if (senjs.IOUtil.isAbsouteOrFixed(this)) {
                 this._dom.style.top = value;
             }
             else {
@@ -1376,11 +1376,11 @@ export class View {
         }
         else {
             this.info.pushTop = this.info.pushTop == -1 ? value : this.info.pushTop;
-            if (dh.IOUtil.isAbsouteOrFixed(this)) {
+            if (senjs.IOUtil.isAbsouteOrFixed(this)) {
                 this._dom.style.top = parseInt(value) + app_constant.SIZE_UNIT;
             }
             else {
-                this._dom.style.marginTop = app.utils.ScreenUtil.convertScreenSize(parseInt(value)) + app_constant.SIZE_UNIT;
+                this._dom.style.marginTop = parseInt(value) + app_constant.SIZE_UNIT;
             }
             if (this.events.layout.onAboveOf != null) {
                 this.events.layout.onAboveOf();
@@ -1396,7 +1396,7 @@ export class View {
 
     setBottom(value) {
         if (isNaN(value)) {
-            if (dh.IOUtil.isAbsouteOrFixed(this)) {
+            if (senjs.IOUtil.isAbsouteOrFixed(this)) {
                 this._dom.style.bottom = value;
             }
             else {
@@ -1405,11 +1405,11 @@ export class View {
         }
         else {
             this.info.pushBottom = this.info.pushBottom == -1 ? value : this.info.pushBottom;
-            if (dh.IOUtil.isAbsouteOrFixed(this)) {
+            if (senjs.IOUtil.isAbsouteOrFixed(this)) {
                 this._dom.style.bottom = parseInt(value) + app_constant.SIZE_UNIT;
             }
             else {
-                this._dom.style.marginBottom = app.utils.ScreenUtil.convertScreenSize(parseInt(value)) + app_constant.SIZE_UNIT;
+                this._dom.style.marginBottom = parseInt(value) + app_constant.SIZE_UNIT;
             }
             if (this.events.layout.onAboveOf != null) {
                 this.events.layout.onAboveOf();
@@ -1424,7 +1424,7 @@ export class View {
 
 
     setPercentLeft(size) {
-        if (dh.IOUtil.isAbsouteOrFixed(this)) {
+        if (senjs.IOUtil.isAbsouteOrFixed(this)) {
             this._dom.style.left = size + "%";
         }
         else {
@@ -1436,7 +1436,7 @@ export class View {
 
 
     setPercentRight(size) {
-        if (dh.IOUtil.isAbsouteOrFixed(this)) {
+        if (senjs.IOUtil.isAbsouteOrFixed(this)) {
             this._dom.style.right = size + "%";
         }
         else {
@@ -1448,7 +1448,7 @@ export class View {
 
 
     setPercentTop(size) {
-        if (dh.IOUtil.isAbsouteOrFixed(this)) {
+        if (senjs.IOUtil.isAbsouteOrFixed(this)) {
             this._dom.style.top = size + "%";
         }
         else {
@@ -1460,7 +1460,7 @@ export class View {
 
 
     setPercentBottom(size) {
-        if (dh.IOUtil.isAbsouteOrFixed(this)) {
+        if (senjs.IOUtil.isAbsouteOrFixed(this)) {
             this._dom.style.bottom = size + "%";
         }
         else {
@@ -1560,7 +1560,7 @@ export class View {
             this._dom.style.height = "auto";
         }
         else if (value == app_constant.Size.FILL_PARENT) {
-            if (dh.IOUtil.isAbsouteOrFixed(this)) {
+            if (senjs.IOUtil.isAbsouteOrFixed(this)) {
                 this._dom.style.height = "100%";
             }
             else {
@@ -1579,7 +1579,7 @@ export class View {
             }
         }
         else {
-            this._dom.style.height = app.utils.ScreenUtil.convertScreenSize(value) + app_constant.SIZE_UNIT;
+            this._dom.style.height = value + app_constant.SIZE_UNIT;
         }
         this.events.system.reLayout();
         return this;
@@ -1597,25 +1597,25 @@ export class View {
     }
 
     setPaddingLeft(value) {
-        this._dom.style.paddingLeft = (typeof value === "number") ? (app.utils.ScreenUtil.convertScreenSize(value) + app_constant.SIZE_UNIT) : value;
+        this._dom.style.paddingLeft = (typeof value === "number") ? (value + app_constant.SIZE_UNIT) : value;
         this.events.system.reLayout();
         return this;
     }
 
     setPaddingRight(value) {
-        this._dom.style.paddingRight = (typeof value === "number") ? (app.utils.ScreenUtil.convertScreenSize(value) + app_constant.SIZE_UNIT) : value;
+        this._dom.style.paddingRight = (typeof value === "number") ? (value + app_constant.SIZE_UNIT) : value;
         this.events.system.reLayout();
         return this;
     }
 
     setPaddingTop(value) {
-        this._dom.style.paddingTop = (typeof value === "number") ? (app.utils.ScreenUtil.convertScreenSize(value) + app_constant.SIZE_UNIT) : value;
+        this._dom.style.paddingTop = (typeof value === "number") ? (value + app_constant.SIZE_UNIT) : value;
         this.events.system.reLayout();
         return this;
     }
 
     setPaddingBottom(value) {
-        this._dom.style.paddingBottom = (typeof value === "number") ? (app.utils.ScreenUtil.convertScreenSize(value) + app_constant.SIZE_UNIT) : value;
+        this._dom.style.paddingBottom = (typeof value === "number") ? (value + app_constant.SIZE_UNIT) : value;
         this.events.system.reLayout();
         return this;
     }
@@ -1623,7 +1623,7 @@ export class View {
 
     setPadding(value) {
         if (typeof value === 'number') {
-            this._dom.style.padding = app.utils.ScreenUtil.convertScreenSize(value) + app_constant.SIZE_UNIT;
+            this._dom.style.padding = value + app_constant.SIZE_UNIT;
         } else {
             this._dom.style.padding = value;
         }
@@ -1656,7 +1656,7 @@ export class View {
         this.info.border.all.size = size;
 
         this.info.border.all.color = color;
-        this._dom.style.border = color + " " + app.utils.ScreenUtil.convertScreenSize(size) + app_constant.SIZE_UNIT + " solid";
+        this._dom.style.border = color + " " + size + app_constant.SIZE_UNIT + " solid";
         return this;
     }
 
@@ -1665,7 +1665,7 @@ export class View {
         this.info.border.left.size = size;
 
         this.info.border.left.color = color;
-        this._dom.style.borderLeft = color + " " + app.utils.ScreenUtil.convertScreenSize(size) + app_constant.SIZE_UNIT + " solid";
+        this._dom.style.borderLeft = color + " " + size + app_constant.SIZE_UNIT + " solid";
         return this;
     }
 
@@ -1683,7 +1683,7 @@ export class View {
         this.info.border.right.size = size;
 
         this.info.border.right.color = color;
-        this._dom.style.borderRight = color + " " + app.utils.ScreenUtil.convertScreenSize(size) + app_constant.SIZE_UNIT + " solid";
+        this._dom.style.borderRight = color + " " + size + app_constant.SIZE_UNIT + " solid";
         return this;
     }
 
@@ -1692,7 +1692,7 @@ export class View {
         this.info.border.bottom.size = size;
 
         this.info.border.bottom.color = color;
-        this._dom.style.borderBottom = color + " " + app.utils.ScreenUtil.convertScreenSize(size) + app_constant.SIZE_UNIT + " solid";
+        this._dom.style.borderBottom = color + " " + size + app_constant.SIZE_UNIT + " solid";
         return this;
     }
 
@@ -1783,7 +1783,7 @@ export class View {
 
     removeAllView() {
         var item, id;
-        while ((item = app.dh_viewPool.get(this.info.childControls.pop())) != null) {
+        while ((item = app.senjs_viewPool.get(this.info.childControls.pop())) != null) {
             item.events.system.destroy();
         }
         this.info.childControls = new Array();
@@ -1810,7 +1810,7 @@ export class View {
         }
         var oldParent = this.getParentView();
         if (oldParent != null) {
-            app.dh_viewPool.allRootChilds(oldParent.info.id).foreach(function (viewChild, i) {
+            app.senjs_viewPool.allRootChilds(oldParent.info.id).foreach(function (viewChild, i) {
                 new List(viewChild.info.parents).remove(oldParent.info.id);
             }
             );
@@ -1833,7 +1833,7 @@ export class View {
 
 
     getAbsoluteTop() {
-        return app.dh_viewPool.allParents(this.info.id).filter(function (item) {
+        return app.senjs_viewPool.allParents(this.info.id).filter(function (item) {
             return item != null && item.isTableCol && item.info.parent >= 0;
         }
         ).Sum(function (a, b) {
@@ -1844,7 +1844,7 @@ export class View {
 
 
     getAbsoluteLeft() {
-        return app.dh_viewPool.allParents(this.info.id).filter(function (i) {
+        return app.senjs_viewPool.allParents(this.info.id).filter(function (i) {
             return i != null && i.info.parent >= 0;
         }
         ).Sum(function (a, b) {
@@ -1855,7 +1855,7 @@ export class View {
 
 
     getParentScrollY() {
-        return app.dh_viewPool.allParents(this.info.id).filter(function (i) {
+        return app.senjs_viewPool.allParents(this.info.id).filter(function (i) {
             return i._dom.scrollTop > 0
         }
         ).Sum(function (a, b) {
@@ -1866,7 +1866,7 @@ export class View {
 
 
     getParentScrollX() {
-        return app.dh_viewPool.allParents(this.info.id).filter(function (i) {
+        return app.senjs_viewPool.allParents(this.info.id).filter(function (i) {
             return i._dom.scrollLeft > 0;
         }
         ).Sum(function (a, b) {
@@ -2048,7 +2048,7 @@ export class View {
     setOnSwipeLeft(listener) {
         this.info.onSwipeLeftListener = listener;
         if (!isMobile.any()) {
-            dh.event.setOnMouseDown(this);
+            senjs.event.setOnMouseDown(this);
             return this;
         }
         this.initTouch();
@@ -2058,7 +2058,7 @@ export class View {
     setOnSwipeRight(listener) {
         this.info.onSwipeRightListener = listener;
         if (!isMobile.any()) {
-            dh.event.setOnMouseDown(this);
+            senjs.event.setOnMouseDown(this);
             return this;
         }
         this.initTouch();
@@ -2202,7 +2202,7 @@ export class View {
                             currentX = currentX - oldX;
                             if (currentX < -30) {
                                 this.info.allowDragRemoveItem = false;
-                                this.setAnimation(dhKey.anims.CLOSE_PAGE_DEFUALT_LEFT);
+                                this.setAnimation(senjsKey.anims.CLOSE_PAGE_DEFUALT_LEFT);
                                 new Waiter(function () {
                                     this.info.allowDragRemoveItem = true;
                                     this.events.system.destroy();
@@ -2323,7 +2323,7 @@ export class View {
 
     setEnable(enable) {
         this._dom.disabled = !enable;
-        app.dh_viewPool.allRootChilds(this.info.id).foreach(function (view_child) {
+        app.senjs_viewPool.allRootChilds(this.info.id).foreach(function (view_child) {
             view_child.setEnable(enable);
         }
         );
@@ -2346,7 +2346,7 @@ export class View {
         style = new List(style);
         var strStyle = "";
         style.foreach(function (item) {
-            strStyle += item.dhKey + ":" + ((item.dhValue instanceof Function) ? item.dhValue() : item.dhValue) + ";";
+            strStyle += item.senjsKey + ":" + ((item.senjsValue instanceof Function) ? item.senjsValue() : item.senjsValue) + ";";
         }
         );
         this._dom.setAttribute("style", (this._dom.getAttribute("style") || "") + strStyle);
@@ -2392,7 +2392,7 @@ export class View {
         var data = dragData;
         var dragItem = this;
         this._dom.ondragstart = function (arg) {
-            dh.event.isDragDropItem = true;
+            senjs.event.isDragDropItem = true;
             arg.dataTransfer.setData("dragData", dragData);
             dragcallback(arg, this);
         }
@@ -2400,11 +2400,11 @@ export class View {
             // arg.preventDefault();
             dropCallback(arg, this, dropControl);
             new Waiter(function () {
-                dh.event.isDragDropItem = false;
+                senjs.event.isDragDropItem = false;
             }, 1000);
         }
         dropControl._dom.ondragover = function (arg) {
-            dh.event.isDragDropItem = true;
+            senjs.event.isDragDropItem = true;
             arg.preventDefault();
         }
         return this;
@@ -2416,13 +2416,13 @@ export class View {
         if (isMobile.any()) {
             this.initTouch();
         }
-        dh.event.setOnDragRemoveItem(this, function (view) {
+        senjs.event.setOnDragRemoveItem(this, function (view) {
             if (callback(view)) {
                 view.destroy();
             }
             else {
                 view.setLeft(0);
-                view.setAnimation(dhKey.anims.OPEN_PAGE_DEFAULT_LEFT);
+                view.setAnimation(senjsKey.anims.OPEN_PAGE_DEFAULT_LEFT);
             }
         }
         );
@@ -2450,17 +2450,17 @@ export class View {
 
 
     showPinnerPanel() {
-        var btnHidden = dh.IO.buttonNonTextView("").setPosition(app_constant.Position.FIXED).zIndex(1001).toFillParent();
-        var pinContainer = dh.IO.sticky(this).zIndex(1002).background(color.TRANSPARENT);
+        var btnHidden = senjs.IO.buttonNonTextView("").setPosition(app_constant.Position.FIXED).zIndex(1001).toFillParent();
+        var pinContainer = senjs.IO.sticky(this).zIndex(1002).background(color.TRANSPARENT);
         pinContainer.setPosition(app_constant.Position.FIXED).Padding(5).PaddingBottom(0).removeShadow();
         pinContainer.disableAutoLayout();
-        var pinContent = dh.IO.block(40, 40).radius(3).shadow(ggColors.Black, 0, 0, 8, false).boxSizing("border-box").border(3, ggColors.Grey.g200).background(ggColors.Grey.g50);
+        var pinContent = senjs.IO.block(40, 40).radius(3).shadow(ggColors.Black, 0, 0, 8, false).boxSizing("border-box").border(3, ggColors.Grey.g200).background(ggColors.Grey.g50);
         btnHidden.setOnClick(function (view) {
             view.destroy();
             pinContainer.destroyWithAnimate();
         }
         );
-        var lbArrow = dh.IO.textView("");
+        var lbArrow = senjs.IO.textView("");
         lbArrow.height(1.8);
         lbArrow.setWidth(lbArrow.getHeight() * 2);
         pinContainer.addView(pinContent).addView(lbArrow);
@@ -2599,14 +2599,14 @@ export class View {
     setOnTooltip(text) {
         var noteDialog;
         this.setOnMouseEnter(function (view, x, y) {
-            noteDialog = dh.IO.block(app_constant.Size.WRAP_CONTENT, app_constant.Size.WRAP_CONTENT);
+            noteDialog = senjs.IO.block(app_constant.Size.WRAP_CONTENT, app_constant.Size.WRAP_CONTENT);
             noteDialog.minWidth(8);
             app.mainFrame.addView(noteDialog);
             noteDialog.setHTML(text);
             noteDialog.BackgroundColor(color.WHITE);
             noteDialog.Padding(10);
             noteDialog.shadow(color.DEFAULT_SHADOW, 0, 0, 1, false);
-            noteDialog.setAnimation(dhKey.anims.TOOLTIP_OPEN);
+            noteDialog.setAnimation(senjsKey.anims.TOOLTIP_OPEN);
             noteDialog.setPosition(app_constant.Position.FIXED);
             noteDialog.setLeft(x + 2);
             noteDialog.setTop(y + 2);
@@ -2616,7 +2616,7 @@ export class View {
         );
         this.setOnMouseOut(function (view, x, y) {
             if (noteDialog != null) {
-                noteDialog.destroyWithCustomAnimation(dhKey.anims.TOOLTIP_CLOSE);
+                noteDialog.destroyWithCustomAnimation(senjsKey.anims.TOOLTIP_CLOSE);
             }
         });
         this.setOnMouseMove(function (view, x, y) {
@@ -2694,7 +2694,7 @@ var orderControl = {
     addRelayout: function (item) {
         item.tView.events.override.onMeasured(function (view, view_width, view_height) {
             view.postDelay(function () {
-                if (!view.info.isDestroy && view.info.isCreated && dhCts.get(view.info.id) != null) {
+                if (!view.info.isDestroy && view.info.isCreated && senjsCts.get(view.info.id) != null) {
                     orderControl.performOrder(item);
                 }
             }, view.getAnimationDuration() + 30);
@@ -2702,7 +2702,7 @@ var orderControl = {
         item.fView.getParentView().events.override.onMeasured(function (view, view_width, view_height) {
             console.log("relayout for order parent");
             view.postDelay(function () {
-                if (!view.info.isDestroy && view.info.isCreated && dhCts.get(view.info.id) != null) {
+                if (!view.info.isDestroy && view.info.isCreated && senjsCts.get(view.info.id) != null) {
                     orderControl.performOrder(item);
                 }
             }, view.getAnimationDuration() + 30);
@@ -2710,15 +2710,15 @@ var orderControl = {
     },
     order: function () {
         if (orderControl.thrOder == null) {
-            orderControl.thrOder = dh.Thread.create(function () {
+            orderControl.thrOder = senjs.Thread.create(function () {
                 if (orderControl.stackControls.length == 0 && orderControl.stackControlsTemp.length > 0) {
                     orderControl.stackControls = orderControl.stackControlsTemp;
                     orderControl.stackControlsTemp = new Array();
-                } else if (orderControl.stackControls.length == 0 && dh.event.stackCreatedControl == 0 && orderControl.stackControlsTemp.length == 0) {
+                } else if (orderControl.stackControls.length == 0 && senjs.event.stackCreatedControl == 0 && orderControl.stackControlsTemp.length == 0) {
                     orderControl.thrOder.remove();
                     orderControl.thrOder = null;
                     return;
-                } else if (orderControl.stackControls.length == 0 && dh.event.stackCreatedControl.length > 0) {
+                } else if (orderControl.stackControls.length == 0 && senjs.event.stackCreatedControl.length > 0) {
                     return;
                 }
                 if (orderControl.stackControls.length > 0) {
@@ -2831,7 +2831,7 @@ var orderControl = {
     }
 }
 
-var dh = {
+var senjs = {
     IOUtil: {
         isAbsouteOrFixed: function (view) {
             if (view.info.position == app_constant.Position.ABSOLUTE || view.info.position == app_constant.Position.FIXED) {
@@ -2872,10 +2872,10 @@ var dh = {
             view.addView(canvas);
         },
         blurView: function (view) {
-            var blur_view = dh.IO.block();
+            var blur_view = senjs.IO.block();
             blur_view.toFillParent();
             for (var i = 0; i < 10; i++) {
-                var div = dh.IO.block("100%", "10%").float("left");
+                var div = senjs.IO.block("100%", "10%").float("left");
                 div.background(i % 2 == 0 ? "rgba(100,100,100,0.6)" : "rgba(180,180,180,0.6)");
                 blur_view.addView(div);
             }

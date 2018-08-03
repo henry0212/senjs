@@ -1,4 +1,4 @@
-import { dh } from "../../src/index.js";
+import { senjs } from "../../src/index.js";
 import { Waiter } from "../../src/core/app-context.js";
 
 const array_avatar = [
@@ -39,7 +39,7 @@ function initClient() {
 
     gapi.client.init({
         apiKey: "AIzaSyAb82hh-7INW8Svl3zGcA32KzdWyWpne10",
-        clientId: "835880225064-trbqa1ltv5nmrj8o63dhk8f4r69tg0ef.apps.googleusercontent.com",
+        clientId: "835880225064-trbqa1ltv5nmrj8o63senjsk8f4r69tg0ef.apps.googleusercontent.com",
         discoveryDocs: DISCOVERY_DOCS,
         scope: SCOPES
     }).then(function () {
@@ -132,7 +132,7 @@ function uploadImage(src) {
 }
 
 
-export class GalleryPage extends dh.layout.FrameLayout {
+export class GalleryPage extends senjs.layout.FrameLayout {
 
     constructor() {
         super();
@@ -155,18 +155,18 @@ export class GalleryPage extends dh.layout.FrameLayout {
     }
 
     initControl() {
-        this._view.lsv_gallery = new dh.widget.ListView().toFillParent().setPaddingBottom(60);
-        this._view.btn_capture = new dh.widget.FloatingButton("photo_camera")
+        this._view.lsv_gallery = new senjs.widget.ListView().toFillParent().setPaddingBottom(60);
+        this._view.btn_capture = new senjs.widget.FloatingButton("photo_camera")
             .toBottomParent().toRightParent()
             .setBottom(10).setRight(10)
             .setBackground("#fff")
-            .setIconColor(dh.res.material_colors.Blue.g500);
+            .setIconColor(senjs.res.material_colors.Blue.g500);
 
-        this._view.btn_gallery = new dh.widget.FloatingButton("photo_library")
+        this._view.btn_gallery = new senjs.widget.FloatingButton("photo_library")
             .toBottomParent().toLeftOf(this._view.btn_capture)
             .setBottom(10).setRight(10)
             .setBackground("#fff")
-            .setIconColor(dh.res.material_colors.Blue.g500);
+            .setIconColor(senjs.res.material_colors.Blue.g500);
 
 
         this.addView(this._view.lsv_gallery)
@@ -175,48 +175,48 @@ export class GalleryPage extends dh.layout.FrameLayout {
     }
 
     initData() {
-        this._meta.list_image = new dh.util.List();
+        this._meta.list_image = new senjs.util.List();
         for (var i = 0; i < 500; i++) {
-            this._meta.list_image.add(array_avatar[dh.util.NumberUtil.randomNumber(0, array_avatar.length - 1)]);
+            this._meta.list_image.add(array_avatar[senjs.util.NumberUtil.randomNumber(0, array_avatar.length - 1)]);
         }
-        this._adapter.adapter_gallery = new dh.adapter.BaseAdapter(this._meta.list_image);
+        this._adapter.adapter_gallery = new senjs.adapter.BaseAdapter(this._meta.list_image);
         this._adapter.adapter_gallery.setColumn(3);
         this._adapter.adapter_gallery.setView(getGalleryView.bind(this));
         this._view.lsv_gallery.setAdapter(this._adapter.adapter_gallery);
     }
     initEvent() {
         this._view.btn_capture.setOnClick(async () => {
-            dh.lib.FilePicker.onFilePicked({
+            senjs.lib.FilePicker.onFilePicked({
                 accept: 'image/*',
                 capture: 'camera'
             }).then(file => {
                 if (file) {
-                    dh.app.showLoading();
-                    return dh.lib.FilePicker.singleFileToBase64(file);
+                    senjs.app.showLoading();
+                    return senjs.lib.FilePicker.singleFileToBase64(file);
                 }
             }).then(base64 => {
                 new ImageEditor(base64).setOnImageSaved(newBase64 => {
                     this._meta.list_image.addAt(newBase64, 0);
                     this._adapter.adapter_gallery.notifyDataSetChanged();
                 }).show();
-                dh.app.hideLoading();
+                senjs.app.hideLoading();
             });
         });
 
         this._view.btn_gallery.setOnClick(async () => {
-            dh.lib.FilePicker.onMultifilePicked({
+            senjs.lib.FilePicker.onMultifilePicked({
                 accept: 'image/*'
             }).then(file => {
                 if (file) {
-                    dh.app.showLoading();
-                    return dh.lib.FilePicker.multiFileToBase64(file);
+                    senjs.app.showLoading();
+                    return senjs.lib.FilePicker.multiFileToBase64(file);
                 }
             }).then(list_base64 => {
                 while (list_base64.length > 0) {
                     this._meta.list_image.addAt(list_base64.shift(), 0);
                 }
                 this._adapter.adapter_gallery.notifyDataSetChanged();
-                dh.app.hideLoading();
+                senjs.app.hideLoading();
             });
         });
         this._view.lsv_gallery.setOnItemClicked(this.onImageItemClicked.bind(this));
@@ -238,8 +238,8 @@ export class GalleryPage extends dh.layout.FrameLayout {
 
 function getGalleryView(dataItem, position, convertView) {
     if (convertView == null) {
-        convertView = new dh.widget.ImageView()
-            .setScaleType(dh.constant.ImageScale.COVER)
+        convertView = new senjs.widget.ImageView()
+            .setScaleType(senjs.constant.ImageScale.COVER)
             .setWidth(window.innerWidth / 3)
             .setHeight(window.innerWidth / 3);
         convertView.setBorder(1, "#fff");
@@ -251,11 +251,11 @@ function getGalleryView(dataItem, position, convertView) {
 
 /***--------------- Image editor dialog ---------------------*/
 
-class ImageEditor extends dh.dialog.BaseDialog {
+class ImageEditor extends senjs.dialog.BaseDialog {
     constructor(imageSrc) {
         super();
         this._instance = {
-            imageRefactor: new dh.lib.ImageRefactor(imageSrc)
+            imageRefactor: new senjs.lib.ImageRefactor(imageSrc)
         }
 
         this._listener = {
@@ -265,29 +265,29 @@ class ImageEditor extends dh.dialog.BaseDialog {
         this._meta.rotate_degree = 0;
 
         this._view = {
-            imageView: new dh.widget.ImageView(imageSrc).toFillParent().setBottom(60).setTop(60),
+            imageView: new senjs.widget.ImageView(imageSrc).toFillParent().setBottom(60).setTop(60),
 
-            btn_rotate_right: new dh.widget.IconView("rotate_right").setRadiusAt(0, 40, 0, 40)
-                .setBackground("#fff").setWidth(60).setTextGravity(dh.constant.Gravity.CENTER)
-                .setPadding(8).setIconColor(dh.res.material_colors.Grey.g800).setIconSize(dh.res.dimen.icon.s24),
+            btn_rotate_right: new senjs.widget.IconView("rotate_right").setRadiusAt(0, 40, 0, 40)
+                .setBackground("#fff").setWidth(60).setTextGravity(senjs.constant.Gravity.CENTER)
+                .setPadding(8).setIconColor(senjs.res.material_colors.Grey.g800).setIconSize(senjs.res.dimen.icon.s24),
 
-            btn_rotate_left: new dh.widget.IconView("rotate_left").setRadiusAt(40, 0, 40, 0)
-                .setBackground("#fff").setRight(1).setWidth(60).setTextGravity(dh.constant.Gravity.CENTER)
-                .setPadding(8).setIconColor(dh.res.material_colors.Grey.g800).setIconSize(dh.res.dimen.icon.s24),
+            btn_rotate_left: new senjs.widget.IconView("rotate_left").setRadiusAt(40, 0, 40, 0)
+                .setBackground("#fff").setRight(1).setWidth(60).setTextGravity(senjs.constant.Gravity.CENTER)
+                .setPadding(8).setIconColor(senjs.res.material_colors.Grey.g800).setIconSize(senjs.res.dimen.icon.s24),
 
-            btn_save: new dh.widget.IconView("save")
-                .setPadding(10).setIconColor("#fff").setIconSize(dh.res.dimen.icon.s24).toTopParent().toRightParent(),
+            btn_save: new senjs.widget.IconView("save")
+                .setPadding(10).setIconColor("#fff").setIconSize(senjs.res.dimen.icon.s24).toTopParent().toRightParent(),
 
-            btn_back: new dh.widget.IconView("arrow_back_ios")
-                .setPadding(10).setIconColor("#fff").setIconSize(dh.res.dimen.icon.s24).toTopParent().toLeftParent(),
+            btn_back: new senjs.widget.IconView("arrow_back_ios")
+                .setPadding(10).setIconColor("#fff").setIconSize(senjs.res.dimen.icon.s24).toTopParent().toLeftParent(),
 
         }
-        this.setHeight("100%").setWidth("100%").setBackground(dh.res.material_colors.Grey.g900);
+        this.setHeight("100%").setWidth("100%").setBackground(senjs.res.material_colors.Grey.g900);
         this._meta.imageSrc = imageSrc;
 
-        var linear_action = new dh.layout.LinearLayout("100%")
+        var linear_action = new senjs.layout.LinearLayout("100%")
             .setBottom(10)
-            .setGravity(dh.constant.Gravity.TOP_CENTER).toBottomParent();
+            .setGravity(senjs.constant.Gravity.TOP_CENTER).toBottomParent();
 
         linear_action
             .addView(this._view.btn_rotate_left)
@@ -320,13 +320,13 @@ class ImageEditor extends dh.dialog.BaseDialog {
                 this._view.imageView.setRotate(this._meta.rotate_degree);
                 break;
             case this._view.btn_save:
-                dh.app.showLoading();
+                senjs.app.showLoading();
                 view.postDelay(() => {
                     if (this._listener.onImageSaved) {
                         this._listener.onImageSaved(this._instance.imageRefactor.toBase64(20));
                     }
                     this.dismiss();
-                    dh.app.hideLoading();
+                    senjs.app.hideLoading();
                 }, 200);
                 break;
             case this._view.btn_back:

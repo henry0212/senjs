@@ -1,4 +1,4 @@
-import { app, dhAdps, dhCts } from '../core/app-context.js'
+import { app, senjsAdps, senjsCts } from '../core/app-context.js'
 import { app_constant } from '../res/constant.js'
 import { List } from '../util/list-util.js';
 import { Waiter } from '../core/waiter.js';
@@ -51,7 +51,7 @@ export class BaseAdapter {
         this._pool.groupViews.clear();
         this._pool.groupUsings.clear();
         this._listener.onRenderRootView = onRenderRootView;
-        this._view.view_parent = (typeof baseListView === "number") ? dhCts.get(baseListView) : baseListView;
+        this._view.view_parent = (typeof baseListView === "number") ? senjsCts.get(baseListView) : baseListView;
         if (this._view.view_parent &&
             (this._view.view_parent.info.state == app_constant.VIEW_STATE.renderring
                 || this._view.view_parent.info.state == app_constant.VIEW_STATE.orderring)) {
@@ -66,12 +66,12 @@ export class BaseAdapter {
             return this;
         }
         this._view.view_parent.removeAllView();
-        this._view.view_scroller = (typeof baseListView === "number") ? dhCts.get(baseListView) : baseListView;
+        this._view.view_scroller = (typeof baseListView === "number") ? senjsCts.get(baseListView) : baseListView;
         while (!this._view.view_scroller.info.isScrollY && this._view.view_scroller.info.id > 0) {
             this._view.view_scroller = this._view.view_scroller.getParentView();
         }
         if (this._view.view_scroller) {
-             this._view.view_scroller.setScrollY(0);
+            this._view.view_scroller.setScrollY(0);
             this._view.view_scroller.appEvent.setOnScroll((view, iaScrollEvent, e) => {
                 (scrollRenderring.bind(this))(iaScrollEvent, e);
             });
@@ -80,7 +80,7 @@ export class BaseAdapter {
             this._meta.flagDestroyListener = true;
             this._view.view_parent.events.override.onDestroy(() => {
                 new Promise(next => {
-                    dhAdps.remove(this.id);
+                    senjsAdps.remove(this.id);
                     Object.keys(this).forEach(key => {
                         this[key] = null;
                         delete this[key];
@@ -174,20 +174,19 @@ async function initMeta() {
     return new Promise(async next => {
         await renderFirstView.bind(this)();
         if (this._meta.orientationType == app_constant.Orientation.VERTICAL) {
-            this._view.view_parent.setMinHeight(Math.floor(this._meta.min_view_height * (this.getCount() + this._meta.number_of_col - 1) / this._meta.number_of_col));
+            this._view.view_parent.setMinHeight(this._meta.min_container_height = Math.floor(this._meta.min_view_height * (this.getCount() + this._meta.number_of_col - 1) / this._meta.number_of_col));
         } else {
             this._view.view_parent.setMinWidth(this._meta.min_view_width * (this.getCount()));
         }
         this._meta.layout_height = this._view.view_scroller._dom.offsetHeight;
         this._meta.layout_width = this._view.view_scroller._dom.offsetWidth;
 
-        this._meta.limit_minus_top = this._meta.layout_height;
-        this._meta.limit_minus_bottom = this._meta.layout_height * 2;
+        this._meta.limit_minus_top = this._meta.min_view_height * 2;
+        this._meta.limit_minus_bottom = this._meta.layout_height + this._meta.min_view_height * 1;
 
         var number_visible_item = 0;
         if (this._meta.orientationType == app_constant.Orientation.VERTICAL) {
-            number_visible_item = (Math.round((this._meta.limit_minus_bottom + this._meta.limit_minus_top) / this._meta.min_view_height) + 2) * this._meta.number_of_col;
-
+            number_visible_item = (Math.round((this._meta.limit_minus_bottom + this._meta.limit_minus_top) / this._meta.min_view_height)) * this._meta.number_of_col;
         } else {
             number_visible_item = this.getCount();
         }
@@ -195,12 +194,21 @@ async function initMeta() {
             for (var i = 1; i < number_visible_item; i++) {
                 (renderViewAt.bind(this))(i);
             }
+
             for (var i = number_visible_item; i < this.getCount(); i++) {
                 (newMeta.bind(this))(i, this.getItem(i));
             }
+            for (var i = 1; i < number_visible_item; i++) {
+                (drawSizeAgain.bind(this))(this._pool.metadata.get(i));
+            }
+
+
         } else {
             for (var i = 1; i < this.getCount(); i++) {
                 (renderViewAt.bind(this))(i);
+            }
+            for (var i = 1; i < this.getCount(); i++) {
+                (drawSizeAgain.bind(this))(this._pool.metadata.get(i));
             }
         }
         next();
@@ -216,7 +224,7 @@ function renderFirstView() {
             rootView.events.override.onMeasured((view, w, h) => {
                 this._meta.min_view_height = h;
                 this._meta.min_view_width = w / this._meta.number_of_col;
-                rootView.setMinHeight(h);
+                // rootView.setMinHeight(h);
                 if (this._meta.orientationType == app_constant.Orientation.VERTICAL) {
                     rootView.setWidth(`${100 / this._meta.number_of_col}%`);
                 } else {
@@ -225,27 +233,20 @@ function renderFirstView() {
                 var meta = (newMeta.bind(this))(0, dataItem);
                 meta.groupView = { rootView: rootView, convertView: convertView };
                 meta.hasRendered = true;
-                this._meta.place_to_put += rootView._dom.offsetHeight;
-                meta.realOffsetTop = 0;
-                meta.real_size = rootView._dom.offsetHeight;
                 next();
             })
         } else {
             this._meta.min_view_height = rootView._dom.offsetHeight;
             this._meta.min_view_width = rootView._dom.offsetWidth / this._meta.number_of_col;
-            rootView.setMinHeight(this._meta.min_view_height);
+            //rootView.setMinHeight(this._meta.min_view_height);
             if (this._meta.orientationType == app_constant.Orientation.VERTICAL) {
                 rootView.setWidth(`${100 / this._meta.number_of_col}%`);
             } else {
                 rootView.setWidth(this._meta.min_view_width);
             }
             var meta = (newMeta.bind(this))(0, dataItem);
-            meta.groupView = { rootView: rootView, convertView: convertView, meta: meta };
+            meta.groupView = { rootView: rootView, convertView: convertView };
             meta.hasRendered = true;
-            this._meta.place_to_put += rootView._dom.offsetHeight;
-            meta.realOffsetTop = 0;
-            meta.real_size = rootView._dom.offsetHeight;
-
             next();
         }
     })
@@ -265,14 +266,16 @@ function renderViewAt(position) {
     } else {
         rootView.setWidth(this._meta.min_view_width);
     }
-    var above_meta = this._pool.metadata.get(position - 1);
-    meta.real_size = rootView._dom.offsetHeight;
-    meta.realOffsetTop = above_meta.realOffsetTop + above_meta.real_size;
-
     rootView.setPosition(app_constant.Position.ABSOLUTE)
         .setTop(meta.offsetTop)
         .setLeft(meta.offsetLeft);
     return meta;
+}
+
+function preparePool() {
+    var dataItem = this.getItem(0);
+    var convertView = (newConvertView.bind(this))(dataItem, 0, null);
+    this._pool.groupViews.add({ rootView: null, convertView: null });
 }
 
 function newConvertView(dataItem, position, existingConvertView) {
@@ -288,11 +291,7 @@ function newMeta(position, dataItem) {
         offsetTop: 0,
         offsetLeft: 0,
         hasRendered: false,
-        groupView: null,
-        more_height: -1,
-        more_top: position == 0 ? 0 : -1,
-        realOffsetTop: 0,
-        real_size: -1,
+        moreHeight: 0
     }
     if (position > this._meta.number_of_col - 1) {
         this._meta.temp_row += meta.colIndex == 0 ? 1 : 0;
@@ -334,36 +333,47 @@ function scrollRenderring(iaScrollEvent, e) {
             item.groupView = null;
         }
     });
-
-    if (this._pool.groupViews.size() > 0) {
-        this._pool.metadata.filter(item => {
-            return !item.hasRendered && item.offsetTop >= iaScrollEvent.scrollY - this._meta.limit_minus_top && item.offsetTop <= iaScrollEvent.scrollY + this._meta.limit_minus_bottom;
-        }).foreach(item => {
-            item.hasRendered = true;
-            var groupView;
-            if (this._pool.groupViews.size() > 0) {
-                groupView = this._pool.groupViews.shift();
-                var temp = this._listener.onRenderConvertView(this.getItem(item.position), item.position, groupView.convertView);
-                if (temp.info.id != groupView.convertView.info.id) {
-                    groupView.rootView.removeAllView();
-                    groupView.rootView.addView(temp);
-                }
-                item.dataItem = this.getItem(item.position);
-                groupView.rootView.reload(groupView.convertView, item.dataItem, item.position);
-                groupView.meta = item;
-                this._pool.groupUsings.add(groupView);
-                item.groupView = groupView;
-                reinitMeta(item, groupView.rootView);
-                groupView.rootView
-                    .setTop(item.offsetTop)
-                    .setLeft(item.offsetLeft);
+    console.log("Pool", this._pool.groupViews.size());
+    this._pool.metadata.filter(item => {
+        return !item.hasRendered && item.offsetTop >= iaScrollEvent.scrollY - this._meta.limit_minus_top && item.offsetTop <= iaScrollEvent.scrollY + this._meta.limit_minus_bottom;
+    }).foreach(item => {
+        item.hasRendered = true;
+        var groupView;
+        if (this._pool.groupViews.size() > 0) {
+            groupView = this._pool.groupViews.shift();
+            var temp = this._listener.onRenderConvertView(this.getItem(item.position), item.position, groupView.convertView);
+            if (temp.info.id != groupView.convertView.info.id) {
+                groupView.rootView.removeAllView();
+                groupView.rootView.addView(temp);
             }
-        });
-    }
+            item.dataItem = this.getItem(item.position);
+            groupView.rootView.reload(groupView.convertView, item.dataItem, item.position);
+            groupView.meta = item;
+            this._pool.groupUsings.add(groupView);
+            item.groupView = groupView;
+            groupView.rootView
+                .setTop(item.offsetTop)
+                .setLeft(item.offsetLeft);
+
+            (drawSizeAgain.bind(this))(item);
+        } else {
+            (renderViewAt.bind(this))(item.position);
+        }
+    });
 }
 
-function reinitMeta(meta, rootView) {
-    if (meta.real_size == -1) {
-        meta.real_size = rootView._dom.offsetHeight;
+function drawSizeAgain(meta) {
+    if (meta.groupView.rootView._dom.offsetHeight != this._meta.min_view_height + meta.moreHeight) {
+        meta.moreHeight = meta.groupView.rootView._dom.offsetHeight - this._meta.min_view_height;
+        console.log(" meta.moreHeight ", meta.moreHeight);
+        this._view.view_parent.setMinHeight(this._meta.min_container_height += meta.moreHeight);
+        this._pool.metadata
+            .filter(i => { return i.position > meta.position })
+            .filter((item, index) => {
+                item.offsetTop += meta.moreHeight;
+                return item.groupView;
+            }).foreach(item => {
+                item.groupView.rootView.setTop(item.offsetTop);
+            });
     }
 }

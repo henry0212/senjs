@@ -2,17 +2,10 @@ import { View } from './view.js'
 import { app_constant } from '../res/constant.js';
 import { app_size } from '../res/dimen.js';
 import { app_theme, material_colors } from '../res/theme.js';
-import { AnimationUtil } from '../util/animation-util.js';
-import { ColorUtil } from '../util/color-util.js';
-import { DateUtil } from '../util/date-util.js';
-import { FormatUtil } from '../util/format-util.js';
 import { List } from '../util/list-util.js';
 import { NumberUtil } from '../util/number-util.js';
-import { ObjectUtil } from '../util/object-util.js';
-import { PrinterUtil } from '../util/printer-util.js';
 import { ScreenUtil } from '../util/screen-util.js';
 import { StringUtil } from '../util/string-util.js';
-import { UrlUtil } from '../util/url-util.js';
 import { app_event } from './event.js';
 import { Thread as app_thread } from './thread.js';
 import { Waiter as app_waiter } from './waiter.js';
@@ -39,7 +32,7 @@ const app_context = {
         chart: {
             imported: false,
             src: function () {
-                return "js/dh/libs/chart.js";
+                return "js/senjs/libs/chart.js";
             }
         }
     },
@@ -200,13 +193,13 @@ var _view_pool = {
             var parent = this.get(view.info.parent);
             if (parent != null) {
                 parentId = parent.info.id
-                dh.List(parent.info.childControls).remove(viewId);
+                senjs.List(parent.info.childControls).remove(viewId);
                 console.log(" parent", parent.info.id);
             }
             var childs = this.allRootChilds(parentId);
             childs.filter(function (child, i) {
                 console.log("clear parent", child.info.parents);
-                dh.List(child.info.parents).remove(parentId);
+                senjs.List(child.info.parents).remove(parentId);
                 console.log("cleared parent", child.info.parents);
                 return child;
             });
@@ -226,10 +219,10 @@ var _view_pool = {
 var _viewId_pool = {
     ids: new List(),
     add: function (uid, cid) {
-        dhUIds.ids.add({ uid: uid, id: cid });
+        senjsUIds.ids.add({ uid: uid, id: cid });
     },
     remove: function (cid) {
-        dhUIds.ids.remove(this.ids.filter(function (item) {
+        senjsUIds.ids.remove(this.ids.filter(function (item) {
             return item.id == cid;
         }).get(0));
     },
@@ -242,24 +235,24 @@ var _viewId_pool = {
 
 
 
-export var dhAdps = {
+export var senjsAdps = {
     lists: new List(),
     count: 0,
-    add: function (dhAdapter) {
+    add: function (senjsAdapter) {
         this.count++;
-        dhAdapter.id = "adax" + this.count;
-        dhAdps.lists.add(dhAdapter);
+        senjsAdapter.id = "adax" + this.count;
+        senjsAdps.lists.add(senjsAdapter);
     },
     find: function (id) {
-        return dhAdps.lists.single("id", id);
+        return senjsAdps.lists.single("id", id);
     },
     remove: function (id) {
-        dhAdps.lists.remove(dhAdps.lists.single("id", id));
+        senjsAdps.lists.remove(senjsAdps.lists.single("id", id));
     }
 }
 
 var application_start = async () => {
-    app_url = UrlUtil.getCurrentURL();
+    app_url =  window.location.pathname;
     app_context.SCREEN_WIDTH = window.innerWidth;
     app_context.SCREEN_HEIGHT = window.innerHeight;
     app.info.display.SCREEN_WIDTH = window.innerWidth;
@@ -273,7 +266,7 @@ var application_start = async () => {
     app_context.ROOT_BODY.setPosition("fixed");
     app_context.ROOT_BODY.info.isCreated = true;
     app_context.ROOT_BODY.info.state = app_constant.VIEW_STATE.running;
-    dhCts.lists.clear();
+    senjsCts.lists.clear();
     app_context.APP_WINDOW = app.mainFrame = new FrameLayout().toFillParent();
     app_context.ROOT_BODY._dom.appendChild(app.mainFrame._dom);
     delete app.mainFrame.getParentView;
@@ -336,7 +329,7 @@ const app_service_context = {
     start: () => {
         document.body.oncontextmenu = function () { return false; }
         document.body.onkeyup = function (event) {
-            // if (!dh.event.isEnablePageKeyUp) {
+            // if (!senjs.event.isEnablePageKeyUp) {
             //     return;
             // }
             if (event.keyCode == 13) {
@@ -663,12 +656,6 @@ const app_service_context = {
 
 export var app = {
     mainFrame: app_context.APP_WINDOW,
-    constant: app_constant,
-    size: app_size,
-    theme: app_theme,
-    color: {
-        material: material_colors
-    },
     info: {
         display: {
             SCREEN_WIDTH: 0,
@@ -683,20 +670,6 @@ export var app = {
             }
         }
     },
-    utils: {
-        AnimationUtil: AnimationUtil,
-        ColorUtil: ColorUtil,
-        DateUtil: DateUtil,
-        FormatUtil: FormatUtil,
-        List: List,
-        NumberUtil: NumberUtil,
-        PrinterUtil: PrinterUtil,
-        ScreenUtil: ScreenUtil,
-        StringUtil: StringUtil
-    },
-    io: {
-        FrameLayout: FrameLayout
-    },
     onStart: function (callback) {
         app_context.onAppStarted.push(callback);
     },
@@ -708,13 +681,13 @@ export var app = {
     Thread: app_thread,
     findViewById: function (id) {
         if (!isNaN(id)) {
-            return dhCts.get(id);
+            return senjsCts.get(id);
         } else {
-            return dhCts.getByUid(id);
+            return senjsCts.getByUid(id);
         }
     },
     findAdapterById: function (id) {
-        return dhAdps.find(id);
+        return senjsAdps.find(id);
     },
     _addViewToRoot: function (view) {
         app_context.APP_WINDOW.addView(view);
@@ -807,8 +780,8 @@ window.addEventListener("load", function () {
 export var
     Thread = app_thread,
     Waiter = app_waiter,
-    dhCts = app.dh_viewPool = _view_pool,
-    dhUIds = app.idPool = _viewId_pool,
+    senjsCts = app.senjs_viewPool = _view_pool,
+    senjsUIds = app.idPool = _viewId_pool,
     io = {
         layout: {
 
@@ -875,12 +848,12 @@ function service_reduceControlPool() {
             return;
         }
 
-        var viewIndex = dhCts.lists.size();
+        var viewIndex = senjsCts.lists.size();
 
         thread = new Thread(function (thred) {
             viewIndex--;
-            if (viewIndex <= dhCts.lists.size() && dhCts.lists.get(viewIndex) == null) {
-                dhCts.lists.removeAt(viewIndex);
+            if (viewIndex <= senjsCts.lists.size() && senjsCts.lists.get(viewIndex) == null) {
+                senjsCts.lists.removeAt(viewIndex);
             } else {
                 thread = null;
                 thred.remove();

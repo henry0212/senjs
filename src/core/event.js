@@ -1,5 +1,6 @@
-import { app, Thread, Waiter, isMobile, dhCts } from './app-context.js'
+import { app, Thread, Waiter, isMobile, senjsCts } from './app-context.js'
 import { app_constant, app_duration } from '../res/constant.js';
+import { senjs } from '../index.js';
 var event_context = {
     NONE: 0,
     ONMOVE: 1,
@@ -65,7 +66,7 @@ class iaEvent {
     setOnCreated(callback) {
         var control = this.view;
         if (!control.info.isCreated) {
-            control.info.state = app.constant.VIEW_STATE.renderring;
+            control.info.state = senjs.constant.VIEW_STATE.renderring;
             event_context.stackCreatedControl.push(control);
             if (event_context.threadCreatedControl <= 0) {
                 var count = 0;
@@ -89,16 +90,16 @@ class iaEvent {
                                     count++;
                                     var view = event_context.stackCreatedControl.shift();
                                     if (view.info.parent != -1 && !view.info.isDestroy) {
-                                        var parent = app.dh_viewPool.get(view.info.parent);
+                                        var parent = senjs.app.senjs_viewPool.get(view.info.parent);
                                         if (parent != null) {
                                             if (!parent.info.isDestroy) {
                                                 view.info.isCreated = true;
                                                 callback(view);
                                                 if (view.getAnimationDuration() > 0) {
                                                     view.postDelay(function (view) {
-                                                        view.info.state = app.constant.VIEW_STATE.running;
-                                                        dhCts.allRootChilds().filter(v => {
-                                                            return v != null && v.info.state == app.constant.VIEW_STATE.renderring;
+                                                        view.info.state = senjs.constant.VIEW_STATE.running;
+                                                        senjsCts.allRootChilds().filter(v => {
+                                                            return v != null && v.info.state == senjs.constant.VIEW_STATE.renderring;
                                                         }).foreach(function (vChild, pos) {
                                                             console.log(vChild);
                                                             vChild.info.state = app_constant.VIEW_STATE.running;
@@ -106,22 +107,22 @@ class iaEvent {
                                                     }, view.getAnimationDuration());
                                                 }
                                                 else {
-                                                    view.info.state = app.constant.VIEW_STATE.running;
+                                                    view.info.state = senjs.constant.VIEW_STATE.running;
                                                 }
                                             }
                                             else {
-                                                dhCts.remove(view.info.id);
+                                                senjsCts.remove(view.info.id);
                                             }
                                         }
                                         else {
-                                            dhCts.remove(view.info.id);
+                                            senjsCts.remove(view.info.id);
                                         }
                                     }
                                     else if (!view.info.isDestroy) {
                                         tempReCreate.push(view);
                                     }
                                     else if (view.info.isDestroy) {
-                                        dhCts.remove(view.info.id);
+                                        senjsCts.remove(view.info.id);
                                     }
                                 }
                             }
@@ -149,7 +150,7 @@ class iaEvent {
         }
 
         var onClick = function (e) {
-            var childs = dhCts.allRootChilds(control.info.id);
+            var childs = senjsCts.allRootChilds(control.info.id);
             if (childs.filter(function (node) {
                 return node.info.isClicked;
             }
@@ -176,7 +177,7 @@ class iaEvent {
                 if (allowClick && callback != null && control.info.allowClick) {
                     callback(control);
                     if (!isMobile.iOS()) {
-                        //     dh.Util.addClickAnim(control, e);
+                        //     senjs.Util.addClickAnim(control, e);
                     }
                 }
                 new Waiter(function () {
@@ -354,7 +355,7 @@ class iaEvent {
                 return;
             }
 
-            if (view.info.touch_state == -2 || dhCts.allRootChilds(view.info.id).filter(i =>{ return i.info.touch_state != -1}).size() > 0) {
+            if (view.info.touch_state == -2 || senjsCts.allRootChilds(view.info.id).filter(i =>{ return i.info.touch_state != -1}).size() > 0) {
                 view.info.touch_state = -2;
                 return;
             }
@@ -397,7 +398,7 @@ class iaEvent {
         view._dom.ontouchend = function (e) {
             // view._dom.addEventListener("touchend", function (e) {
             view.info.touch_state = -1;
-            if (dhCts.allRootChilds(view.info.id).filter(i => i.info.touch_state != -1).size() > 0) {
+            if (senjsCts.allRootChilds(view.info.id).filter(i => i.info.touch_state != -1).size() > 0) {
                 return;
             }
             ev.touchX = currentX = e.changedTouches[0].pageX;
@@ -514,7 +515,7 @@ class iaEvent {
             if (info.mobileMode && info.BODY != view && ev.firstX < info.SCREEN_WIDTH * 0.05) {
                 return;
             }
-            if (view.info.touch_state == -2 || dhCts.allRootChilds(view.info.id).filter(i => i.info.touch_state != -1).size() > 0) {
+            if (view.info.touch_state == -2 || senjsCts.allRootChilds(view.info.id).filter(i => i.info.touch_state != -1).size() > 0) {
                 view.info.touch_state = -2;
                 return;
             }
@@ -558,7 +559,7 @@ class iaEvent {
             }
             console.log("mouse up");
             view.info.touch_state = -1;
-            if (dhCts.allRootChilds(view.info.id).filter(i => i.info.touch_state != -1).size() > 0) {
+            if (senjsCts.allRootChilds(view.info.id).filter(i => i.info.touch_state != -1).size() > 0) {
                 return;
             }
             ev.touchX = currentX = e.pageX;
@@ -690,7 +691,7 @@ class iaEvent {
             control.setCursor("auto");
         }
         else {
-            control.setCursor(app.constant.Cursor.POINTER);
+            control.setCursor( senjs.constant.Cursor.POINTER);
         }
         if (control._dom.onmousedown == null) {
             this.setOnMouseDown(control);
@@ -724,8 +725,8 @@ class iaEvent {
             var timeout = null;
             var value = "";
             var code;
-            var notify = dh.IO.textView("");
-            notify.Position(app.constant.Position.FIXED);
+            var notify = senjs.IO.textView("");
+            notify.Position( senjs.constant.Position.FIXED);
             notify.setBottom(20);
             notify._dom.style.right = "45%";
             notify.setTextSize(calculator.sizeHeight(4.5));
@@ -851,7 +852,7 @@ class iaEvent {
             control._dom.onscroll = null;
             return;
         }
-        var LIMIT_FAST_TICK = 20, LIMIT_FAST_RANGE = app.info.display.SCREEN_HEIGHT * 0.15;
+        var LIMIT_FAST_TICK = 20, LIMIT_FAST_RANGE = senjs.app.info.display.SCREEN_HEIGHT * 0.15;
         var first_x = 0, first_y = 0;
         var capture_scrollY = 0;
         var time_tick = 0;

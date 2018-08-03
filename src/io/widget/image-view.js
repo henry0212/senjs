@@ -1,7 +1,7 @@
 
 import { View } from '../../core/view.js'
 import { app_constant } from '../../res/constant.js'
-import { dhCts } from '../../core/app-context.js';
+import { senjsCts } from '../../core/app-context.js';
 
 
 export class ImageView extends View {
@@ -37,7 +37,7 @@ export class ImageView extends View {
     }
 
     override_onResume() {
-        // let delay = dhCts.allParents(this.info.id).reduce((a, item) => {
+        // let delay = senjsCts.allParents(this.info.id).reduce((a, item) => {
         //     return a < item.getAnimationDuration() ? item.getAnimationDuration() : a;
         // }, 0);
         // if (delay > 0) {

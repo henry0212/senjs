@@ -6,7 +6,7 @@ import { List } from "../../util/list-util.js";
 import { IconView } from "../widget/icon-view.js";
 import { app_constant } from "../../res/constant.js";
 import { app_theme } from "../../res/theme.js";
-import { dhCts, app, Thread } from "../../core/app-context.js";
+import { senjsCts, app, Thread } from "../../core/app-context.js";
 import { TextView } from "../widget/text-view.js";
 import { app_size } from "../../res/dimen.js";
 import { Waiter } from "../../core/waiter.js";
@@ -172,7 +172,7 @@ export class StoryLayout extends BaseLayout {
                 anim.setDelay(200);
                 if (closePage) {
                     closePage.setAnimation("storyBoardCloseBelow").events.system.pause();
-                    dhCts.allRootChilds(closePage.info.id).foreach(function (view_child) {
+                    senjsCts.allRootChilds(closePage.info.id).foreach(function (view_child) {
                         if (view_child._cache == null) {
                             view_child._cache = {
                                 _story: {}
@@ -289,11 +289,11 @@ export class StoryLayout extends BaseLayout {
                     layer_black.destroy();
                 }, openPage.getAnimationDuration());
                 openPage.events.system.resume();
-                dhCts.allChilds(openPage.info.id).foreach(function (child, position) {
+                senjsCts.allChilds(openPage.info.id).foreach(function (child, position) {
                     openPage._dom.appendChild(child._dom);
                 });
                 try {
-                    dhCts.allRootChilds(openPage.info.id).filter(item => {
+                    senjsCts.allRootChilds(openPage.info.id).filter(item => {
                         return (item
                             && item._cache != undefined
                             && item._cache._story != undefined
@@ -460,7 +460,7 @@ export class StoryLayout extends BaseLayout {
 function checkAllChildCreated() {
     return new Promise(next => {
         new Waiter(() => {
-            var childs = dhCts.allRootChilds(this.info.id);
+            var childs = senjsCts.allRootChilds(this.info.id);
             var size = childs.filter(child => {
                 return child.info.state == app_constant.VIEW_STATE.renderring;
             }).size();

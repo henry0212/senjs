@@ -1,5 +1,5 @@
 
-import { app, dhCts } from "../../core/app-context.js";
+import { app, senjsCts } from "../../core/app-context.js";
 import { Checkbox } from "./checkbox.js";
 import { app_theme } from "../../res/theme.js";
 import { app_constant } from "../../res/constant.js";
@@ -41,7 +41,7 @@ export class RadioButton extends Checkbox {
                 .setFontWeight(app_theme.radio_button.status_checked.fontWeight)
                 .setTextColor(app_theme.radio_button.status_checked.text)
             this.setBackground(app_theme.radio_button.status_checked.background);
-            var group_radio = dhCts.findView(view => {
+            var group_radio = senjsCts.findView(view => {
                 return view && view.info.id != this.info.id && view._meta && view._meta.groupId == this._meta.groupId;
             });
             console.log(group_radio);

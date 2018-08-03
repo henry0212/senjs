@@ -1,5 +1,5 @@
 import { Waiter } from "../core/waiter.js";
-import { dh } from "../index.js";
+import { senjs } from "../index.js";
 
 
 export class FilePicker {
