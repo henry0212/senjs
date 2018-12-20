@@ -86,7 +86,7 @@ export class List {
     }
 
     removeAll(listObject) {
-        if (listObject instanceof  List) {
+        if (listObject instanceof List) {
             listObject = listObject.toArray();
         }
         for (var i = 0; i < listObject.length; i++) {
@@ -100,7 +100,7 @@ export class List {
     }
 
     clone() {
-        return new  List(this.src_array.slice(0));
+        return new List(this.src_array.slice(0));
     }
 
     set(index, value) {
@@ -177,6 +177,7 @@ export class List {
         var thread;
         var max_loop = 5;
         var self = this;
+        console.log(foreachCallback);
         try {
             if (!isResever) {
                 thread = new Thread(function (thred) {
@@ -193,8 +194,7 @@ export class List {
                         foreachCallback(self.get(i), i);
                         i++;
                     }
-                }
-                    , delay == null ? 20 : delay);
+                }, delay == null ? 20 : delay);
             }
             else {
                 i = self.size() - 1;
@@ -212,8 +212,7 @@ export class List {
                         foreachCallback(self.get(i), i);
                         i--;
                     }
-                }
-                    , delay == null ? 20 : delay);
+                }, delay == null ? 20 : delay);
             }
         }
         catch (ex) {
@@ -237,51 +236,56 @@ export class List {
         var max_loop = 5;
         var i = 0;
         clock = clock || 1;
-        if (isReverse) {
-            var i = self.size() - 1;
-            for (var c = 0; c < clock; c++) {
-                arThread.push(new Thread(function (thread) {
-                    for (var k = 0; k < max_loop; k++) {
-                        if (i < 0) {
-                            if (onFinish != null && arThread.length == 1) {
-                                onFinish();
-                            }
-                            if (arThread.length == 0) {
+        try {
+            if (isReverse) {
+                var i = self.size() - 1;
+                for (var c = 0; c < clock; c++) {
+                    arThread.push(new Thread(function (thread) {
+                        for (var k = 0; k < max_loop; k++) {
+                            if (i < 0) {
+                                if (onFinish != null && arThread.length == 1) {
+                                    onFinish();
+                                }
+                                if (arThread.length == 0) {
+                                    return;
+                                }
+                                arThread.shift().remove();
                                 return;
                             }
-                            arThread.shift().remove();
-                            return;
+                            foreachCallback(self.get(i), i);
+                            i--;
                         }
-                        foreachCallback(self.get(i), i);
-                        i--;
-                    }
-                }, 5));
+                    }, 10));
+                }
             }
-        }
-        else {
-            var size = self.size();
-            for (var c = 0;
-                c < clock;
-                c++) {
-                arThread.push(new Thread(function (thread) {
-                    for (var k = 0; k < max_loop; k++) {
-                        if (i >= size) {
-                            if (onFinish != null && arThread.length == 1) {
-                                onFinish();
-                            }
-                            if (arThread.length == 0) {
+            else {
+                var size = self.size();
+                for (var c = 0;
+                    c < clock;
+                    c++) {
+                    arThread.push(new Thread(function (thread) {
+                        for (var k = 0; k < max_loop; k++) {
+                            if (i >= size) {
+                                if (onFinish != null && arThread.length == 1) {
+                                    onFinish();
+                                }
+                                if (arThread.length == 0) {
+                                    return;
+                                }
+                                arThread.shift().remove();
                                 return;
                             }
-                            var thr = arThread.shift();
-                            thr.remove();
-                            return;
+                            foreachCallback(self.get(i), i);
+                            i++;
                         }
-                        foreachCallback(self.get(i), i);
-                        i++;
-                    }
-                }, 5));
+                    }, 10));
+                }
             }
+        } catch (ex) {
+            console.log(ex);
+            this.stop();
         }
+
         this.stop = function () {
             forceStop = true;
             while (arThread.length > 0) {
@@ -292,6 +296,9 @@ export class List {
     }
 
 
+    /**
+     * @return {Array}
+     */
     toArray() {
         return this.src_array || [];
     }
@@ -301,9 +308,17 @@ export class List {
         return this.src_array.indexOf(object);
     }
 
+    /**
+     * @return {List}
+     */
+    map(callback) {
+        return new List(this.src_array.map(callback));
+    }
 
     single(key, value) {
-        return this.size() == 0 ? null : (this.find.equal(key, value).get(0) || null);
+        return this.src_array.find(item => {
+            return item[key] == value;
+        });
     }
 
 
@@ -330,7 +345,7 @@ export class List {
             , {
             }
         )).toArray();
-        var result = new  List();
+        var result = new List();
         var keys = Object.keys(array);
         for (var i = 0;
             i < keys.length;
@@ -350,7 +365,7 @@ export class List {
 
 
     orderByAscending(key) {
-        return List(this.src_array.sort(function (a, b) {
+        return new List(this.src_array.sort(function (a, b) {
             return a[key] - b[key];
         }
         ));

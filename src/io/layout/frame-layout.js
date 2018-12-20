@@ -8,8 +8,7 @@ import { senjs } from '../../index.js';
 export class FrameLayout extends BaseLayout {
   
     constructor(width,height) {
-        super();      
-        this.setWidth(width).setHeight(height);
+        super(width,height);      
         this.setPosition(senjs.constant.Position.RELATIVE);
     }
 }

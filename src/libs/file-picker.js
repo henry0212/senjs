@@ -5,7 +5,9 @@ import { senjs } from "../index.js";
 export class FilePicker {
 
 
+
     /**
+     * 
      * {
      *  accept: 'minetype' 
      *  capture: 'camera...'
@@ -23,16 +25,20 @@ export class FilePicker {
             if (options.hasOwnProperty("capture")) {
                 file.capture = options.capture;
             }
+            file.style.zIndex = -1;
+            file.style.visibility = "hidden";
             file.onchange = (e) => {
                 if (Object.keys(e.target.files).length > 0) {
                     next(e.target.files[0]);
                 } else {
                     next(null);
                 }
+                file.remove();
             };
+            document.body.appendChild(file);
             new Waiter(() => {
                 file.click();
-            }, 500);
+            }, 100);
         })
     }
 
@@ -46,7 +52,6 @@ export class FilePicker {
             if (options.hasOwnProperty("accept")) {
                 file.accept = options.accept;
             }
-
             file.onchange = (e) => {
                 if (Object.keys(e.target.files).length > 0) {
                     next(e.target.files);
@@ -54,9 +59,10 @@ export class FilePicker {
                     next([]);
                 }
             };
+            document.body.appendChild(file);
             new Waiter(() => {
                 file.click();
-            }, 500);
+            }, 200);
         })
     }
 

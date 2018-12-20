@@ -1,0 +1,24 @@
+{
+  "name": "senjs",
+  "version": "1.0.0",
+  "description": "The javascript framework like android",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/henry0212/senjs.git"
+  },
+  "keywords": [
+    "senjs",
+    "javascript",
+    "framework"
+  ],
+  "author": "Henry Ho",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/henry0212/senjs/issues"
+  },
+  "homepage": "https://github.com/henry0212/senjs#readme"
+}

@@ -4,20 +4,22 @@ import { BaseLayout } from './base-layout.js'
 import { FrameLayout } from './frame-layout.js'
 import { app_constant } from '../../res/constant.js'
 import { touch_constant } from '../../core/event.js';
+import { BaseAdapter } from '../../adapter/base-adapter.js';
 
 export class PagerLayout extends BaseLayout {
     constructor(width, height) {
         super(width, height);
         this._view = {};
-        this._listener ={
+        this._listener = {
             onPageChanged: null
         }
         this._meta.isChildScrolling = false;
         this._meta.currentPage = 0;
+        this._meta.track_page = 0;
         this._meta.isSwiping = false;
-        
+
         this._cache.currentTranslate = 0;
-        this._view.frame_dataList = new FrameLayout(app_constant.Size.FILL_PARENT, app_constant.Size.WRAP_CONTENT);
+        this._view.frame_dataList = new FrameLayout("100%", "100%");
         this.setScrollType(app_constant.ScrollType.HORIZONTAL);
         this.addView(this._view.frame_dataList);
     }
@@ -25,7 +27,7 @@ export class PagerLayout extends BaseLayout {
 
     override_onAddView(view, child) {
         if (child.info.scrollType != app_constant.ScrollType.NONE) {
-            child.events.override.onScrolled((view, ia_scroll_event, e) => {
+            child.events.override.onScrolled((view, args, e) => {
                 e.preventDefault();
             })
             child.events.override.onTouched((view, ia_touch_event) => {
@@ -61,17 +63,18 @@ export class PagerLayout extends BaseLayout {
             case touch_constant.TOUCH_MOVE:
                 this._meta.isSwiping = true;
                 this._view.frame_dataList.setTranslateX(this._cache.currentTranslate + ia_touch_event.touch_width);
+                ia_touch_event._e.preventDefault();
                 break;
             case touch_constant.TOUCH_UP:
             case touch_constant.TOUCH_CANCEL:
-                var touchWidth = Math.abs(ia_touch_event.touch_width);
-                if (ia_touch_event.touch_width < 0 && ia_touch_event.tick_last - ia_touch_event.tick_first < 120 && touchWidth >= this.getWidth() * 0.05) {
+                var touch_width = Math.abs(ia_touch_event.touch_width);
+                if (ia_touch_event.touch_width < 0 && ia_touch_event.tick_last - ia_touch_event.tick_first < 120 && touch_width >= this.getWidth() * 0.05) {
                     this._meta.currentPage++;
                     this._view.frame_dataList.setTransition("transform", '.2', 'ease-out');
                 } else if (ia_touch_event.touch_width < 0 && Math.abs(ia_touch_event.touch_width) > this.getWidth() * 0.3) {
                     this._meta.currentPage++;
                     this._view.frame_dataList.setTransition("transform", '.3', 'ease-out');
-                } else if (ia_touch_event.touch_width > 0 && ia_touch_event.tick_last - ia_touch_event.tick_first < 120 && touchWidth >= this.getWidth() * 0.05) {
+                } else if (ia_touch_event.touch_width > 0 && ia_touch_event.tick_last - ia_touch_event.tick_first < 120 && touch_width >= this.getWidth() * 0.05) {
                     this._meta.currentPage--;
                     this._view.frame_dataList.setTransition("transform", '.2', 'ease-out');
                 } else if (ia_touch_event.touch_width > 0 && Math.abs(ia_touch_event.touch_width) > this.getWidth() * 0.3) {
@@ -81,8 +84,9 @@ export class PagerLayout extends BaseLayout {
                     this._view.frame_dataList.setTransition("transform", '.2', 'ease-out');
                 }
                 this.setCurrentPage(this._meta.currentPage);
-                if(this._listener.onPageChanged){
-                    this._listener.onPageChanged(this,this._meta.currentPage);
+                if (this._listener.onPageChanged && this._meta.track_page != this._meta.currentPage) {
+                    this._meta.track_page = this._meta.currentPage;
+                    this._listener.onPageChanged(this, this._meta.currentPage);
                 }
                 this._meta.isSwiping = false;
                 break;
@@ -91,14 +95,19 @@ export class PagerLayout extends BaseLayout {
 
 
 
+    /**
+     * 
+     * @param {BaseAdapter} adapter 
+     */
 
     setAdapter(adapter) {
-        if(!adapter._meta){
+        if (!adapter._meta) {
             return;
         }
         this.adapter = adapter;
         adapter._meta.orientationType = app_constant.Orientation.HORIZONTAL;
         var onRenderDataView = (view, dataItem, index) => {
+            console.log("pager", this.getWidth(), this.getHeight());
             var rootView = new FrameLayout(this.getWidth(), this.getHeight());
             rootView.addView(view);
             rootView.setTag({ position: index, convertView: view });
@@ -127,7 +136,7 @@ export class PagerLayout extends BaseLayout {
         }
         this._meta.currentPage = index;
         this._cache.currentTranslate = -this._meta.currentPage * this.getWidth();
-        this._view.frame_dataList.setTransition("transform",".2","ease-out").setTranslateX(this._cache.currentTranslate);
+        this._view.frame_dataList.setTransition("transform", ".2", "ease-out").setTranslateX(this._cache.currentTranslate);
         return this;
     }
 
@@ -138,8 +147,8 @@ export class PagerLayout extends BaseLayout {
      * @description - pass the function with two arguments function(pager, pageIndex)
      */
 
-    setOnPageChanged(listener){
-        this._listener.onPageChanged =listener;
+    setOnPageChanged(listener) {
+        this._listener.onPageChanged = listener;
         return this;
     }
 

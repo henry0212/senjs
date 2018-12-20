@@ -5,6 +5,8 @@ import { LinearLayout } from './linear-layout.js';
 import { PagerLayout } from './pager-layout.js';
 import { StickyLayout } from './sticky-layout.js';
 import { StoryLayout } from './story-layout.js';
+import { RatioLayout } from './ratio-layout.js';
+import { BannerLayout } from './banner-layout.js';
 
 // export  BaseLayout;
 // export default DrawerLayout;
@@ -22,4 +24,6 @@ export default {
     PagerLayout,
     StickyLayout,
     StoryLayout,
+    RatioLayout,
+    BannerLayout
 }

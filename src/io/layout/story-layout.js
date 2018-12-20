@@ -10,6 +10,7 @@ import { senjsCts, app, Thread } from "../../core/app-context.js";
 import { TextView } from "../widget/text-view.js";
 import { app_size } from "../../res/dimen.js";
 import { Waiter } from "../../core/waiter.js";
+import { senjs } from "../../index.js";
 
 const _view_config = {
     limit_text_toolbar_left: 10,
@@ -27,6 +28,7 @@ export class StoryLayout extends BaseLayout {
             toolbarViews: new List(),
             backIconsName: new List(),
             saveStates: new List(),
+            toolbarVisibilityState: new List(),
             instances: new List()
         }
         this._listener = {
@@ -42,12 +44,12 @@ export class StoryLayout extends BaseLayout {
             .setHeight(ScreenUtil.calculateHeightSize(8))
             .setShadow(app_theme.storyLayout.toolbar_shadow, 0, 0, 2);
 
-        this._view.toolbar_pn_left = new LinearLayout("25%");
-        this._view.toolbar_pn_center = new FrameLayout("60%");
-        this._view.toolbar_pn_right = new LinearLayout("25%");
-        this._view.toolbar_pn_right.setGravity(app_constant.Gravity.CENTER_RIGHT);
+        this._view.toolbar_pn_left = new LinearLayout("25%", "100%").setGravity(app_constant.Gravity.CENTER_LEFT);
+        this._view.toolbar_pn_center = new FrameLayout("60%", "100%").setGravity(app_constant.Gravity.CENTER);
+        this._view.toolbar_pn_right = new LinearLayout("25%", "100%").setGravity(app_constant.Gravity.CENTER_RIGHT)
         this._view.toolbar_btn_back = new IconView(_view_config.icon_back);
-        this._view.toolbar_btn_back.setIconColor(_view_config.icon_color).setAbsoluteZIndex(2).setHeight("100%").setPaddingLeft(10);
+        this._view.toolbar_btn_back
+            .setAbsoluteZIndex(2).setHeight("100%").setPaddingLeft(10);
         this._view.toolbar_lb_left = new TextView();
         this._view.toolbar_lb_left
             .setTextAlign("left")
@@ -102,12 +104,14 @@ export class StoryLayout extends BaseLayout {
      * @param title:string - the header text of page - place at toolbar
      */
     newPage(title) {
+        this._meta.toolbarVisibilityState.add(senjs.constant.Visibility.VISIBLE);
+        this.setToolbarVisibility(senjs.constant.Visibility.VISIBLE);
         let frame_newPage = new FrameLayout();
         frame_newPage.setScrollType(app_constant.ScrollType.VERTICAL);
         let lb_newTitle = new TextView().bold()
-            .ellipsis()
-            .setBackground(this._view.toolbar.getBackground())
-            .toFillParent().setTextGravity(app_constant.Gravity.CENTER);
+            .setWidth("100%")
+            .toFillParent()
+            .setTextGravity(app_constant.Gravity.CENTER);
         lb_newTitle.setText(title || "");
         frame_newPage
             .setBackground(app_theme.storyLayout.container)
@@ -165,33 +169,18 @@ export class StoryLayout extends BaseLayout {
                 var layer_black = new FrameLayout();
                 layer_black
                     .setBackground("rgba(0,0,0,0)").toFillParent()
-                    .setAbsoluteZIndex(this._meta.pages.size())
-                    .setAnimation("fadeIn");
-                var anim = layer_black.getAnimation();
-                anim.setDuration(200);
-                anim.setDelay(200);
+                    .setAbsoluteZIndex(this._meta.pages.size());
                 if (closePage) {
                     closePage.setAnimation("storyBoardCloseBelow").events.system.pause();
-                    senjsCts.allRootChilds(closePage.info.id).foreach(function (view_child) {
-                        if (view_child._cache == null) {
-                            view_child._cache = {
-                                _story: {}
-                            }
-                        } else if (view_child._cache && view_child._cache._story == null) {
-                            view_child._cache._story = {};
-                        }
-                        view_child._cache._story.scrollY = view_child._dom.scrollTop;
-                        view_child._cache._story.scrollX = view_child.getScrollX();
-                    });
+                    frame_newPage.events.override.onBeforeDestroy(() => {
+                        // closePage.restoreState();
+                    })
                 }
                 closePage._cache.pageIndex = this._meta.pages.size() - 2;
                 layer_black.postDelay((view) => {
                     view.destroy();
-                    if (closePage && closePage._cache.pageIndex != this._meta.pages.size() - 1) {
-                        closePage.setHtml("");
-                    }
                     frame_prevent.destroy();
-
+                    closePage.saveState();
                 }, frame_newPage.getAnimationDuration() + 30);
                 this._view.frame_content.addView(layer_black);
 
@@ -242,14 +231,20 @@ export class StoryLayout extends BaseLayout {
             case 2:
                 this._view.toolbar_lb_left.setVisibility(app_constant.Visibility.GONE);
                 if (this._meta.instances.size() == 0) {
-                    this._view.toolbar_btn_back.setVisibility(this._meta.backIconsName.get(0) == null 
-                    ?app_constant.Visibility.GONE :app_constant.Visibility.VISIBLE);
+                    this._view.toolbar_btn_back.setVisibility(this._meta.backIconsName.get(0) == null
+                        ? app_constant.Visibility.GONE : app_constant.Visibility.VISIBLE);
                 }
             default:
+                this._meta.toolbarVisibilityState.pop();
+                this.setToolbarVisibility(this._meta.toolbarVisibilityState.last());
                 let openTitle = this._meta.titles.get(this._meta.titles.size() - 2);
                 let openPage = this._meta.pages.get(this._meta.pages.size() - 2);
+                openPage.restoreState();
                 this._meta.backIconsName.pop();
-                this._view.toolbar_btn_back.updateIcon(this._meta.backIconsName.last());
+                if (this._meta.backIconsName.last() != null) {
+                    this._view.toolbar_btn_back.updateIcon(this._meta.backIconsName.last() || _view_config.icon_back);
+
+                }
                 openTitle.setVisibility(app_constant.Visibility.VISIBLE);
                 if (this._meta.titles.size() >= 3) {
                     var text = this._meta.titles.get(this._meta.titles.size() - 3).getText()
@@ -272,12 +267,8 @@ export class StoryLayout extends BaseLayout {
                 var layer_black = new FrameLayout();
 
                 layer_black
-                    .setBackground("rgba(0,0,0,0.1)").toFillParent()
-                    .setAbsoluteZIndex(this._meta.pages.size() + 1)
-                    .setOpacity(0)
-                    .setAnimation("fadeOut");
-
-                layer_black.getAnimation().setDuration(400);
+                    .setBackground("rgba(0,0,0,0)").toFillParent()
+                    .setAbsoluteZIndex(this._meta.pages.size() + 1);
 
                 this._view.frame_content.addView(layer_black);
 
@@ -289,22 +280,6 @@ export class StoryLayout extends BaseLayout {
                     layer_black.destroy();
                 }, openPage.getAnimationDuration());
                 openPage.events.system.resume();
-                senjsCts.allChilds(openPage.info.id).foreach(function (child, position) {
-                    openPage._dom.appendChild(child._dom);
-                });
-                try {
-                    senjsCts.allRootChilds(openPage.info.id).filter(item => {
-                        return (item
-                            && item._cache != undefined
-                            && item._cache._story != undefined
-                            && (item._cache._story.scrollX || 0) > 0 || (item._cache._story.scrollY || 0) > 0) || false;
-                    }).foreach(child => {
-                        child.setScrollX(child._cache._story.scrollX);
-                        child.setScrollY(child._cache._story.scrollY);
-                    })
-                } catch (ex) {
-
-                }
                 break;
         }
         return this;
@@ -357,6 +332,14 @@ export class StoryLayout extends BaseLayout {
         return this;
     }
 
+    removeViewsRightToolbar() {
+        var container = this._meta.toolbarViews.last();
+        if (container) {
+            this._meta.toolbarViews.remove(container);
+            container.destroy();
+        }
+        return this;
+    }
 
     /**
      * 
@@ -384,7 +367,14 @@ export class StoryLayout extends BaseLayout {
         this._listener.onPageChanged = cb;
     }
 
+    getToolbarWrapper() {
+        return this._view.toolbar;
+    }
 
+    setToolbarBackground(value) {
+        this._view.toolbar.setBackground(value);
+        return this;
+    }
     /**
      * 
      * @callback onPageBeginChange
@@ -432,11 +422,12 @@ export class StoryLayout extends BaseLayout {
      */
     newInstance(title) {
         this._meta.pages.last().events.system.pause();
+        var hiddenPage = this._meta.pages.last();
+
         var layer_black = new FrameLayout().toFillParent().setBackground("rgba(0,0,0,0.2)");
         layer_black.setAnimation("fadeIn");
-        layer_black.postDelay(() => {
-            layer_black.destroy();
-        }, 500)
+
+
         var new_story_instance = new StoryLayout().toFillParent();
         new_story_instance._meta.instances = this._meta.instances;
         new_story_instance.setToolbarHeader(title);
@@ -448,11 +439,51 @@ export class StoryLayout extends BaseLayout {
         layer_black.setAbsoluteZIndex(this._meta.instances.size() + 2)
         super.addView(layer_black)
         super.addView(new_story_instance);
+
+        if (hiddenPage) {
+            layer_black.postDelay((view) => {
+                view.destroy();
+                hiddenPage.saveState();
+            }, new_story_instance.getAnimationDuration() + 30);
+        } else {
+            layer_black.postDelay(() => {
+                layer_black.destroy();
+            }, 500);
+        }
+        new_story_instance.events.override.onBeforeDestroy((new_story_instance) => {
+            hiddenPage.restoreState();
+        });
         new_story_instance.events.override.onDestroy((new_story_instance) => {
             this._meta.instances.remove(new_story_instance);
+
             this._meta.pages.last().events.system.resume();
         });
         return new_story_instance;
+    }
+
+    backInstance() {
+        if (this._meta.instances.size() > 0) {
+            this._meta.instances.pop().destroyWithCustomAnimation("storyBoard_instance_out");
+        } else {
+            console.warn("The instance pool is empty");
+        }
+        return this;
+    }
+
+    setToolbarVisibility(visibility) {
+        this._meta.toolbarVisibilityState.set(this._meta.toolbarVisibilityState.size() - 1, visibility);
+        this._view.toolbar.setVisibility(visibility);
+        switch (visibility) {
+            case app_constant.Visibility.VISIBLE:
+            case app_constant.Visibility.INVISIBLE:
+                this._view.frame_content.toBelowOf(this._view.toolbar);
+                break;
+            case app_constant.Visibility.GONE:
+                this._view.frame_content.toTopParent();
+                break;
+
+        }
+        return this;
     }
 }
 

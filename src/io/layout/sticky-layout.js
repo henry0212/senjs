@@ -4,8 +4,14 @@ import { app_theme } from "../../res/theme.js";
 import { app, senjsCts } from "../../core/app-context.js";
 import { BaseLayout } from "./base-layout.js";
 import { app_size } from "../../res/dimen.js";
+import { senjs } from "../../index.js";
 
-
+const compareBound = function (view, touch_x, touch_y) {
+    return (touch_x >= view.getRelativeLeft())
+        && (touch_x <= view.getRelativeLeft() + view._dom.offsetWidth)
+        && (touch_y >= view.getRelativeTop())
+        && (touch_y <= view.getRelativeTop() + view._dom.offsetHeight)
+}
 export class StickyLayout extends BaseLayout {
 
     constructor(focusView) {
@@ -28,6 +34,7 @@ export class StickyLayout extends BaseLayout {
             .setRadius(app_theme.stickyLayout.radius)
             .setShadow(app_theme.stickyLayout.shadow)
             .setScrollType(app_constant.ScrollType.VERTICAL)
+            .setDisplayType(senjs.constant.Display.INLINE_BLOCK)
             .setLeft(this._meta.left)
             .setTop(this._meta.top)
             .setAnimation(app_animation.STICKY_LAYOUT_SHOW);
@@ -49,14 +56,17 @@ export class StickyLayout extends BaseLayout {
             button_dismiss.setVisibility(app_constant.Visibility.VISIBLE);
         })
 
-        this._meta.mouseDownService = app.service.register.onMouseDown((service) => {
-            console.log("mousedown", this._meta.isMouseOut);
-            if (this._meta.isMouseOut && !this._meta.preventDismiss) {
+        this._meta.mouseDownService = app.service.register.onMouseDown((service, e) => {
+            if (senjs.app.isMobile.any() && e.targetTouches && compareBound(this, e.targetTouches[0].clientX, e.targetTouches[0].clientY)) {
+                return;
+            }
+            if (this._meta && this._meta.isMouseOut && !this._meta.preventDismiss) {
                 this.destroy();
             }
+
         })
 
-        this.events.override.onDestroy(() =>{
+        this.events.override.onDestroy(() => {
             button_dismiss.destroy();
         })
     }
@@ -100,9 +110,9 @@ export class StickyLayout extends BaseLayout {
             }
         })
         if (this._view.focusView) {
-            // this._view.focusView.events.override.onPaused(() => {
-            //     super.destroy();
-            // });
+            this._view.focusView.events.override.onPaused(() => {
+                super.destroy();
+            });
             this._view.focusView.events.override.onDestroy(() => {
                 super.destroy();
             });

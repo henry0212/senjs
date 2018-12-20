@@ -29,6 +29,7 @@ export class Service {
         service.isPaused = false;
         service.isRemoved = false;
         service.startTime = new Date();
+        service._service = true;
         service.delay = -1;
         service_context._queue.add(service);
         _run();
@@ -88,7 +89,7 @@ function _run() {
             if (!service_context.isRunning) {
                 service_context.isRunning = true;
                 var arrayRemoveIndex = new Array();
-                service_context._queue.foreachWithTimer(function (item, count) {
+                service_context._queue.foreach(function (item, count) {
                     if (item.isRemoved) {
                         arrayRemoveIndex.push(count);
                     } else if (!item.isPaused && !item.isRemoved && item.delay == service_context.DELAY_DEFAULT) {
@@ -106,21 +107,19 @@ function _run() {
                         item.delay = service_context.DELAY_MANUAL;
                         item.threadId = thred.processId;
                     }
-
-                }, service_context.sbDelay, function () {
-                    service_context.isRunning = false;
-                    for (var i = 0; i < arrayRemoveIndex.length; i++) {
-                        service_context._queue.removeAt(arrayRemoveIndex[i]);
-                    }
-                    if (service_context._queue.size() == 0 && _runner) {
-                        _runner.remove();
-                        _runner = null;
-                    }
                 });
+                service_context.isRunning = false;
+                for (var i = 0; i < arrayRemoveIndex.length; i++) {
+                    service_context._queue.removeAt(arrayRemoveIndex[i]);
+                }
+                if (service_context._queue.size() == 0 && _runner) {
+                    _runner.remove();
+                    _runner = null;
+                }
             }
         }, service_context.delay, POOL_EXECUTOR);
-        _runner.remove = () => {
-            throw new Error("Service cannot remove");
-        };
+        // _runner.remove = () => {
+        //     throw new Error("Service cannot remove");
+        // };
     }
 }

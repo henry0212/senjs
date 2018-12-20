@@ -5,11 +5,14 @@ import { IconView } from "./icon-view.js";
 import { app_size } from "../../res/dimen.js";
 import { StickyLayout } from "../layout/sticky-layout.js";
 import { material_colors } from "../../res/theme.js";
+import { senjs } from "../../index.js";
 
 export class BaseTextView extends View {
     constructor(htmlElement) {
         super(htmlElement);
         this.setTextSize(app_size.font.normal);
+        this.setLineHeight("1em")
+            .setMinHeight("1.1em");
     }
 
 
@@ -31,7 +34,7 @@ export class BaseTextView extends View {
         }
         if (out_anim) {
             this.setAnimation(out_anim);
-        }else{
+        } else {
             this.setText("");
         }
         this._cache.changeTextAnimationTimeout = new Waiter(() => {
@@ -62,6 +65,10 @@ export class BaseTextView extends View {
         return this;
     }
 
+    setTextDecoration(value) {
+        this._dom.style.textDecoration = value;
+        return this;
+    }
 
     ellipsis() {
         this._dom.style.textOverflow = "ellipsis";
@@ -75,7 +82,7 @@ export class BaseTextView extends View {
         return this;
     }
 
-    setFontWeight(weight){
+    setFontWeight(weight) {
         this._dom.style.fontWeight = weight;
         return this;
     }
@@ -86,8 +93,13 @@ export class BaseTextView extends View {
         return this;
     }
 
-    setTextSize(pixel) {
-        this._dom.style.fontSize = pixel + app_constant.SIZE_UNIT;
+    setTextSize(value) {
+        this._dom.style.fontSize = isNaN(value) ? value : value + app_constant.SIZE_UNIT;
+        return this;
+    }
+
+    setLineHeight(value) {
+        this._dom.style.lineHeight = isNaN(value) ? value : value + senjs.constant.SIZE_UNIT;
         return this;
     }
 

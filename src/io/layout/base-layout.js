@@ -2,6 +2,7 @@ import { View } from '../../core/view.js'
 import { List } from '../../util/list-util.js'
 import { app, senjsCts } from '../../core/app-context.js'
 import { Thread } from '../../core/thread.js';
+import { senjs } from '../../index.js';
 
 export class BaseLayout extends View {
 
@@ -12,7 +13,7 @@ export class BaseLayout extends View {
         this._cache.listQuicklyLayout = new List();
         this._cache.loadingView = null;
 
-        this._super.addView =  (view) => {
+        this._super.addView = (view) => {
             super.addView(view);
             return this;
         }
@@ -55,8 +56,8 @@ class QuiclyLayout extends BaseLayout {
             swipe_to_close: -1,
             range_prevent_move: 0,
             isLockPage: false,
-            show_animation: "notifyboard_open",
-            hide_animation: "notifyboard_close"
+            show_animation: "storyBoard_instance_in",
+            hide_animation: "storyBoard_instance_out"
         }
         this._cache.service_esc_hide = null;
         this._cache.service_back_press = null;
@@ -74,7 +75,7 @@ class QuiclyLayout extends BaseLayout {
             event.remove();
             this._cache.service_esc_hide = null;
         });
-        this._cache.service_back_press = app.service.register.onBackPress(app.utils.StringUtil.randomString(5), function () {
+        this._cache.service_back_press = app.service.register.onBackPress("", "", () => {
             board.dismiss();
         });
         this.btnBelow = new BaseLayout().toFillParent().setBackground("rgba(0,0,0,0.4)").setZIndex(10000 + self.childCount());
@@ -84,7 +85,7 @@ class QuiclyLayout extends BaseLayout {
             top: 1,
             bottom: 2,
         }
-        this.setTransition("").setVisible(false).setPosition(app.constant.Position.ABSOLUTE).toFillParent();
+        this.setTransition("").setVisible(false).setPosition(senjs.constant.Position.ABSOLUTE).toFillParent();
         this.btnBelow.setTransitionAll(".3");
         this.btnBelow.setVisible(false);
         this.setOnTouch(this.onTouch);
@@ -96,15 +97,13 @@ class QuiclyLayout extends BaseLayout {
     onCreated() {
         super.onCreated();
         var self = this;
-        console.log("Created panel");
         var limit_count = 0;
         var blurView;
-        console.log(self.getParentView());
         self.getParentView()._super.addView(self.btnBelow);
         this.setBackground("#fff");
         new Thread(function (thread) {
             if (blurView != null) {
-                blurView.opacity(1).setAnimation("opacity_open");
+                blurView.opacity(1).setAnimation("fadeIn");
             }
             var childs = senjsCts.allRootChilds(self.info.id);
             if (childs.size() == childs.filter(function (c) { return c != null && c.info.isCreated; }).size() || limit_count > 5) {
@@ -112,7 +111,7 @@ class QuiclyLayout extends BaseLayout {
                 thread.remove();
                 self.setVisible(true);
                 self.btnBelow.setVisible(true);
-                self.btnBelow.setAnimation("opacity_open");
+                self.btnBelow.setAnimation("fadeIn");
                 self.setAnimation(self.self_config.show_animation);
             }
         }, 50);
@@ -124,11 +123,14 @@ class QuiclyLayout extends BaseLayout {
             this._cache.service_esc_hide.remove();
             this._cache.service_esc_hide = null;
         }
-        app.service.remove(this._cache.service_back_press);
+        if (this._cache.service_back_press) {
+            app.service.remove(this._cache.service_back_press);
+            this._cache.service_back_press = null;
+        }
     }
 
     dismiss() {
-        if (!this.info.isDestroy) {
+        if (this.info && !this.info.isDestroy) {
             this.btnBelow.destroyWithCustomAnimation("fadeOut");
             this.destroyWithCustomAnimation(this.self_config.hide_animation);
         }

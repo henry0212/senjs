@@ -11,7 +11,7 @@ export const DrawerLayout_context = {
         BLACK: 1
     }
 }
-const dim_background = 'rgba(0,0,0,0.4)';
+const dim_background = 'rgba(0,0,0,0.7)';
 
 
 export class DrawerLayout extends BaseLayout {
@@ -44,9 +44,12 @@ export class DrawerLayout extends BaseLayout {
         this._cache.flagMoveable = false;
         this._cache.percentShowing = 0;
 
+        this.events.override.onCreated(this.overr_onCreated.bind(this));
+        this.events.override.onMeasured(this.overr_onMeasured.bind(this));
+
     }
 
-    override_onCreated(view) {
+    overr_onCreated(view) {
         this._view.root_view = app.mainFrame;
         this._view.parentView = this.getParentView();
 
@@ -54,17 +57,19 @@ export class DrawerLayout extends BaseLayout {
         var touch = this.onTouched.bind(view);
         this._view.root_view.events.override.onTouched(touch);
         this.events.override.onDestroy(() => {
-            console.log("remove");
             this._view.root_view.events.override.variables.onTouchCallbacks.remove(touch);
         })
     }
-
+    /**
+     * 
+     * @param {boolean} flag 
+     */
     setDimEnable(flag) {
         this._meta.dimMode_enable = flag;
         return this;
     }
 
-    override_onMeasured(view, width, height) {
+    overr_onMeasured(view, width, height) {
         switch (this._meta.direction) {
             case app_constant.Direction.LEFT:
                 this._meta.orgin_x = -width;
@@ -145,13 +150,14 @@ export class DrawerLayout extends BaseLayout {
                 return false;
             }
         }
-        //ia_touch_event._e.preventDefault();
+
         switch (ia_touch_event.action) {
             case touch_constant.TOUCH_DOWN:
                 this._cache.flagTouchable = true;
                 (onTouched_down.bind(this))(ia_touch_event);
                 return true;
             case touch_constant.TOUCH_MOVE:
+                ia_touch_event._e.preventDefault();
                 (onTouched_move.bind(this))(ia_touch_event);
                 return true;
             case touch_constant.TOUCH_UP:
@@ -160,6 +166,7 @@ export class DrawerLayout extends BaseLayout {
                 (onTouched_up.bind(this))(ia_touch_event);
                 return true;
         }
+
 
     }
 
@@ -186,11 +193,11 @@ export class DrawerLayout extends BaseLayout {
         switch (this._meta.direction) {
             case app_constant.Direction.LEFT:
             case app_constant.Direction.RIGHT:
-                this.setTransition("all", ".2", "ease-out").setTranslateX(0);
+                this.setTransition("all", ".4", "cubic-bezier(0,0.2,0.1,1)").setTranslateX(0);
                 break;
             case app_constant.Direction.TOP:
             case app_constant.Direction.BOTTOM:
-                this.setTransition("all", ".2", "ease-out").setTranslateY(0);
+                this.setTransition("all", ".4", "ease-out").setTranslateY(0);
                 break;
         }
         if (this._meta.dimMode_enable && this._view.dim_view == null) {
@@ -211,11 +218,11 @@ export class DrawerLayout extends BaseLayout {
         switch (this._meta.direction) {
             case app_constant.Direction.LEFT:
             case app_constant.Direction.RIGHT:
-                this.setTransition("all", ".2", "ease-out").setTranslateX(this._meta.orgin_x);
+                this.setTransition("all", ".3", "ease-out").setTranslateX(this._meta.orgin_x);
                 break;
             case app_constant.Direction.TOP:
             case app_constant.Direction.BOTTOM:
-                this.setTransition("all", ".2", "ease-out").setTranslateY(this._meta.orgin_y);
+                this.setTransition("all", ".3", "ease-out").setTranslateY(this._meta.orgin_y);
                 break;
         }
         if (this._view.dim_view) {
@@ -240,6 +247,9 @@ export class DrawerLayout extends BaseLayout {
     isOpening() {
         return this._meta.isShowing;
     }
+    // get isOpening(){
+    //     return this._meta.isShowing;
+    // }
 }
 
 
@@ -284,6 +294,7 @@ function onTouched_move(ia_touch_event) {
                 this._cache.current_translate = this._cache.current_translate > 0 ? 0 : this._cache.current_translate;
                 this._cache.percentShowing = (this._meta.layout_width + this._cache.current_translate) * 100 / this._meta.layout_width;
                 this.setTranslateX(this._cache.current_translate);
+                ia_touch_event._e.preventDefault();
             }
             break;
         case app_constant.Direction.RIGHT:
@@ -294,6 +305,7 @@ function onTouched_move(ia_touch_event) {
                 this._cache.current_translate = this._cache.current_translate < 0 ? 0 : this._cache.current_translate;
                 this._cache.percentShowing = (this._meta.layout_width - this._cache.current_translate * 100 / this._meta.layout_width);
                 this.setTranslateX(this._cache.current_translate);
+                ia_touch_event._e.preventDefault();
             }
             break;
         case app_constant.Direction.TOP:
@@ -304,6 +316,7 @@ function onTouched_move(ia_touch_event) {
                 this._cache.current_translate = this._cache.current_translate > 0 ? 0 : this._cache.current_translate;
                 this._cache.percentShowing = (this._meta.layout_height + this._cache.current_translate) * 100 / this._meta.layout_height;
                 this.setTranslateY(this._cache.current_translate);
+                ia_touch_event._e.preventDefault();
             }
             break;
         case app_constant.Direction.BOTTOM:
@@ -314,6 +327,7 @@ function onTouched_move(ia_touch_event) {
                 this._cache.current_translate = this._cache.current_translate < 0 ? 0 : this._cache.current_translate;
                 this._cache.percentShowing = (this._meta.layout_height - this._cache.current_translate) * 100 / this._meta.layout_height;
                 this.setTranslateY(this._cache.current_translate);
+                ia_touch_event._e.preventDefault();
             }
             break;
     }

@@ -15,7 +15,6 @@ export function initial(apiKey) {
     script.defer = "defer";
     script.async = "async";
     document.head.appendChild(script);
-
     return script;
 }
 
@@ -72,6 +71,16 @@ export class GoogleMap extends FrameLayout {
         return ia_marker.marker;
     }
 
+    setMapCenter(lat,lng) {
+        this._meta._google_map.setCenter({ lat: lat, lng: lng });
+        return this
+    }
+
+    setMapZoom(value){
+        this._meta._google_map.setZoom(value);
+        return this
+    }
+
     findMarkerById(id) {
         return this._pool.ia_markers.single("id", id);
     }
@@ -110,14 +119,14 @@ export class GoogleMap extends FrameLayout {
 
     }
 
-    findPlaceDetail(placeId,fields){
-        var request ;
-        if(fields){
-             request = {
+    findPlaceDetail(placeId, fields) {
+        var request;
+        if (fields) {
+            request = {
                 placeId: placeId,
                 fields: fields
             };
-        }else{
+        } else {
             request = {
                 placeId: placeId,
             };
@@ -151,7 +160,7 @@ class IaGoogleMarker {
     constructor(options, googleMap) {
 
         // Rewrite image icon - scale image
-        if(options.icon){
+        if (options.icon) {
             options.icon = {
                 url: options.icon,
                 // This marker is 20 pixels wide by 32 pixels high.

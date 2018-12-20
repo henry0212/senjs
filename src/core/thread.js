@@ -6,7 +6,7 @@ const thread_context = {
     POOL_EXECUTOR: POOL_EXECUTOR,
     info: {
         currentId: 0,
-        maxmium: 10000,
+        maxmium: 20,
         ThreadStack: new Array(),
         ThreadWaitStack: new Array(),
         limit: 30
@@ -29,11 +29,7 @@ export class Thread {
         if (thread_context.info.ThreadStack.length <= thread_context.info.limit && this.runType == thread_context.SERIAL_EXECUTOR) {
             this.startTime = new Date();
             this.processId = thread_context.info.currentId;
-            this.process = setInterval(function () {
-                if (!self.paused) {
-                    callback(self);
-                }
-            }, duration || 10);
+            this.process = _initWorker(callback, this);
             thread_context.info.ThreadStack.push(this);
             thread_context.info.currentId++;
         } else {
@@ -68,7 +64,9 @@ export class Thread {
 var _remove = (processId) => {
     for (var i = 0; i < thread_context.info.ThreadStack.length; i++) {
         if (thread_context.info.ThreadStack[i].processId == processId) {
-            clearInterval(thread_context.info.ThreadStack[i].process);
+            // clearInterval(thread_context.info.ThreadStack[i].process);
+            thread_context.info.ThreadStack[i].process.terminate();
+            thread_context.info.ThreadStack[i].process = undefined;
             thread_context.info.ThreadStack.splice(i, 1);
             break;
         }
@@ -90,4 +88,28 @@ var _removeAll = () => {
         clearInterval(thread_context.info.ThreadStack.shift().process);
     }
     thread_context.info.currentId = 0;
+}
+
+var _initWorker = (callback, thread) => {
+    var meta = {
+        processId: thread.processId,
+        delay: thread.delay
+    }
+    var func = `onmessage = (e) =>{
+        setInterval(() =>{
+            postMessage(e.data.processId);
+        },e.data.delay);
+     }`;
+    var blob = new Blob([func]);
+    var blobURL = window.URL.createObjectURL(blob);
+    var worker = new Worker(blobURL);
+    worker.onmessage = function (e) {
+        if (thread == undefined || callback == undefined) {
+            worker.terminate();
+            return;
+        }
+        callback(thread);
+    };
+    worker.postMessage(meta);
+    return worker;
 }

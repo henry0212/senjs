@@ -1,6 +1,7 @@
 import { app, Thread, Waiter, isMobile, senjsCts } from './app-context.js'
 import { app_constant, app_duration } from '../res/constant.js';
 import { senjs } from '../index.js';
+import { View } from './view.js';
 var event_context = {
     NONE: 0,
     ONMOVE: 1,
@@ -41,7 +42,6 @@ var event_context = {
                 && (iaTouchEvent.firstX <= view.getRelativeLeft() + view._dom.offsetWidth)
                 && (iaTouchEvent.firstY >= view.getRelativeTop())
                 && (iaTouchEvent.firstY <= view.getRelativeTop() + view._dom.offsetHeight)
-
         }
     }
 }
@@ -58,7 +58,6 @@ export const touch_constant = {
 
 
 class iaEvent {
-
     constructor(view) {
         this.view = view;
     }
@@ -84,7 +83,6 @@ class iaEvent {
                             while (tempReCreate.length > 0) {
                                 event_context.stackCreatedControl.unshift(tempReCreate.shift());
                             }
-
                             for (var i = 0; i < 10; i++) {
                                 if (event_context.stackCreatedControl.length > 0) {
                                     count++;
@@ -92,7 +90,7 @@ class iaEvent {
                                     if (view.info.parent != -1 && !view.info.isDestroy) {
                                         var parent = senjs.app.senjs_viewPool.get(view.info.parent);
                                         if (parent != null) {
-                                            if (!parent.info.isDestroy) {
+                                            if (!parent.info.isDestroy && !parent.info.isPaused) {
                                                 view.info.isCreated = true;
                                                 callback(view);
                                                 if (view.getAnimationDuration() > 0) {
@@ -227,7 +225,7 @@ class iaEvent {
             control._dom.onclick = onClick;
         }
 
-        this.view.performClick = () =>{
+        this.view.performClick = () => {
             callback(this.view);
         }
     }
@@ -277,7 +275,7 @@ class iaEvent {
     /**
      * @callback onTouchEvent
      * @param {View} view
-     * @param {*} args - { action: numner, event: event , firstX:number, firstY:number, touchX:number, touchY:number, zoom_length: number, touchWidth : number,touch_height: number }
+     * @param {*} args - { action: numner, _e: event , firstX:number, firstY:number, touchX:number, touchY:number, zoom_length: number, touchWidth : number,touch_height: number }
      */
     /**
      * @param {onTouchEvent} listener
@@ -294,7 +292,7 @@ class iaEvent {
         var first_zoom_length = -1;
         var ev = {
             action: event_context.touch.TOUCH_DOWN,
-            _e:null,
+            _e: null,
             event: null, firstX: -1, firstY: -1, touchX: -1, touchY: -1, zoom_length: 0, touch_width: 0, touch_height: 0,
             tick_first: 0,
             tick_last: 0,
@@ -355,7 +353,7 @@ class iaEvent {
                 return;
             }
 
-            if (view.info.touch_state == -2 || senjsCts.allRootChilds(view.info.id).filter(i =>{ return i.info.touch_state != -1}).size() > 0) {
+            if (view.info.touch_state == -2 || senjsCts.allRootChilds(view.info.id).filter(i => { return i.info.touch_state != -1 }).size() > 0) {
                 view.info.touch_state = -2;
                 return;
             }
@@ -363,7 +361,7 @@ class iaEvent {
                 ev.firstX = e.changedTouches[0].pageX;
                 ev.firstY = e.changedTouches[0].pageY;
                 ev._e
-                 = e;
+                    = e;
                 has_moved = false;
                 event_context.prevent_touch = false;
                 if (listener(view, ev)) {
@@ -385,7 +383,7 @@ class iaEvent {
             if (ev.touchX < view.getRelativeLeft() || ev.touchX > view.getRelativeLeft() + view._dom.offsetWidth || ev.touchY < view.getRelativeTop() || ev.touchY > view.getRelativeTop() + view._dom.offsetHeight) {
                 ev.action = event_context.touch.TOUCH_OUTSIDE;
             }
-           has_moved = true;
+            has_moved = true;
             if (listener(view, ev)) {
                 view.info.touch_state = event_context.touch.TOUCH_MOVE;
             }
@@ -418,7 +416,7 @@ class iaEvent {
                 view.info.touch_state = -1;
             }
             call_override();
-           refreshTouchInfo();
+            refreshTouchInfo();
         }
         // );
         view._dom.ontouchcancel = function (e) {
@@ -671,10 +669,8 @@ class iaEvent {
         );
         this.setOnFocusOut(control, function (view) {
             callback(view, false);
-        }
-        );
+        });
     }
-
 
     setOnFocusOut(callback) {
         var control = this.view;
@@ -683,7 +679,6 @@ class iaEvent {
         }
     }
 
-
     setOnLongClick(callback) {
         var control = this.view;
         control.info.onLongClickListener = callback;
@@ -691,7 +686,7 @@ class iaEvent {
             control.setCursor("auto");
         }
         else {
-            control.setCursor( senjs.constant.Cursor.POINTER);
+            control.setCursor(senjs.constant.Cursor.POINTER);
         }
         if (control._dom.onmousedown == null) {
             this.setOnMouseDown(control);
@@ -726,7 +721,7 @@ class iaEvent {
             var value = "";
             var code;
             var notify = senjs.IO.textView("");
-            notify.Position( senjs.constant.Position.FIXED);
+            notify.Position(senjs.constant.Position.FIXED);
             notify.setBottom(20);
             notify._dom.style.right = "45%";
             notify.setTextSize(calculator.sizeHeight(4.5));
@@ -833,7 +828,7 @@ class iaEvent {
     }
 
     setOnMouseDown() {
-          
+
     }
 
 
@@ -858,6 +853,12 @@ class iaEvent {
         var time_tick = 0;
         var iaScrollEvent = {
             speed: -1, scrollY: 0, scrollX: 0, tickPerScroll: 0, isScrollDown: false, rangeEachTime: 0,
+            get scroll_x() {
+                return this.scrollX;
+            },
+            get scroll_y() {
+                return this.scrollY;
+            }
         }
         control._dom.onscroll = function (e) {
             iaScrollEvent.tickPerScroll = performance.now() - time_tick;
@@ -867,13 +868,15 @@ class iaEvent {
             iaScrollEvent.scrollX = this.scrollLeft;
             time_tick = performance.now();
             iaScrollEvent.speed = ((iaScrollEvent.tickPerScroll < LIMIT_FAST_TICK && iaScrollEvent.rangeEachTime > LIMIT_FAST_RANGE) ? 1 : 0);
-            listener(control, iaScrollEvent, e);
+            if (listener) {
+                listener(control, iaScrollEvent, e);
+            }
             iaScrollEvent.rangeEachTime;
             control.events.override.variables.onScrolledCallbacks.foreach(function (listener, idx) {
                 listener(control, iaScrollEvent, e);
             });
         }
-        if (this.scrollTop == 0 || this.scrollTop == control._dom.scrollHeight - control._dom.offsetHeight) {
+        if (this.scrollTop <= 0 || this.scrollTop >= control._dom.scrollHeight - control._dom.offsetHeight) {
             e.preventDefault();
         }
     }

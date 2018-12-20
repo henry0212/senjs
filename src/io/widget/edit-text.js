@@ -1,6 +1,7 @@
 import { BaseTextView } from "./base-text-view.js";
 
 import { material_colors } from "../../res/theme.js";
+import { KeyChangeListener } from "../../core/event-v2.js";
 
 export class EditText extends BaseTextView {
     constructor() {
@@ -15,11 +16,12 @@ export class EditText extends BaseTextView {
         this.setTextSize
         this.listener = {
             onTextChanged: null,
-            onKeyUp: null
+            onKeyUp: null,
+            onKeyChanged: null
         };
-        
-        this.appEvent.setOnKeyUp(this.override_onKeyUp);
 
+        new KeyChangeListener(this.override_onKeyChange)
+            .bindToView(this);
     }
 
     getText() {
@@ -31,15 +33,22 @@ export class EditText extends BaseTextView {
         return this;
     }
 
-    override_onKeyUp(view, keycode, e) {
+    override_onKeyChange(view, args) {
         if (this.listener.onTextChanged) {
             this.listener.onTextChanged(this, this.getText());
         }
-        if (this.listener.onKeyUp) {
-            this.listener.onKeyUp(this, keycode, e);
+        if (args.action == KeyChangeListener.MotionAction.KEY_UP && this.listener.onKeyUp) {
+            this.listener.onKeyUp(this, args.keycode, args._e);
+        }
+        if (this.listener.onKeyChanged) {
+            this.listener.onKeyChanged(view, args);
         }
     }
 
+    setHint(hint) {
+        this._dom.placeholder = hint;
+        return this;
+    }
 
 
     /**
@@ -57,14 +66,25 @@ export class EditText extends BaseTextView {
      */
     setOnKeyUp(listener) {
         this.listener.onKeyUp = listener;
+        return this;
     }
 
     setOnTextChanged(listener) {
         this.listener.onTextChanged = listener;
+        return this;
     }
 
     getLength() {
         return this.getText().length || 0;
     }
 
+    /**
+     * 
+     * @param {KeyChangeListener} listener 
+     * @returns {EditText}
+     */
+    setOnKeyChanged(listener) {
+        this.listener.onKeyChanged = listener;
+        return this;
+    }
 }

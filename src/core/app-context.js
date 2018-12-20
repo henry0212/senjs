@@ -16,6 +16,28 @@ import res from '../res/index.js';
 
 var app_url = "";
 
+var _isMobile = {
+    Android: function () {
+        return navigator.userAgent.match(/Android/i);
+    },
+    BlackBerry: function () {
+        return navigator.userAgent.match(/BlackBerry/i);
+    },
+    iOS: function () {
+        return navigator.userAgent.match(/iPhone|iPad|iPod/i);
+    },
+    Opera: function () {
+        return navigator.userAgent.match(/Opera Mini/i);
+    },
+    Windows: function () {
+        return navigator.userAgent.match(/IEMobile/i);
+    },
+    any: function () {
+        return (this.Android() || this.BlackBerry() || this.iOS() || this.Opera() || this.Windows());
+        //return false;
+    }
+}
+
 const app_context = {
     ROOT_BODY: null,
     APP_WINDOW: null,
@@ -89,9 +111,9 @@ var _view_pool = {
         return _view_pool.lists.get(controlIdx);
     },
     getByUid: function (uid) {
-        return uid.length == 0 ? null : _view_pool.lists.filter(function (item) {
+        return uid.length == 0 ? null : _view_pool.lists.src_array.find(function (item) {
             return item != null && item.info.uid == uid;
-        }).get(0);
+        });
     },
     forceRemove: function (controlId) {
         this.forceRemoveChilds(controlId);
@@ -252,7 +274,7 @@ export var senjsAdps = {
 }
 
 var application_start = async () => {
-    app_url =  window.location.pathname;
+    app_url = window.location.pathname;
     app_context.SCREEN_WIDTH = window.innerWidth;
     app_context.SCREEN_HEIGHT = window.innerHeight;
     app.info.display.SCREEN_WIDTH = window.innerWidth;
@@ -383,7 +405,7 @@ const app_service_context = {
             }
         };
 
-        if (isMobile.any()) {
+        if (_isMobile.any()) {
 
             document.body.addEventListener("touchstart", (e) => {
                 app_service_context.isMouseDown = true;
@@ -676,7 +698,7 @@ export var app = {
     config: {
         enableAnimate: true,
     },
-    isMobile: isMobile,
+    isMobile: _isMobile,
     event: app_event,
     Thread: app_thread,
     findViewById: function (id) {
@@ -697,15 +719,20 @@ export var app = {
         var frame = new FrameLayout().toFillParent().setPosition("fixed");
         frame.setZIndex(app_context.INDEX_DIALOG).setTransition("opacity", ".1");
         var layer_below = new FrameLayout().toFillParent();
-        layer_below.setTransition("opacity", ".1").setBackground("rgba(0,0,0,0.6");
+        layer_below.setTransition("opacity", ".1").setBackground("rgba(0,0,0,0.5");
         frame._dom.style.display = "flex";
         frame._dom.style.justifyContent = "center";
         frame._dom.style.flexDirection = "column";
 
+        // app_context.APP_WINDOW.filterBlur(2);
+
         var container = new FrameLayout().setMargin("auto");
         container.addView(dialog);
-        container.setWidth(dialog._dom.style.width);
-        container.setHeight(dialog._dom.style.height);
+        container.setWidth(dialog._dom.style.width)
+            .setHeight(dialog._dom.style.height)
+            .setMaxHeight("100%")
+            .setScrollType(app_constant.ScrollType.VERTICAL);
+
         dialog._dom.style.width = "100%";
         dialog._dom.style.height = "100%";
         frame
@@ -715,7 +742,6 @@ export var app = {
         app_context.ROOT_BODY.addView(frame);
         var dismiss = dialog.dismiss.bind(dialog);
         dialog.dismiss = function () {
-            layer_below.setOpacity(0);
             dismiss();
             return dialog;
         }
@@ -723,9 +749,10 @@ export var app = {
             if (service_back) {
                 service_back.remove();
             }
+            // app_context.APP_WINDOW.filterBlur(0);
             layer_below.setOpacity(0).postDelay(() => {
                 app_context.ROOT_BODY.removeChild(frame);
-            }, dialog.getAnimationDuration());
+            }, dialog.getAnimationDuration() - 150);
         })
         layer_below.setOnClick(() => {
             dialog.dismiss();
@@ -743,9 +770,10 @@ export var app = {
         }
         _dialog_loading = new FrameLayout().toFillParent().setPosition("fixed");
         _dialog_loading._dom.style.display = "flex";
+        _dialog_loading.setClassName("fadeIn");
         _dialog_loading._dom.style.justifyContent = "center";
         _dialog_loading._dom.style.flexDirection = "column";
-        _dialog_loading.setBackground("rgba(0,0,0,0.3)").setZIndex(app_context.INDEX_DIALOG).setTransition("opacity", ".1");
+        _dialog_loading.setBackground("rgba(0,0,0,0.2)").setZIndex(app_context.INDEX_DIALOG).setTransition("opacity", ".1");
 
         var container = new FrameLayout().setPadding(10).setRadius(4)
             .setBackground("rgba(0,0,0,0.8)")
@@ -753,7 +781,7 @@ export var app = {
             .setWidth(app_size.icon.s48 + 20);
         var icon_loading = new IconView("autorenew").setIconColor("#fff")
             .setIconSize(app_size.icon.s48)
-            .setAnimation("rotate_infinite")
+            .setClassName("rotate_infinite")
             .setIconColor(material_colors.White);
         container.addView(icon_loading);
 
@@ -777,45 +805,15 @@ window.addEventListener("load", function () {
     application_start();
 })
 
+
 export var
     Thread = app_thread,
     Waiter = app_waiter,
     senjsCts = app.senjs_viewPool = _view_pool,
     senjsUIds = app.idPool = _viewId_pool,
-    io = {
-        layout: {
-
-        },
-        widget: {
-
-        },
-        dialog: {
-
-        }
-    };
+    isMobile = _isMobile;
 
 
-export var isMobile = {
-    Android: function () {
-        return navigator.userAgent.match(/Android/i);
-    },
-    BlackBerry: function () {
-        return navigator.userAgent.match(/BlackBerry/i);
-    },
-    iOS: function () {
-        return navigator.userAgent.match(/iPhone|iPad|iPod/i);
-    },
-    Opera: function () {
-        return navigator.userAgent.match(/Opera Mini/i);
-    },
-    Windows: function () {
-        return navigator.userAgent.match(/IEMobile/i);
-    },
-    any: function () {
-        return (isMobile.Android() || isMobile.BlackBerry() || isMobile.iOS() || isMobile.Opera() || isMobile.Windows());
-        //return false;
-    }
-}
 
 export var brownserType = {
     isOpera: function () {

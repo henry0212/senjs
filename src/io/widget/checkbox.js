@@ -24,6 +24,20 @@ export class Checkbox extends BaseTextView {
             icon: null,
             label: null
         }
+        this._config = {
+            status_default: {
+                icon: "#888",
+                background: "transparent",
+                text: "rgba(0,0,0,0.5)",
+                fontWeight: "normal"
+            },
+            status_checked: {
+                icon: "#222",
+                background: "transparent",
+                text: "rgba(0,0,0,0.9)",
+                fontWeight: "bold"
+            }
+        }
 
         var panel = new View(document.createElement("div"));
         this._view.label = new TextView();
@@ -57,6 +71,13 @@ export class Checkbox extends BaseTextView {
         }
     }
 
+    setCheckIconColor(state_checked, state_default) {
+        this._view.icon.setIconColor(state_default);
+        this._config.status_checked.icon = state_checked;
+        this._config.status_default.icon = state_default;
+        return this;
+    }
+
     /**
      * @params listener call this when event executed
      * @description pass the function with params: function(view, isChecked)
@@ -74,19 +95,19 @@ export class Checkbox extends BaseTextView {
         if (this._meta.isChecked) {
             this._view.icon
                 .updateIcon(icon_state.checked)
-                .setIconColor(app_theme.checkbox.status_checked.icon);
+                .setIconColor(this._config.status_checked.icon);
             this._view.label
-                .setFontWeight(app_theme.checkbox.status_checked.fontWeight)
-                .setTextColor(app_theme.checkbox.status_checked.text)
-            this.setBackground(app_theme.checkbox.status_checked.background);
+                .setFontWeight(this._config.status_checked.fontWeight)
+                .setTextColor(this._config.status_checked.text)
+            this.setBackground(this._config.status_checked.background);
         } else {
             this._view.icon
                 .updateIcon(icon_state.uncheck)
-                .setIconColor(app_theme.checkbox.status_default.icon);
+                .setIconColor(this._config.status_default.icon);
             this._view.label
-                .setFontWeight(app_theme.checkbox.status_default.fontWeight)
-                .setTextColor(app_theme.checkbox.status_default.text)
-            this.setBackground(app_theme.checkbox.status_default.background);
+                .setFontWeight(this._config.status_default.fontWeight)
+                .setTextColor(this._config.status_default.text)
+            this.setBackground(this._config.status_default.background);
         }
     }
 
@@ -94,4 +115,6 @@ export class Checkbox extends BaseTextView {
         this._view.label.setText(text);
         return this;
     }
+
+
 }   

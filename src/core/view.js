@@ -1,24 +1,36 @@
+"use strict";
 
 import { app, Thread, Waiter, isMobile, senjsCts, brownserType } from './app-context.js'
 import { app_constant, app_animation } from '../res/constant.js'
 import { List } from '../util/list-util.js';
 import { StringUtil } from '../util/string-util.js';
+import { senjs } from '../index.js';
+import { ClickListener, ScrollListener, TouchListener, FocusChangeListener } from './event-v2.js';
 
 var countAnimation = 0;
 
+/**
+ * @typedef {Object} View
+ * 
+ */
 export class View {
     constructor(htmlElement) {
         this.TAG = this.constructor.name;
         this._dom = htmlElement || document.createElement("div");
         this._super = {};
+
         this._meta = {};
-        this._
+        this._senjs = senjs;
         var self = this;
-        var obj_keys = Object.getOwnPropertyNames(Object.getPrototypeOf(this));
-        for (var i = 0; i < obj_keys.length; i++) {
-            this[obj_keys[i]] = (this[obj_keys[i]]).bind(self);
-        }
-        this._init();
+        // var obj_keys = Object.getOwnPropertyNames(Object.getPrototypeOf(this));
+        // for (var i = 0; i < obj_keys.length; i++) {
+        //     if (this[obj_keys[i]]) {
+        //         this[obj_keys[i]] = (this[obj_keys[i]]).bind(self);
+        //     } else {
+        //         console.log(obj_keys[i])
+        //     }
+        // }
+        this._init_();
         this.setDisplayType(app_constant.Display.BLOCK)
             .setBoxSizing("border-box");
         if (this.info.id == -1) {
@@ -26,30 +38,35 @@ export class View {
         }
     }
 
-    _init() {
+    _init_() {
         this._prepare();
         this.appEvent = app.event.init(this);
-        this.events.override.onCreated(this.onCreated);
-        this.events.override.onDestroy(this.onDestroy);
-        this.events.override.onPaused(this.onPause);
-        this.events.override.onResume(this.onResume);
-        this.events.override.onMeasured(this.onMeasured);
-        this._cache = {}
+        this.events.override.onCreated(this.onCreated.bind(this));
+        this.events.override.onDestroy(this.onDestroy.bind(this));
+        this.events.override.onPaused(this.onPause.bind(this));
+        this.events.override.onResume(this.onResume.bind(this));
+        this.events.override.onMeasured(this.onMeasured.bind(this));
+        this._cache = {
+            __state: {
+
+            }
+        }
         this.setScrollType(app_constant.ScrollType.NONE)
             .setPosition(app_constant.Position.RELATIVE);
 
         Object.getOwnPropertyNames(Object.getPrototypeOf(this)).filter((item) => {
             return item.indexOf("override_") > -1;
         }).forEach(ovr_func => {
+            console.log(ovr_func);
             var real_func = ovr_func.replace("override_", "");
-            if (this.events.override.hasOwnProperty(real_func)) {
-                console.log("override", ovr_func, real_func);
+            if (this.events.override[real_func] != undefined) {
                 this.events.override[real_func](this[ovr_func].bind(self));
             }
         })
     }
     /**
-     * @param control: View class
+     * Call when the view have been created
+     * @param {View} view
      * @description the callback need pass view param
      */
 
@@ -57,18 +74,39 @@ export class View {
 
     }
 
+    /**
+        *  Call when the view not show on screen
+         * @param {View} view
+         * @description the callback need pass view param
+    */
     onPause(view) {
 
     }
 
+    /**
+       * Call when the view show on screen again
+       * @param {View} view
+       * @description the callback need pass view param
+    */
     onResume(view) {
 
     }
 
+
+    /**
+       * Call when the view have been remove on screen
+       * @param  {View} view
+       * @description the callback need pass view param
+    */
     onDestroy(view) {
 
     }
 
+    /**
+      * Call when the view render finish
+      * @param  {View} view
+      * @description the callback need pass view param
+   */
     onMeasured(view, width, height) {
 
     }
@@ -191,7 +229,8 @@ export class View {
                 onDestroy: null,
                 onChangeSize: null,
                 onClicked: null
-            }
+            },
+            orderViews: []
         }
         this.layout = {
             centerVertical: function () {
@@ -257,11 +296,13 @@ export class View {
                     declare_funcs: new List(),
                     createCallback: new Array(),
                     resizeCallback: new Array(),
+                    beforeDestroyCallBack: new List(),
                     destroyCallBack: new List(),
                     addViewCallBack: new List(),
                     pauseCallback: new List(),
                     resumeCallback: new List(),
                     onFocusChanged: new List(),
+                    onKeyChangedCallback: new List(),
                     onMouseDownCallback: new List(),
                     onMouseUpCallback: new List(),
                     onRenderedCallback: new List(),
@@ -270,10 +311,13 @@ export class View {
                     onScrolledCallbacks: new List(),
                     onMeasuredCallbacks: new List(),
                     onTouchCallbacks: new List(),
-
                 },
                 onCreated: function (listener) {
                     self.events.override.variables.createCallback.push(listener);
+                    return self;
+                },
+                onBeforeDestroy: function (listener) {
+                    self.events.override.variables.beforeDestroyCallBack.add(listener);
                     return self;
                 },
                 onDestroy: function (listener) {
@@ -294,9 +338,11 @@ export class View {
                 },
                 onMouseDown: function (listener) {
                     self.events.override.variables.onMouseDownCallback.add(listener);
+                    return self;
                 },
                 onMouseUp: function (listener) {
                     self.events.override.variables.onMouseUpCallback.add(listener);
+                    return self;
                 },
                 onPaused: function (listener) {
                     self.events.override.variables.pauseCallback.add(listener);
@@ -308,22 +354,35 @@ export class View {
                 },
                 onFocusChanged: function (listener) {
                     self.events.override.variables.onFocusChanged.add(listener);
+                    return self;
+                },
+                onKeyChanged: function (listener) {
+                    self.events.override.variables.onKeyChangedCallback.add(listener);
+                    return self;
                 },
                 onRendered: function (listener) {
                     self.events.override.variables.onRenderedCallback.add(listener);
+                    return self;
                 },
                 onRemovedChild: function (listener) {
                     self.events.override.variables.onRemovedChild.add(listener);
+                    return self;
                 },
+                /**
+                 * 
+                 * @param {import('./event-v2.js').scroll_listener} listener 
+                 */
                 onScrolled: function (listener) {
                     self.events.override.variables.onScrolledCallbacks.add(listener);
                     if (self._dom.onscroll == undefined) {
-                        app.event.init(self).setOnScroll(self, function () { });
+                        new ScrollListener((view, args) => {
+
+                        }).bindToView(self);
                     }
                 },
                 onTouched: function (listener) {
                     self.events.override.variables.onTouchCallbacks.add(listener);
-                    self.setOnTouch(() => { });
+                    self.setOnTouch(new TouchListener(() => { }));
                 },
                 onMeasured: function (listener) {
                     this.variables.onMeasuredCallbacks.add(listener);
@@ -387,15 +446,17 @@ export class View {
                         self.info.state = parent.info.state;
                     }
                     self.events.system.init.focusChanged();
+                    self._dom.id = "view" + self.info.id;
                     if (!isMobile.any()) {
                         self.events.system.init.mouseChanged();
                     }
                     if (!self.info.hasCallCreatedStack) {
                         self.info.hasCallCreatedStack = true;
-                        new List(self.events.override.variables.createCallback).foreach(function (action, i) {
+                        self.events.override.variables.createCallback.forEach(function (action, i) {
                             action(self);
                         });
                     }
+
                     this.measured();
                     if (self.events.override.variables.resumeCallback.size() > 0) {
                         let delay = senjsCts.allParents(self.info.id).reduce((a, item) => {
@@ -412,19 +473,29 @@ export class View {
                                 call(self);
                             });
                         }
-                        // self.postDelay(() => {
-                        //     console.log("duration", self.getAnimationDuration());
-                        //     self.postDelay(() => {
-                        //         self.events.override.variables.resumeCallback.foreach(function (call, position) {
-                        //             call(self);
-                        //         });
-                        //     }, self.getAnimationDuration());
-                        // }, 40);
                     }
                 },
                 destroy: function () {
                     self.addView = function (view) { };
-                    var child;
+                    if (self.events.override.variables.beforeDestroyCallBack.size() > 0) {
+                        self.events.override.variables.beforeDestroyCallBack.foreach(function (item, count) {
+                            if (item instanceof Function || item === "function") {
+                                item(self);
+                            }
+                        });
+                        self.events.override.variables.beforeDestroyCallBack.clear();
+                    }
+                    self.events.override.variables.beforeDestroyCallBack.clear();
+                    if (self._cache._destroyAnim) {
+                        self.setAnimation(self._cache._destroyAnim);
+                        new Waiter(() => {
+                            if (self._cache) {
+                                self._cache._destroyAnim = null;
+                            }
+                            self.events.system.destroy();
+                        }, self.getAnimationDuration())
+                        return self;
+                    }
                     self.info.isDestroy = true;
                     var p = self.getParentView();
                     if (p != null) {
@@ -442,15 +513,16 @@ export class View {
                         //    console.log("Destroy Child: " + child.info.id);
                         //});
                     }
-                    self.events.override.variables.destroyCallBack.foreachWithTimer(function (item, count) {
+                    self.events.override.variables.destroyCallBack.foreach(function (item, count) {
                         if (item instanceof Function || item === "function") {
                             item(self);
                         }
-                    }, 0);
+                    });
                     var rootChilds = app.senjs_viewPool.allRootChilds(self.info.id);
                     if (rootChilds.size() > 0) {
                         rootChilds.foreach(function (removeChild, i) {
                             removeChild.info.isDestroy = true;
+
                             if (removeChild.info.uid != null) {
                                 app.idPool.remove(removeChild.info.id);
                             }
@@ -478,6 +550,7 @@ export class View {
                         delayFunc.remove();
                     });
                     app.senjs_viewPool.remove(self.info.id);
+
                     return self;
                 },
                 pause: function () {
@@ -495,8 +568,6 @@ export class View {
                         item.info.state = app_constant.VIEW_STATE.pause;
                         return item.events.override.variables.pauseCallback.size() > 0;
                     });
-                    var i = 0;
-
                     self_thread.pause = allRootChilds.asyncForeach(function (viewChild, position) {
                         viewChild.info.state = app_constant.VIEW_STATE.running;
                         viewChild.info.state = app_constant.VIEW_STATE.pause;
@@ -528,7 +599,8 @@ export class View {
                         return item.events.override.variables.resumeCallback.size() > 0;
                     });
 
-                    allRootChilds.asyncForeach(function (viewChild, position) {
+                    console.log("resume", allRootChilds.size());
+                    allRootChilds.foreach(function (viewChild, position) {
                         viewChild.info.state = app_constant.VIEW_STATE.running;
                         viewChild.info.isPaused = false;
                         viewChild.events.override.variables.resumeCallback.foreach(function (call, position) {
@@ -543,11 +615,13 @@ export class View {
                     return self;
                 },
                 reLayout: function () {
+
                     if (self.info.isCreated && self.info.state == app_constant.VIEW_STATE.running) {
                         self.postDelay(function () {
                             self.events.system.measured();
                         }, 10 + self.getAnimationDuration());
                     }
+
                 },
                 measured: function () {
                     if (self.info.prevent_measure_callback) {
@@ -634,7 +708,7 @@ export class View {
     }
 
     getId() {
-        return this.info.id;
+        return this.info.uid.length > 0 ? this.info.uid : this.info.id;
     }
 
     setContentEditable(flag) {
@@ -686,45 +760,44 @@ export class View {
         return this;
     }
 
-
     setGravity(gravity) {
+        this._dom.style.display = "inline-flex";
         switch (gravity) {
             case app_constant.Gravity.TOP_LEFT:
-                this._dom.style.flexDirection = "column";
-                this.setFloat("left")._dom.style.justifyContent = "inherit";
+                this._dom.style.justifyContent = "flex-start";
+                this._dom.style.alignItems = "flex-start";
                 break;
             case app_constant.Gravity.TOP_CENTER:
-                this.setFloat("initial")._dom.style.justifyContent = "center";
+                this._dom.style.justifyContent = "flex-start";
+                this._dom.style.alignItems = "center";
                 break;
             case app_constant.Gravity.TOP_RIGHT:
-                this._dom.style.flexDirection = "column";
-                //   this.setTextAlign("right")._dom.style.justifyContent = "inherit";
+                this._dom.style.justifyContent = "flex-start";
+                this._dom.style.alignItems = "flex-end";
                 break;
             case app_constant.Gravity.CENTER_LEFT:
-                this.setDisplayType(app_constant.Display.FLEX);
-                this._dom.style.flexDirection = "column";
-                //  this.setTextAlign("left")._dom.style.justifyContent = "left";
+                this._dom.style.justifyContent = "flex-start";
+                this._dom.style.alignItems = "center";
                 break;
             case app_constant.Gravity.CENTER:
-                this.setDisplayType(app_constant.Display.FLEX);
-                this._dom.style.flexDirection = "column";
-                //     this.setTextAlign("center")._dom.style.justifyContent = "center";
+                this._dom.style.justifyContent = "center";
+                this._dom.style.alignItems = "center";
                 break;
             case app_constant.Gravity.CENTER_RIGHT:
-                this._dom.style.flexDirection = "row-reverse";
-                this._dom.style.justifyContent = "right";
+                this._dom.style.alignItems = "center";
+                this._dom.style.justifyContent = "flex-end";
                 break;
             case app_constant.Gravity.BOTTOM_LEFT:
-                this._dom.style.flexDirection = "column-reverse";
-                //     this.setTextAlign("left")._dom.style.justifyContent = "end";
+                this._dom.style.alignItems = "flex-end";
+                this._dom.style.justifyContent = "flex-end";
                 break;
             case app_constant.Gravity.BOTTOM_CENTER:
-                this._dom.style.flexDirection = "column-reverse";
-                //      this.setTextAlign("center")._dom.style.justifyContent = "end";
+                this._dom.style.alignItems = "flex-end";
+                this._dom.style.justifyContent = "center";
                 break;
             case app_constant.Gravity.BOTTOM_RIGHT:
-                this._dom.style.flexDirection = "column-reverse";
-                //     this.setTextAlign("right")._dom.style.justifyContent = "end";
+                this._dom.style.alignItems = "flex-end";
+                this._dom.style.justifyContent = "flex-end";
                 break;
         }
         return this;
@@ -744,12 +817,25 @@ export class View {
         return this;
     }
 
-
+    /**
+     * 
+     * @param {View} view 
+     */
+    setStyleLikeOf(view) {
+        this._dom.setAttribute("style", view._dom.getAttribute("style"));
+        return this;
+    }
 
     getTextColor() {
         return this.info.manualTextColor != "" ? this.info.manualTextColor : this.info.textColor;
     }
 
+    countChildNotYetCreated() {
+        return this.getAllViews().filter(item => {
+            console.log(" item.info.isCreated =", item.info.isCreated);
+            return item.info.state == senjs.constant.VIEW_STATE.renderring || item.info.isCreated == false;
+        }).size();
+    }
 
     setBorderText(color) {
         if (!isMobile.any()) {
@@ -758,12 +844,10 @@ export class View {
         return this;
     }
 
-
     removeBorderText() {
         this._dom.style.textShadow = "";
         return this;
     }
-
 
     setBackgroundColor(color) {
         try {
@@ -863,10 +947,12 @@ export class View {
         return app.senjs_viewPool.allChilds(this.info.id);
     }
 
+    /**
+     * @returns {View}
+     */
     getParentView() {
         return app.senjs_viewPool.get(this.info.parent);
     }
-
 
     allParents() {
         return app.senjs_viewPool.allParents(this.info.id);
@@ -1030,8 +1116,8 @@ export class View {
         this.info.scrollType = type;
         switch (type) {
             case app_constant.ScrollType.VERTICAL:
-                this._dom.style.overflowX = "overlay";
-                this._dom.style.overflowY = "auto";
+                this._dom.style.overflowX = "hidden";
+                this._dom.style.overflowY = "overlay";
                 this.info.isScrollX = false;
                 this.info.isScrollY = true;
                 break;
@@ -1048,6 +1134,10 @@ export class View {
         return this;
     }
 
+    /**
+     * 
+     * @param {View} view 
+     */
     addView(view) {
         if (view == null || this.info.isDestroy) {
             return;
@@ -1075,7 +1165,7 @@ export class View {
         if (this.info.isCreated && this.info.id != -1) {
             view.info.isDestroy = this.info.isDestroy;
             view.info.parent = this.info.id;
-            view.appEvent.setOnCreated(function (v) {
+            _bindOnViewCreated(view, function (v) {
                 v.events.system.created();
             });
             if (self.isPaused()) {
@@ -1087,12 +1177,12 @@ export class View {
         }
         else {
             this.events.override.onCreated(function (viewParent) {
-                view.info.parent = viewParent.getId();
+                view.info.parent = viewParent.info.id;
                 view.info.isDestroy = viewParent.info.isDestroy;
                 if (self.isPaused()) {
                     view.events.system.pause();
                 }
-                view.appEvent.setOnCreated(function (v) {
+                _bindOnViewCreated(view, function (v) {
                     v.events.system.created();
                 });
                 viewParent.events.override.variables.addViewCallBack.foreach(function (call, index) {
@@ -1126,10 +1216,9 @@ export class View {
             if (this.info.isCreated && this.info.id != -1) {
                 view.info.isDestroy = this.info.isDestroy;
                 view.info.parent = this.info.id;
-                senjs.event.setOnCreated(view, function (v) {
+                _bindOnViewCreated(view, function (v) {
                     v.events.system.created();
-                }
-                );
+                });
                 if (this.isPaused()) {
                     view.events.system.pause();
                 }
@@ -1145,10 +1234,9 @@ export class View {
                     if (self.isPaused()) {
                         view.events.system.pause();
                     }
-                    senjs.event.setOnCreated(view, function (v) {
+                    _bindOnViewCreated(view, function (v) {
                         v.events.system.created();
-                    }
-                    );
+                    });
                     viewParent.events.override.variables.addViewCallBack.foreach(function (call, index) {
                         call(viewParent, view);
                     }
@@ -1268,7 +1356,7 @@ export class View {
     getLeft() {
         var left = 0;
         if (this.info.left == -1) {
-            if (senjs.IOUtil.isAbsouteOrFixed(this)) {
+            if (IOUtil.isAbsouteOrFixed(this)) {
                 left = parseInt(this._dom.style.left);
             }
             else {
@@ -1283,7 +1371,7 @@ export class View {
 
 
     getRight() {
-        if (senjs.IOUtil.isAbsouteOrFixed(this)) {
+        if (IOUtil.isAbsouteOrFixed(this)) {
             return parseInt(this._dom.style.right);
         }
         else {
@@ -1295,7 +1383,7 @@ export class View {
     getTop() {
         var top = 0;
         if (this.info.top == -1) {
-            if (senjs.IOUtil.isAbsouteOrFixed(this)) {
+            if (IOUtil.isAbsouteOrFixed(this)) {
                 top = parseInt(this._dom.style.top);
             }
             else {
@@ -1310,7 +1398,7 @@ export class View {
 
 
     getBottom() {
-        if (senjs.IOUtil.isAbsouteOrFixed(this)) {
+        if (IOUtil.isAbsouteOrFixed(this)) {
             return parseInt(this._dom.style.bottom);
         }
         else {
@@ -1321,7 +1409,7 @@ export class View {
 
     setLeft(value) {
         if (isNaN(value)) {
-            if (senjs.IOUtil.isAbsouteOrFixed(this)) {
+            if (IOUtil.isAbsouteOrFixed(this)) {
                 this._dom.style.left = value;
             }
             else {
@@ -1330,7 +1418,7 @@ export class View {
         }
         else {
             this.info.pushLeft = this.info.pushLeft == -1 ? value : this.info.pushLeft;
-            if (senjs.IOUtil.isAbsouteOrFixed(this)) {
+            if (IOUtil.isAbsouteOrFixed(this)) {
                 this._dom.style.left = parseInt(value) + app_constant.SIZE_UNIT;
             }
             else {
@@ -1338,13 +1426,14 @@ export class View {
             }
         }
         this.events.system.reLayout();
+
         return this;
     }
 
 
     setRight(value) {
         if (isNaN(value)) {
-            if (senjs.IOUtil.isAbsouteOrFixed(this)) {
+            if (IOUtil.isAbsouteOrFixed(this)) {
                 this._dom.style.right = value;
             }
             else {
@@ -1353,7 +1442,7 @@ export class View {
         }
         else {
             this.info.pushRight = (this.info.pushRight == -1) ? value : this.info.pushRight;
-            if (senjs.IOUtil.isAbsouteOrFixed(this)) {
+            if (IOUtil.isAbsouteOrFixed(this)) {
                 this._dom.style.right = parseInt(value) + app_constant.SIZE_UNIT;
             }
             else {
@@ -1367,7 +1456,7 @@ export class View {
 
     setTop(value) {
         if (isNaN(value)) {
-            if (senjs.IOUtil.isAbsouteOrFixed(this)) {
+            if (IOUtil.isAbsouteOrFixed(this)) {
                 this._dom.style.top = value;
             }
             else {
@@ -1376,7 +1465,7 @@ export class View {
         }
         else {
             this.info.pushTop = this.info.pushTop == -1 ? value : this.info.pushTop;
-            if (senjs.IOUtil.isAbsouteOrFixed(this)) {
+            if (IOUtil.isAbsouteOrFixed(this)) {
                 this._dom.style.top = parseInt(value) + app_constant.SIZE_UNIT;
             }
             else {
@@ -1396,7 +1485,7 @@ export class View {
 
     setBottom(value) {
         if (isNaN(value)) {
-            if (senjs.IOUtil.isAbsouteOrFixed(this)) {
+            if (IOUtil.isAbsouteOrFixed(this)) {
                 this._dom.style.bottom = value;
             }
             else {
@@ -1405,7 +1494,7 @@ export class View {
         }
         else {
             this.info.pushBottom = this.info.pushBottom == -1 ? value : this.info.pushBottom;
-            if (senjs.IOUtil.isAbsouteOrFixed(this)) {
+            if (IOUtil.isAbsouteOrFixed(this)) {
                 this._dom.style.bottom = parseInt(value) + app_constant.SIZE_UNIT;
             }
             else {
@@ -1424,7 +1513,7 @@ export class View {
 
 
     setPercentLeft(size) {
-        if (senjs.IOUtil.isAbsouteOrFixed(this)) {
+        if (IOUtil.isAbsouteOrFixed(this)) {
             this._dom.style.left = size + "%";
         }
         else {
@@ -1436,7 +1525,7 @@ export class View {
 
 
     setPercentRight(size) {
-        if (senjs.IOUtil.isAbsouteOrFixed(this)) {
+        if (IOUtil.isAbsouteOrFixed(this)) {
             this._dom.style.right = size + "%";
         }
         else {
@@ -1560,7 +1649,7 @@ export class View {
             this._dom.style.height = "auto";
         }
         else if (value == app_constant.Size.FILL_PARENT) {
-            if (senjs.IOUtil.isAbsouteOrFixed(this)) {
+            if (IOUtil.isAbsouteOrFixed(this)) {
                 this._dom.style.height = "100%";
             }
             else {
@@ -1568,18 +1657,15 @@ export class View {
                     this._dom.style.height = this.getParentView().offsetHeight + app_constant.SIZE_UNIT;
                 }
                 else {
-                    this._dom.style.height = info.SCREEN_HEIGHT;
+                    this._dom.style.height = senjs.app.info.display.SCREEN_HEIGHT;
                 }
             }
             return this;
         }
-        else if (typeof value === 'string' || value instanceof String) {
-            if (value.indexOf("%") != -1) {
-                this._dom.style.height = value;
-            }
-        }
-        else {
+        else if (!isNaN(value)) {
             this._dom.style.height = value + app_constant.SIZE_UNIT;
+        } else {
+            this._dom.style.height = value;
         }
         this.events.system.reLayout();
         return this;
@@ -1838,8 +1924,7 @@ export class View {
         }
         ).Sum(function (a, b) {
             return (a || 0) + b._dom.offsetTop;
-        }
-        ) + this._dom.offsetTop;
+        }) + this._dom.offsetTop;
     }
 
 
@@ -1939,6 +2024,7 @@ export class View {
 
 
     toBelowOf(view) {
+
         orderControl.add(this, view, orderControl.BELOWOF);
         return this;
     }
@@ -2194,8 +2280,7 @@ export class View {
                                     this.events.system.destroy();
                                 }
                             }
-                        }
-                            , 70);
+                        }, 70);
                     }
                     else {
                         if (this.info.allowDragRemoveItem) {
@@ -2325,8 +2410,7 @@ export class View {
         this._dom.disabled = !enable;
         app.senjs_viewPool.allRootChilds(this.info.id).foreach(function (view_child) {
             view_child.setEnable(enable);
-        }
-        );
+        });
         return this;
     }
 
@@ -2347,12 +2431,37 @@ export class View {
         var strStyle = "";
         style.foreach(function (item) {
             strStyle += item.senjsKey + ":" + ((item.senjsValue instanceof Function) ? item.senjsValue() : item.senjsValue) + ";";
-        }
-        );
+        });
         this._dom.setAttribute("style", (this._dom.getAttribute("style") || "") + strStyle);
         return this;
     }
 
+    /**
+     * Set css for view 
+     * use css original property
+     * ex:
+     * {
+     *      'font-size': '10px',
+     *      'width': '100%'
+     * }
+     */
+    setCss(arg) {
+        Object.keys(arg).forEach(item => {
+            var key = item.split("-");
+            console.log(key);
+            if (key.length > 1) {
+                for (var i = 1; i < key.length; i++) {
+                    console.log(key[i])
+                    key[i] = key[i].charAt(0).toUpperCase() + key[i].substr(1);
+                }
+                key = key.reduce((a, b) => {
+                    return a + b;
+                }, "");
+                console.log(key);
+            }
+            this._dom.style[key] = arg[item];
+        });
+    }
 
     destroyWithAnimate() {
         if (!app.config.enableAnimate) {
@@ -2360,14 +2469,11 @@ export class View {
             return this;
         }
         if (this.info.parent != null) {
-            this.setAnimation(app_animation.DESTROY);
-            new Waiter(() => {
-                this.events.system.destroy();
-            }, this.getAnimationDuration());
+            this._cache._destroyAnim = app_animation.DESTROY;
+            this.events.system.destroy();
         }
         return this;
     }
-
 
     destroyWithCustomAnimation(animation) {
         if (!app.config.enableAnimate) {
@@ -2375,17 +2481,11 @@ export class View {
             return this;
         }
         if (this.info.parent != null) {
-            this.setAnimation(animation);
-            new Waiter(() => {
-                new Waiter(() => {
-                    this._dom.style.display ="none";
-                    this.events.system.destroy();
-                }, this.getAnimationDuration());
-            }, 30)
+            this._cache._destroyAnim = animation;
+            this.events.system.destroy();
         }
         return this;
     }
-
 
     setOnDragItem(dragData, dropControl, dragcallback, dropCallback) {
         this._dom.setAttribute("draggable", true);
@@ -2443,10 +2543,11 @@ export class View {
 
 
     filterBlur(value) {
-        this._dom.style.filter = "blur(" + value + "px) grayscale(20%)";
-        this._dom.style.webkitFilter = "blur(" + value + "px) grayscale(20%)";
+        this._dom.style.filter = "blur(" + value + "px) grayscale(30%)";
+        this._dom.style.webkitFilter = "blur(" + value + "px) grayscale(30%)";
         return this;
     }
+
 
 
     showPinnerPanel() {
@@ -2575,74 +2676,103 @@ export class View {
     }
 
 
+    /**
+     * 
+     * @param {ClickListener} listener 
+     */
     setOnClick(listener) {
-        this.setCursor(app_constant.Cursor.POINTER);
-        app.event.init(this).setOnClick(listener);
-        return this;
-    }
-
-    setOnFocus(listener) {
-        app.event.init(this).setOnFocus(listener);
+        if (listener instanceof ClickListener) {
+            listener.bindToView(this);
+        } else {
+            // Listener - function for old version
+            new ClickListener(listener).bindToView(this);
+        }
         return this;
     }
 
     setOnFocusChange(listener) {
-        app.event.init(this).setOnFocusChange(listener);
+        if (listener instanceof TouchListener) {
+            listener.bindToView(this);
+        } else {
+            // Listener - function for old version
+            new FocusChangeListener(listener).bindToView(this);
+        }
         return this;
     }
 
 
     setOnTouch(listener) {
-        app.event.init(this).setOnTouch(listener);
-    }
-
-    setOnTooltip(text) {
-        var noteDialog;
-        this.setOnMouseEnter(function (view, x, y) {
-            noteDialog = senjs.IO.block(app_constant.Size.WRAP_CONTENT, app_constant.Size.WRAP_CONTENT);
-            noteDialog.minWidth(8);
-            app.mainFrame.addView(noteDialog);
-            noteDialog.setHTML(text);
-            noteDialog.BackgroundColor(color.WHITE);
-            noteDialog.Padding(10);
-            noteDialog.shadow(color.DEFAULT_SHADOW, 0, 0, 1, false);
-            noteDialog.setAnimation(senjsKey.anims.TOOLTIP_OPEN);
-            noteDialog.setPosition(app_constant.Position.FIXED);
-            noteDialog.setLeft(x + 2);
-            noteDialog.setTop(y + 2);
-            noteDialog.float(app_constant.Float.LEFT);
-            noteDialog.zIndex(5001);
+        if (listener instanceof TouchListener) {
+            listener.bindToView(this);
+        } else {
+            // Listener - function for old version
+            new TouchListener(listener).bindToView(this);
         }
-        );
-        this.setOnMouseOut(function (view, x, y) {
-            if (noteDialog != null) {
-                noteDialog.destroyWithCustomAnimation(senjsKey.anims.TOOLTIP_CLOSE);
-            }
-        });
-        this.setOnMouseMove(function (view, x, y) {
-            if (noteDialog != null) {
-                noteDialog.setLeft(x + 2);
-                noteDialog.setTop(y + 2);
-            }
-        });
-        this.events.override.onDestroy(function (view) {
-            if (noteDialog != null) {
-                noteDialog.destroy();
-            }
-        });
         return this;
     }
+
 
     setOnPinnedListener(listener) {
         this.info.onPinnedListener = listener;
     }
 
+    /** 
+     * @param style_key:string - CSS key
+     * Get getComputedStyle  
+     *  */
     getComputedStyle(style_key) {
         return getComputedStyle(this._dom)[style_key];
     }
+
+    /** Save the current state of view before remove it to screen */
+    saveState() {
+        if (this._meta.__hasSavedState) {
+            return this;
+        }
+        new Waiter(() => {
+            this._meta.__hasSavedState = true;
+            senjsCts.allRootChilds(this.info.id).foreach(function (view_child) {
+                if (view_child._cache == null) {
+                    view_child._cache = {
+                        __state: {}
+                    }
+                } else if (view_child.__state && view_child._cache.__state == null) {
+                    view_child._cache.__state = {};
+                }
+                view_child._cache.__state.scrollY = view_child._dom.scrollTop;
+                view_child._cache.__state.scrollX = view_child.getScrollX();
+            }, () => {
+                if (this.info.isPaused || this.info.state == senjs.constant.VIEW_STATE.pause) {
+                    this._dom.innerHTML = "";
+                }
+            });
+            if (this.info.isPaused || this.info.state == senjs.constant.VIEW_STATE.pause) {
+                this._dom.innerHTML = "";
+            }
+        }, this.getAnimationDuration() + 50);
+        return this;
+    }
+
+    /** Restore the state has been saved 'saveState()' of view before display it to screen */
+    restoreState() {
+        if (!this._meta.__hasSavedState) {
+            return this;
+        }
+        this._meta.__hasSavedState = false;
+        senjsCts.allChilds(this.info.id).foreach((child, position) => {
+            this._dom.appendChild(child._dom);
+        });
+        senjsCts.allRootChilds(this.info.id).filter(child => {
+            return child._cache != undefined
+                && child._cache.__state != undefined
+                && (((child._cache.__state.scrollX || 0) > 0 || (child._cache.__state.scrollY || 0) > 0) || false);
+        }).foreach(child => {
+            child.setScrollX(child._cache.__state.scrollX);
+            child.setScrollY(child._cache.__state.scrollY);
+        });
+        return this;
+    }
 }
-
-
 
 var orderControl = {
     thrOder: null,
@@ -2664,6 +2794,9 @@ var orderControl = {
             pnLoad: null,
             Type: type
         }
+        //if (view2) {
+
+        //}
         view1.info.arrangeLayoutType = type;
         item.fView.setPosition(app_constant.Position.ABSOLUTE);
         switch (item.Type) {
@@ -2700,7 +2833,6 @@ var orderControl = {
             }, view.getAnimationDuration() + 30);
         });
         item.fView.getParentView().events.override.onMeasured(function (view, view_width, view_height) {
-            console.log("relayout for order parent");
             view.postDelay(function () {
                 if (!view.info.isDestroy && view.info.isCreated && senjsCts.get(view.info.id) != null) {
                     orderControl.performOrder(item);
@@ -2831,57 +2963,121 @@ var orderControl = {
     }
 }
 
-var senjs = {
-    IOUtil: {
-        isAbsouteOrFixed: function (view) {
-            if (view.info.position == app_constant.Position.ABSOLUTE || view.info.position == app_constant.Position.FIXED) {
-                return true;
-            }
-            return false;
-        },
-        Anim3DUtil: {
-            threeDView: null,
-            init: function () {
-                this.threeDView = new new List();
-            },
-            add: function (view) {
-                info.threeDView.add(view);
-            },
-            remove: function (view) {
-                info.threeDView.remove(view);
-            },
-            clear: function () {
-                info.threeDView.clear();
-            }
-        },
-        selectText: function (view) {
-            var range = document.createRange();
-            range.selectNodeContents(view.control);
-            var sel = window.getSelection();
-            sel.removeAllRanges();
-            sel.addRange(range);
-        },
-        centerInParent: function (view) {
-            view._dom.style.justifyContent = "center";
-            view._dom.style.flexDirection = "column";
-            view._dom.style.display = "flex";
-        },
-        screenShot: function (view) {
-            var canvas = $ot(document.createElement("canvas"));
-            canvas.toFillParent();
-            view.addView(canvas);
-        },
-        blurView: function (view) {
-            var blur_view = senjs.IO.block();
-            blur_view.toFillParent();
-            for (var i = 0; i < 10; i++) {
-                var div = senjs.IO.block("100%", "10%").float("left");
-                div.background(i % 2 == 0 ? "rgba(100,100,100,0.6)" : "rgba(180,180,180,0.6)");
-                blur_view.addView(div);
-            }
-            view._dom.style.filter = "blur(50px)";
-            view.addView(blur_view);
-            return blur_view;
+var IOUtil = {
+    isAbsouteOrFixed: function (view) {
+        if (view.info.position == app_constant.Position.ABSOLUTE || view.info.position == app_constant.Position.FIXED) {
+            return true;
         }
+        return false;
+    },
+    Anim3DUtil: {
+        threeDView: null,
+        init: function () {
+            this.threeDView = new new List();
+        },
+        add: function (view) {
+            info.threeDView.add(view);
+        },
+        remove: function (view) {
+            info.threeDView.remove(view);
+        },
+        clear: function () {
+            info.threeDView.clear();
+        }
+    },
+    selectText: function (view) {
+        var range = document.createRange();
+        range.selectNodeContents(view.control);
+        var sel = window.getSelection();
+        sel.removeAllRanges();
+        sel.addRange(range);
+    },
+    centerInParent: function (view) {
+        view._dom.style.justifyContent = "center";
+        view._dom.style.flexDirection = "column";
+        view._dom.style.display = "flex";
+    },
+    screenShot: function (view) {
+        var canvas = $ot(document.createElement("canvas"));
+        canvas.toFillParent();
+        view.addView(canvas);
+    },
+    blurView: function (view) {
+        var blur_view = senjs.IO.block();
+        blur_view.toFillParent();
+        for (var i = 0; i < 10; i++) {
+            var div = senjs.IO.block("100%", "10%").float("left");
+            div.background(i % 2 == 0 ? "rgba(100,100,100,0.6)" : "rgba(180,180,180,0.6)");
+            blur_view.addView(div);
+        }
+        view._dom.style.filter = "blur(50px)";
+        view.addView(blur_view);
+        return blur_view;
+    }
+}
+
+var stackCreatedControl = new Array();
+var threadCreatedControl = 0;
+
+var _bindOnViewCreated = (control, callback) => {
+    if (!control.info.isCreated) {
+        control.info.state = senjs.constant.VIEW_STATE.renderring;
+        stackCreatedControl.push(control);
+        if (threadCreatedControl <= 0) {
+            var tempReCreate = new Array();
+
+            for (var k = 0; k < 1; k++) {
+                threadCreatedControl++;
+                new Thread(function (thread) {
+                    if (stackCreatedControl.length == 0 && tempReCreate.length == 0) {
+                        thread.remove();
+                        threadCreatedControl--;
+                        return;
+                    }
+                    else {
+                        while (tempReCreate.length > 0) {
+                            stackCreatedControl.unshift(tempReCreate.shift());
+                        }
+                        for (var i = 0; i < 10; i++) {
+                            if (stackCreatedControl.length > 0) {
+                                var view = stackCreatedControl.shift();
+                                if (view.info.parent != -1 && !view.info.isDestroy) {
+                                    var parent = senjs.app.senjs_viewPool.get(view.info.parent);
+                                    if (parent == null) {
+                                        senjsCts.remove(view.info.id);
+                                        continue;
+                                    } else if (parent.info.isDestroy || parent.info.isPaused) {
+                                        senjsCts.remove(view.info.id);
+                                        continue;
+                                    }
+                                    view.info.isCreated = true;
+                                    callback(view);
+                                    if (view.getAnimationDuration() > 0) {
+                                        view.postDelay(function (view) {
+                                            view.info.state = senjs.constant.VIEW_STATE.running;
+                                            senjsCts.allRootChilds().filter(v => {
+                                                return v != null && v.info.state == senjs.constant.VIEW_STATE.renderring;
+                                            }).foreach(function (vChild, pos) {
+                                                vChild.info.state = app_constant.VIEW_STATE.running;
+                                            });
+                                        }, view.getAnimationDuration());
+                                    }
+                                    else {
+                                        view.info.state = senjs.constant.VIEW_STATE.running;
+                                    }
+                                } else if (!view.info.isDestroy) {
+                                    tempReCreate.push(view);
+                                } else if (view.info.isDestroy) {
+                                    senjsCts.remove(view.info.id);
+                                }
+                            }
+                        }
+                    }
+                }, 10);
+            }
+        }
+    }
+    else {
+        callback(control);
     }
 }

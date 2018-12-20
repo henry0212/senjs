@@ -3,17 +3,22 @@ import { app } from '../../core/app-context.js'
 import { BaseTextView } from './base-text-view.js';
 import { app_constant } from '../../res/constant.js';
 import { app_size } from '../../res/dimen.js'
-const iconClassKey = "material-icons";
+import { senjs } from '../../index.js';
+let iconClassKey = "material-icons";
 
 
 export class IconView extends BaseTextView {
+
+    static set iconClassName(key) {
+        iconClassKey = key;
+    }
+
     constructor(icon_name) {
         super(document.createElement("i"));
         this.setHTML(icon_name)
-        .setClassName(iconClassKey)
-        .setDisplayType(app_constant.Display.INLINE_FLEX);
-        this._dom.style.justifyContent = "center";
-        this._dom.style.flexDirection = "column";
+            .setClassName(iconClassKey)
+            .setDisplayType(app_constant.Display.INLINE_FLEX)
+            .setGravity(senjs.constant.Gravity.CENTER)
         this.setIconSize(app_size.icon.normal);
     }
 
@@ -23,8 +28,8 @@ export class IconView extends BaseTextView {
     }
 
     onMeasured(view, w, h) {
-        
-    } 
+
+    }
 
     centerVertical() {
         if (this.info.arrangeLayoutType != -1) {
@@ -46,18 +51,22 @@ export class IconView extends BaseTextView {
         return this;
     }
 
+    setIcon(iconName) {
+        this.setHtml(iconName);
+        return this;
+    }
 
-    setIconSize(value){
+    setIconSize(value) {
         this.setTextSize(value);
         return this;
     }
 
-    setIconColor(color){
+    setIconColor(color) {
         this.setTextColor(color);
         return this;
     }
 
-    static init() {
+    static init(icon_class_name) {
         var css_icon = document.createElement("link");
         css_icon.href = 'css/material-icon.css';
         css_icon.rel = "stylesheet";

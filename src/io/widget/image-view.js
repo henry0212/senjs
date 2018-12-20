@@ -54,7 +54,7 @@ export class ImageView extends View {
     setImage(src) {
         this._cache.imageSrc = src;
         if (src == null || src.length == 0) {
-            this._view.pn_thum.setBackgroundColor("transparent");
+            this._view.pn_thum.setBackground("transparent");
             return;
         } else if (this._meta.scaleType != app_constant.ImageScale.AUTO) {
             this._view.pn_thum
@@ -103,12 +103,6 @@ export class ImageView extends View {
                 // } else if (ratio_height_image > ratio_width_image) {
                 //     this._view.pn_thum.setBackgroundSize("100%", "auto");
                 // }
-                console.log("ratio", {
-                    ratio_width_image: ratio_width_image,
-                    ratio_height_image: ratio_height_image,
-                    ratio_width: ratio_width,
-                    ratio_height: ratio_height
-                })
                 this._view.pn_thum._dom.style.backgroundSize = "contain";
 
                 break;
