@@ -8,12 +8,12 @@ import { Button } from "../src/io/widget/button.js";
 
 
 var firebase_config = {
-    apiKey: "AIzaSyALcClSZQiAt6KiDD0rqOGB9jf30V5T1aM",
-    authDomain: "senpos-220706.firebaseapp.com",
-    databaseURL: "https://senpos-220706.firebaseio.com",
-    projectId: "senpos-220706",
-    storageBucket: "senpos-220706.appspot.com",
-    messagingSenderId: "386131387515"
+    apiKey: "***********iAt6KiDD0rqOGB9jf30V5T1aM",
+    authDomain: "*********.firebaseapp.com",
+    databaseURL: "https://*********.firebaseio.com",
+    projectId: "********",
+    storageBucket: "********.appspot.com",
+    messagingSenderId: "**********"
 };
 firebase.initializeApp(firebase_config);
 
