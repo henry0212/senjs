@@ -8,14 +8,6 @@ import { StoryLayout } from './story-layout.js';
 import { RatioLayout } from './ratio-layout.js';
 import { BannerLayout } from './banner-layout.js';
 
-// export  BaseLayout;
-// export default DrawerLayout;
-// export default FrameLayout;
-// export default LinearLayout;
-// export default PagerLayout;
-// export default StickyLayout;
-// export default StoryLayout;
-
 export default {
     BaseLayout,
     DrawerLayout,

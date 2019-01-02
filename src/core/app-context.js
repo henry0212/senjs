@@ -321,6 +321,18 @@ var application_start = async () => {
 
 }
 
+/**
+ * @typedef {Object} ServiceArgument
+ * @property {number} id
+ * @property {function} remove
+ */
+
+/**
+ * @callback ServiceCallback
+ * @param {ServiceArgument} serviceArgument
+ * @param {*} args - orginal javascript event (e);
+ */
+
 const app_service_context = {
     override_key_up: null,
     override_key_down: null,
@@ -440,6 +452,7 @@ const app_service_context = {
         }
         window.addEventListener("popstate", function (e) {
             if (app_service_context.stackPopStates.size() > 0) {
+                app.preventBackRoutingCallback = true;
                 app_service_context.stackPopStates.pop().listener(e);
                 e.preventDefault();
                 return;
@@ -448,6 +461,10 @@ const app_service_context = {
         })
     },
     register: {
+        /**
+         * 
+         * @param {ServiceCallback} callback 
+         */
         onKeyUp: function (callback) {
             if (callback == null) {
                 app_service_context.override_key_up = null;
@@ -678,6 +695,7 @@ const app_service_context = {
 
 export var app = {
     mainFrame: app_context.APP_WINDOW,
+    preventBackRoutingCallback: false,
     info: {
         display: {
             SCREEN_WIDTH: 0,

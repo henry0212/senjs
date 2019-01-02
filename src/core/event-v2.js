@@ -248,6 +248,7 @@ export class ScrollListener extends BaseListener {
      * @returns {ScrollArgument};
      */
     get event_args() {
+        
         return this._args;
     }
 

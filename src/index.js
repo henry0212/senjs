@@ -6,8 +6,6 @@ import util from './util/index.js';
 import adapter from './adapter/index.js';
 import lib from './libs/index.js';
 import dialog from './io/dialog/index.js';
-import css from './css/index.js';
-
 export const senjs = {
     app: core.app,
     core: core,

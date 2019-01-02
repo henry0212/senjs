@@ -77,8 +77,12 @@ export class BaseAdapter {
         this.removeAllView();
         this._meta.min_view_width = -1;
         this._meta.min_view_height = -1;
+        baseListView = !isNaN(baseListView) ? senjsCts.get(baseListView) : baseListView;
+        if (baseListView == undefined || baseListView.view == undefined) {
+            return;
+        }
         this._listener.onRenderRootView = onRenderRootView;
-        this._view.view_parent = (typeof baseListView === "number") ? senjsCts.get(baseListView) : baseListView;
+        this._view.view_parent = baseListView.view.frame_dataList;
         if (this._view.view_parent == undefined || this._view.view_parent.info.isDestroy) {
             return;
         } else if (this._view.view_parent &&
@@ -95,10 +99,7 @@ export class BaseAdapter {
             return this;
         }
         this._view.view_parent.removeAllView();
-        this._view.view_scroller = (typeof baseListView === "number") ? senjsCts.get(baseListView) : baseListView;
-        while (!this._view.view_scroller.info.isScrollY && this._view.view_scroller.info.id > 0) {
-            this._view.view_scroller = this._view.view_scroller.getParentView();
-        }
+        this._view.view_scroller = baseListView.view.frame_scroller;
         if (this._view.view_scroller) {
             this._view.view_scroller.setScrollY(0);
             // this._view.view_scroller.appEvent.setOnScroll((view, iaScrollEvent, e) => {
@@ -188,8 +189,6 @@ export class BaseAdapter {
         if (position >= 0 && position < this.getCount()) {
             var meta = this._pool.metadata.get(position);
             meta.dataItem = this.getItem(position);
-            console.log(meta.groupView);
-
             if (meta.groupView) {
                 this._listener.onRenderConvertView(meta.dataItem, meta.position, meta.groupView.convertView);
                 //  (forceRenderAgain.bind(this))();
@@ -377,16 +376,16 @@ function renderFirstView() {
         clearInterval(this._waiter.task_recreate_first_view)
     }
     return new Promise(next => {
-        this._waiter.task_recreate_first_view = setInterval(() => {
+        this._waiter.task_recreate_first_view = setInterval(async () => {
+            if (meta == null || meta.groupView == null || meta.groupView.rootView == null) {
+                await this._bind(this._listener.onRenderRootView, this._view.view_parent);
+                clearInterval(this._waiter.task_recreate_first_view);
+                return;
+            }
             var count = meta.groupView.rootView.countChildNotYetCreated();
             if (count > 0) {
                 return;
             }
-            // do {
-            //     var count = meta.groupView.rootView.countChildNotYetCreated();
-            //     console.log(count_loop++);
-            // } while (count > 0);
-
             clearInterval(this._waiter.task_recreate_first_view);
             this._waiter.task_recreate_first_view = null;
             if (meta.groupView.rootView._dom.offsetHeight == 0) {
@@ -649,7 +648,7 @@ function needRenderMetaAt(index) {
         if (item.groupView) {
             item.groupView.rootView._dom.remove();
             this._pool.groupViews.add(item.groupView);
-            this._pool.groupUsings.remove(item.groupView)
+            this._pool.groupUsings.remove(item.groupView);
             item.groupView = null;
         }
     });

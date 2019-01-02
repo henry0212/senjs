@@ -76,7 +76,7 @@ class QuiclyLayout extends BaseLayout {
             this._cache.service_esc_hide = null;
         });
         this._cache.service_back_press = app.service.register.onBackPress("", "", () => {
-            board.dismiss();
+            self.dismiss();
         });
         this.btnBelow = new BaseLayout().toFillParent().setBackground("rgba(0,0,0,0.4)").setZIndex(10000 + self.childCount());
         this.btnBelow.setAcceptClickAnimation(false);
@@ -89,7 +89,7 @@ class QuiclyLayout extends BaseLayout {
         this.btnBelow.setTransitionAll(".3");
         this.btnBelow.setVisible(false);
         this.setOnTouch(this.onTouch);
-        this.btnBelow.setOnClick(this.onClicked);
+        this.btnBelow.setOnClick(this.onClicked.bind(this));
         this.setZIndex(10001);
 
     }
@@ -211,7 +211,6 @@ class QuiclyLayout extends BaseLayout {
     }
 
     onClicked(view) {
-        console.log(this);
         switch (view.getId()) {
             case this.btnBelow.getId():
                 if (this.listener.onTouchOutside != null) {

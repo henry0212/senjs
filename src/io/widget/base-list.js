@@ -8,8 +8,12 @@ import { BaseAdapter } from "../../adapter/base-adapter.js";
 export class BaseList extends View {
     constructor() {
         super(document.createElement("div"));
-        this.view = {};
-        this.view.frame_dataList = new FrameLayout(app_constant.Size.FILL_PARENT, app_constant.Size.WRAP_CONTENT);
+        this.view = {
+            frame_dataList: new FrameLayout(app_constant.Size.FILL_PARENT, app_constant.Size.WRAP_CONTENT),
+            frame_scroller: new FrameLayout().toFillParent("absolute").setScrollType(app_constant.ScrollType.VERTICAL)
+        };
+
+        this.setScrollType(app_constant.ScrollType.NONE);
 
         this.view.panel_loadmore = new senjs.layout.LinearLayout("100%")
             .toLeftParent().toRightParent()
@@ -31,12 +35,17 @@ export class BaseList extends View {
             onScrollToBottom: null
         };
 
-
+        this.view.frame_scroller.addView(this.view.frame_dataList);
 
         this._meta.hasBindScroll = false;
         this.view.panel_loadmore.addView(this.view.icon_loadmore);
-        this.addView(this.view.frame_dataList)
+        this.addView(this.view.frame_scroller)
             .addView(this.view.panel_loadmore);
+
+        this.events.override.onScrolled = ((listener) => {
+            this.view.frame_scroller.events.override.onScrolled(listener);
+            return this;
+        })
     }
 
     onCreated(view) {
@@ -55,7 +64,7 @@ export class BaseList extends View {
             var rootView = new FrameLayout();
             rootView.addView(view);
             rootView.setTag({ position: index, convertView: view });
-            rootView.setOnClick(function (view) {
+            rootView.setOnClick((view) => {
                 if (self.listener.onItemClicked != null) {
                     self.listener.onItemClicked(view.getTag().convertView, adapter.getItem(view.getTag().position), view.getTag().position);
                 } else {
@@ -63,8 +72,7 @@ export class BaseList extends View {
                 }
             });
 
-            rootView.setOnLongClick(function (view) {
-                console.log("long click");
+            rootView.setOnLongClick((view) => {
                 if (self.listener.onItemLongClicked) {
                     self.listener.onItemLongClicked(adapter.getView(view.getTag().position), adapter.getItem(view.getTag()), view.getTag());
                 } else {
@@ -82,7 +90,7 @@ export class BaseList extends View {
             return rootView;
         }
         if (this.info.isCreated) {
-            this.adapter._bind(onRenderDataView, this.view.frame_dataList.info.id);
+            this.adapter._bind(onRenderDataView, this.info.id);
         } else {
             this.view.frame_dataList.events.override.onCreated(() => {
                 this.setAdapter(adapter);
@@ -104,8 +112,7 @@ export class BaseList extends View {
     setOnScrollToBottom(callback) {
         if (!this._meta.hasBindScroll) {
             this._meta.hasBindScroll = true;
-            this.events.override.onScrolled((view, ia_event) => {
-                console.log(ia_event);
+            this.view.frame_scroller.events.override.onScrolled((view, ia_event) => {
                 if (this.listener.onScrollToBottom && ia_event.scrollY > view._dom.scrollHeight - view._dom.offsetHeight - 5) {
                     this.listener.onScrollToBottom(this);
                 }
@@ -125,5 +132,41 @@ export class BaseList extends View {
         return this;
     }
 
+    setPadding(value) {
+        this.view.frame_scroller.setPadding(value);
+        return this;
+    }
 
+    setPaddingLeft(value) {
+        this.view.frame_scroller.setPaddingLeft(value);
+        return this;
+    }
+
+    setPaddingRight(value) {
+        this.view.frame_scroller.setPaddingRight(value);
+        return this;
+    }
+
+    setPaddingTop(value) {
+        this.view.frame_scroller.setPaddingTop(value);
+        return this;
+    }
+
+    setPaddingBottom(value) {
+        this.view.frame_scroller.setPaddingBottom(value);
+        return this;
+    }
+
+    setScrollBarHidden(flag) {
+        this.view.frame_scroller.setRight(flag ? -20 : 0).setPaddingRight(20);
+        return this;
+    }
+
+    setHeightSameContent(flag) {
+        if (flag) {
+            this.view.frame_scroller.setPosition(app_constant.Position.RELATIVE).setWidth("100%").setHeight("auto");
+        } else {
+            this.view.frame_scroller.setPosition(app_constant.Position.ABSOLUTE).toFillParent().setWidth("auto").setHeight("auto");
+        }
+    }
 }

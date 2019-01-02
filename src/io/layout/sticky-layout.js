@@ -5,6 +5,7 @@ import { app, senjsCts } from "../../core/app-context.js";
 import { BaseLayout } from "./base-layout.js";
 import { app_size } from "../../res/dimen.js";
 import { senjs } from "../../index.js";
+import { View } from "../../core/view.js";
 
 const compareBound = function (view, touch_x, touch_y) {
     return (touch_x >= view.getRelativeLeft())
@@ -14,10 +15,15 @@ const compareBound = function (view, touch_x, touch_y) {
 }
 export class StickyLayout extends BaseLayout {
 
+    /**
+     * 
+     * @param {View} focusView 
+     */
     constructor(focusView) {
         super();
-        this._view = {};
-        this._view.focusView = focusView;
+        this._view = {
+            focusView: focusView
+        };
 
         this._meta = {
             left: this._view.focusView.getRelativeLeft(),
@@ -120,8 +126,12 @@ export class StickyLayout extends BaseLayout {
     }
 
     override_onMeasured(view, width, height) {
+        if (this._view.focusView.getRelativeTop() + height > senjs.app.info.display.SCREEN_HEIGHT) {
+            this._meta.top = this._view.focusView.getRelativeTop() - height;
+        }
         this.setLeft(this._meta.left)
             .setTop(this._meta.top);
+
     }
 
     override_onDestroy() {

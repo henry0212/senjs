@@ -122,7 +122,7 @@ export class Combobox extends LinearLayout {
         listView.setAdapter(adapter);
         listView.setWidth("100%");
         stickyList.addView(listView);
-
+        console.log(this._meta.pickerData)
         listView.setOnItemClicked((view, dataItem, position) => {
             this._meta.selected_index = position;
             this._view.label.removeAllView();
@@ -138,6 +138,7 @@ export class Combobox extends LinearLayout {
         stickyList.events.override.onDestroy(() => {
             this._meta.isShowingBox = false;
         });
+        listView.setHeightSameContent(true);
     }
 
     hideSelectBox() {

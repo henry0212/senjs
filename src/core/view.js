@@ -57,10 +57,9 @@ export class View {
         Object.getOwnPropertyNames(Object.getPrototypeOf(this)).filter((item) => {
             return item.indexOf("override_") > -1;
         }).forEach(ovr_func => {
-            console.log(ovr_func);
             var real_func = ovr_func.replace("override_", "");
             if (this.events.override[real_func] != undefined) {
-                this.events.override[real_func](this[ovr_func].bind(self));
+                this.events.override[real_func](this[ovr_func].bind(this));
             }
         })
     }
@@ -1117,12 +1116,12 @@ export class View {
         switch (type) {
             case app_constant.ScrollType.VERTICAL:
                 this._dom.style.overflowX = "hidden";
-                this._dom.style.overflowY = "overlay";
+                this._dom.style.overflowY = "auto";
                 this.info.isScrollX = false;
                 this.info.isScrollY = true;
                 break;
             case app_constant.ScrollType.HORIZONTAL:
-                this._dom.style.overflowX = "overlay";
+                this._dom.style.overflowX = "auto";
                 this._dom.style.overflowY = "hidden";
                 this.info.isScrollY = false;
                 this.info.isScrollX = true;
@@ -1354,60 +1353,55 @@ export class View {
 
 
     getLeft() {
-        var left = 0;
-        if (this.info.left == -1) {
-            if (IOUtil.isAbsouteOrFixed(this)) {
-                left = parseInt(this._dom.style.left);
-            }
-            else {
-                left = parseInt(this._dom.style.marginLeft);
-            }
-        }
-        else {
-            return this.info.left;
-        }
-        return isNaN(left) ? 0 : left;
+        // var left = 0;
+        // if (this.info.left == -1) {
+        //     if (IOUtil.isAbsouteOrFixed(this)) {
+        //         left = parseInt(this._dom.style.left);
+        //     }
+        //     else {
+        //         left = parseInt(this._dom.style.marginLeft);
+        //     }
+        // }
+        // else {
+        //     return this.info.left;
+        // }
+        // return isNaN(left) ? 0 : left;
+        return parseInt(IOUtil.isAbsouteOrFixed(this) ? getComputedStyle(this._dom).left : getComputedStyle(this._dom).marginLeft);
+
     }
 
 
     getRight() {
-        if (IOUtil.isAbsouteOrFixed(this)) {
-            return parseInt(this._dom.style.right);
-        }
-        else {
-            return parseInt(this._dom.style.marginRight);
-        }
+        // if (IOUtil.isAbsouteOrFixed(this)) {
+        //     return parseInt(this._dom.style.right);
+        // }
+        // else {
+        //     return parseInt(this._dom.style.marginRight);
+        // }
+        return parseInt(IOUtil.isAbsouteOrFixed(this) ? getComputedStyle(this._dom).right : getComputedStyle(this._dom).marginRight);
     }
 
 
     getTop() {
-        var top = 0;
-        if (this.info.top == -1) {
-            if (IOUtil.isAbsouteOrFixed(this)) {
-                top = parseInt(this._dom.style.top);
-            }
-            else {
-                top = parseInt(this._dom.style.marginTop);
-            }
-        }
-        else {
-            return this.info.top;
-        }
-        return isNaN(top) ? 0 : top;
+        // var top = 0;
+        // if (IOUtil.isAbsouteOrFixed(this)) {
+        //     top = getComputedStyle(this).top;
+        // }
+        // else {
+        //     top = getComputedStyle(this).marginTop;
+        // }
+        // return isNaN(top) ? 0 : top;
+        return parseInt(IOUtil.isAbsouteOrFixed(this) ? getComputedStyle(this._dom).bottom : getComputedStyle(this._dom).marginBottom);
     }
 
 
     getBottom() {
-        if (IOUtil.isAbsouteOrFixed(this)) {
-            return parseInt(this._dom.style.bottom);
-        }
-        else {
-            return parseInt(this._dom.style.marginBottom);
-        }
+        return parseInt(IOUtil.isAbsouteOrFixed(this) ? getComputedStyle(this._dom).bottom : getComputedStyle(this._dom).marginBottom);
     }
 
 
     setLeft(value) {
+        var old = this.getLeft();
         if (isNaN(value)) {
             if (IOUtil.isAbsouteOrFixed(this)) {
                 this._dom.style.left = value;
@@ -1425,8 +1419,10 @@ export class View {
                 this._dom.style.marginLeft = parseInt(value) + app_constant.SIZE_UNIT;
             }
         }
-        this.events.system.reLayout();
-
+        if (this.info.left != value) {
+            this.events.system.reLayout();
+        }
+        this.info.left = value;
         return this;
     }
 
@@ -1449,7 +1445,10 @@ export class View {
                 this._dom.style.marginRight = parseInt(value) + app_constant.SIZE_UNIT;
             }
         }
-        this.events.system.reLayout();
+        if (this.info.right != value) {
+            this.events.system.reLayout();
+        }
+        this.info.right = value;
         return this;
     }
 
@@ -1478,7 +1477,10 @@ export class View {
                 this.events.layout.onBelowOf();
             }
         }
-        this.events.system.reLayout();
+        if (this.info.top != value) {
+            this.events.system.reLayout();
+        }
+        this.info.top = value;
         return this;
     }
 
@@ -1507,7 +1509,10 @@ export class View {
                 this.events.layout.onBelowOf();
             }
         }
-        this.events.system.reLayout();
+        if (this.info.bottom != value) {
+            this.events.system.reLayout();
+        }
+        this.info.bottom = value;
         return this;
     }
 

@@ -134,9 +134,9 @@ export class ImageRefactor {
             var tv = setInterval(function () {
                 if (self._meta.isLoaded) {
                     if (mineType) {
-                        next(trimCanvas(self.canvas).toDataURL("image/jpeg", quality / 100 || 1));
+                        next(trimCanvas(self.canvas).toDataURL(mineType, quality / 100 || 1));
                     } else {
-                        next(trimCanvas(self.canvas).toDataURL(quality / 100 || 1));
+                        next(trimCanvas(self.canvas).toDataURL("image/jpeg", quality / 100 || 1));
                     }
                     clearInterval(tv);
                 }
