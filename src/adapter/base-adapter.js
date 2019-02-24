@@ -5,6 +5,8 @@ import { Waiter } from '../core/waiter.js';
 import { senjs } from '../index.js';
 import { ScrollListener } from '../core/event-v2.js';
 
+
+
 export class BaseAdapter {
     constructor(dataList) {
         if (dataList == undefined) {
@@ -77,7 +79,9 @@ export class BaseAdapter {
         this.removeAllView();
         this._meta.min_view_width = -1;
         this._meta.min_view_height = -1;
+        this._view.baseListView = baseListView;
         baseListView = !isNaN(baseListView) ? senjsCts.get(baseListView) : baseListView;
+        console.log("baseListView", baseListView, this._meta.list_data);
         if (baseListView == undefined || baseListView.view == undefined) {
             return;
         }
@@ -180,7 +184,7 @@ export class BaseAdapter {
 
     async notifyDataSetChanged() {
         if (!(_reBind.bind(this))()) {
-            await this._bind(this._listener.onRenderRootView, this._view.view_parent);
+            await this._bind(this._listener.onRenderRootView, this._view.baseListView);
         }
         return this;
     }
@@ -201,6 +205,7 @@ export class BaseAdapter {
 
     async setList(list) {
         this._meta.list_data = Array.isArray(list) ? new List(list) : list;
+        console.log("list", this._meta.list_data);
         this._cache.tracking_scroller.current_y = 0;
         this._cache.tracking_scroller.current_x = 0;
         if (this._view.view_scroller) {
@@ -258,7 +263,8 @@ export class BaseAdapter {
         (updateRowCounter.bind(this))();
         (updateContainerHeight.bind(this))();
         this._meta.count_row = (this.getCount() - (this.getCount() % this._meta.number_of_col)) / this._meta.number_of_col;
-        for (var i = currentIndex; i < this.getCount(); i++) {
+        var end = this.getCount();
+        for (var i = currentIndex; i < end; i++) {
             (newMeta.bind(this))(i).offsetTop += plus_offsetTop;
         }
         new Waiter(() => {
@@ -348,7 +354,8 @@ async function initMeta() {
                 (renderViewAt.bind(this))(i);
             }
 
-            for (var i = number_visible_item; i < this.getCount(); i++) {
+            var end = this.getCount();
+            for (var i = number_visible_item; i < end; i++) {
                 (newMeta.bind(this))(i);
             }
 
@@ -356,10 +363,11 @@ async function initMeta() {
                 (drawSizeAgain.bind(this))(this._pool.metadata.get(i));
             }
         } else {
-            for (var i = 1; i < this.getCount(); i++) {
+            var end = this.getCount();
+            for (var i = 1; i < end; i++) {
                 (renderViewAt.bind(this))(i);
             }
-            for (var i = 0; i < this.getCount(); i++) {
+            for (var i = 0; i < end; i++) {
                 (drawSizeAgain.bind(this))(this._pool.metadata.get(i));
             }
 

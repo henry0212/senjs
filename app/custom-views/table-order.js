@@ -30,8 +30,8 @@ export class TableOrderView extends senjs.layout.DrawerLayout {
                 this.closePage();
             } else if (e.keyCode == 16 || e.keyCode == 192) {
                 if (this.isOpening()) {
-                    this.closePage();   
-                }else{
+                    this.closePage();
+                } else {
                     this.openPage();
                 }
             }
@@ -85,7 +85,7 @@ export class TableOrderView extends senjs.layout.DrawerLayout {
     }
 
     /**
-     * 
+     *f
      * @param {TableOrderModel} tableOrder 
      * @param {*} position 
      * @param {ViewOrderInfo} convertView 

@@ -82,11 +82,14 @@ function openHttpRequest(method, url) {
     if (this._options.allowCORS) {
         var httpRequest = new XMLHttpRequest();
         if ("withCredentials" in httpRequest) {
+            console.log("withCredentials")
             httpRequest.open(method, url, true);
         } else if (typeof XDomainRequest != "undefined") {
+            console.log("Access")
             httpRequest = new XDomainRequest();
             httpRequest.open(method, url);
         }
+        httpRequest.setRequestHeader("Access-Control-Allow-Origin", "*");
     } else {
         httpRequest = new XMLHttpRequest();
         httpRequest.open(method, url, true);

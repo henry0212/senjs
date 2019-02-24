@@ -118,4 +118,22 @@ export class FilePicker {
             reader.readAsArrayBuffer(file);
         })
     }
+
+    static loadFileToBlob(file) {
+        return new Promise(next => {
+            var reader = new FileReader();
+            reader.onloadend = function () {
+                var byteCharacters = atob((reader.result.slice(reader.result.indexOf(',') + 1)));
+                var byteNumbers = new Array(byteCharacters.length);
+                for (var i = 0; i < byteCharacters.length; i++) {
+                    byteNumbers[i] = byteCharacters.charCodeAt(i);
+                }
+                var byteArray = new Uint8Array(byteNumbers);
+                var blob = new Blob([byteArray], { type: 'video/mp4' });
+                var url = URL.createObjectURL(blob);
+                next(url);
+            }
+            reader.readAsDataURL(file);
+        });
+    }
 }

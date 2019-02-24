@@ -28,6 +28,8 @@ export class BannerLayout extends FrameLayout {
             wrapper_content: new senjs.layout.FrameLayout("auto", "100%")
                 .setBackground(senjs.res.material_colors.White)
                 .toLeftParent()
+                .setScrollType(senjs.constant.ScrollType.VERTICAL)
+                .setClassName('force_prevent_scroll')
         }
         this.setBackground(senjs.res.material_colors.Grey.g100);
 
@@ -73,6 +75,7 @@ export class BannerLayout extends FrameLayout {
                 }).foreach(item => {
                     item.removeClassName("force_prevent_scroll")
                 });
+                this._views.wrapper_content.removeClassName('force_prevent_scroll');
 
             } else if (!hasPreventScroll && view.getHeight() + arg.scrollY < view._dom.scrollHeight) {
                 hasPreventScroll = true;
@@ -81,6 +84,7 @@ export class BannerLayout extends FrameLayout {
                 }).foreach(item => {
                     item.setClassName("force_prevent_scroll")
                 });
+                this._views.wrapper_content.setClassName('force_prevent_scroll');
             }
         });
 

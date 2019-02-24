@@ -21,16 +21,19 @@ export class BaseLayout extends View {
 
     showLoading() {
         if (this._cache.loadingView == null) {
-            this._cache.loadingView = senjs.IO.loadingForComponent(this);
-            this._cache.loadingView.show();
+            this._cache.loadingView = new senjs.widget.LoadingView().toFillParent();
+            this._cache.loadingView.setCircleColor(senjs.res.material_colors.Blue.g500).setBackground("rgba(255,255,255,0.1)");
+            this.addView(this._cache.loadingView);
         }
+        return this;
     }
 
     hideLoading() {
         if (this._cache.loadingView != null) {
-            this._cache.loadingView.hide();
+            this._cache.loadingView.destroy();
             this._cache.loadingView = null;
         }
+        return this;
     }
 
     dismissQuicklyLayout() {

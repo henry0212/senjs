@@ -202,6 +202,9 @@ export class ClickListener extends BaseListener {
             view._dom.onclick = onClick;
         }
         view.performClick = onclick;
+        view.events.perform.click = () => {
+            this._callListener(view);
+        };
         return this;
     }
 }
@@ -248,7 +251,7 @@ export class ScrollListener extends BaseListener {
      * @returns {ScrollArgument};
      */
     get event_args() {
-        
+
         return this._args;
     }
 

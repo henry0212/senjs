@@ -172,8 +172,16 @@ export class DbUtil {
                         rs.id = doc.id;
                         return rs;
                     }));
-                    data_caching.products = data_caching.products.orderByAscending("createdAt")
-                    saveListToLocal(table_name.PRODUCT, data_caching.products);
+                    data_caching.products = data_caching.products.orderByAscending("createdAt");
+                    data_caching.products.addAll(data_caching.products);
+                    data_caching.products.addAll(data_caching.products);
+                    data_caching.products.addAll(data_caching.products);
+                    data_caching.products.addAll(data_caching.products);
+                    data_caching.products.addAll(data_caching.products);
+                    data_caching.products.addAll(data_caching.products);
+                    data_caching.products.addAll(data_caching.products);
+                    data_caching.products.addAll(data_caching.products);
+                    // saveListToLocal(table_name.PRODUCT, data_caching.products);
                     if (this.callSuccess(data_caching.products.toArray(), request_code.ALL_PRODUCT) == false) {
                         next(data_caching.products.clone().toArray())
                     }

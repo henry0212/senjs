@@ -14,13 +14,13 @@ export class EditText extends BaseTextView {
             .setBackground("transparent");
         this._dom.style.boxSizing = "border-box";
         this.setTextSize
-        this.listener = {
+        this._listener = {
             onTextChanged: null,
             onKeyUp: null,
             onKeyChanged: null
         };
 
-        new KeyChangeListener(this.override_onKeyChange)
+        new KeyChangeListener(this.override_onKeyChange.bind(this))
             .bindToView(this);
     }
 
@@ -34,14 +34,14 @@ export class EditText extends BaseTextView {
     }
 
     override_onKeyChange(view, args) {
-        if (this.listener.onTextChanged) {
-            this.listener.onTextChanged(this, this.getText());
+        if (this._listener.onTextChanged) {
+            this._listener.onTextChanged(this, this.getText());
         }
-        if (args.action == KeyChangeListener.MotionAction.KEY_UP && this.listener.onKeyUp) {
-            this.listener.onKeyUp(this, args.keycode, args._e);
+        if (args.action == KeyChangeListener.MotionAction.KEY_UP && this._listener.onKeyUp) {
+            this._listener.onKeyUp(this, args.keycode, args._e);
         }
-        if (this.listener.onKeyChanged) {
-            this.listener.onKeyChanged(view, args);
+        if (this._listener.onKeyChanged) {
+            this._listener.onKeyChanged(view, args);
         }
     }
 
@@ -65,12 +65,12 @@ export class EditText extends BaseTextView {
      *  
      */
     setOnKeyUp(listener) {
-        this.listener.onKeyUp = listener;
+        this._listener.onKeyUp = listener;
         return this;
     }
 
     setOnTextChanged(listener) {
-        this.listener.onTextChanged = listener;
+        this._listener.onTextChanged = listener;
         return this;
     }
 
@@ -84,7 +84,7 @@ export class EditText extends BaseTextView {
      * @returns {EditText}
      */
     setOnKeyChanged(listener) {
-        this.listener.onKeyChanged = listener;
+        this._listener.onKeyChanged = listener;
         return this;
     }
 }

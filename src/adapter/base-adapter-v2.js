@@ -16,10 +16,12 @@ import { ScrollListener } from "../core/event-v2.js";
 
 /**
  * @callback onRenderConvertView
- * @param { View } view
  * @param { any }  dataItem
  * @param { number } index
+ * @param { View } view
  */
+
+var queue_push_height = [];
 
 export class BaseAdapterV2 {
 
@@ -268,16 +270,20 @@ class AdapterUtil {
                 this._meta.lim_bottom = Math.floor(this._meta.container_height + this._meta.est_view_height * 2);
                 var no_showing = (Math.round((this._meta.lim_bottom + this._meta.lim_top) / this._meta.est_view_height)) * this.baseAdapter._meta.no_column;
                 if (this.baseAdapter.getCount() > no_showing) {
+                    this.baseAdapter.getList().map((item, index) => {
+                        this.newMeta(index);
+                    });
                     for (var i = 1; i < no_showing; i++) {
                         this.renderRootView(i);
                     }
 
-                    for (var i = no_showing; i < this.baseAdapter.getCount(); i++) {
-                        this.newMeta(i);
-                    }
+                    // for (var i = no_showing; i < this.baseAdapter.getCount(); i++) {
+                    //     this.newMeta(i);
+                    // }
 
                 } else {
-                    for (var i = 1; i < this.baseAdapter.getCount(); i++) {
+                    var end = this.baseAdapter.getCount();
+                    for (var i = 1; i < end; i++) {
                         this.renderRootView(i);
                     }
                 }
@@ -304,15 +310,20 @@ class AdapterUtil {
         } else if (this._pool.metaDataList.size() < this.baseAdapter.getCount()) {
             this.updateRowCounter();
             let begin = this._pool.metaDataList.size(), end = this.baseAdapter.getCount();
+            // this._pool.metaDataList.map((item, i) => {
+            //     if (i >= begin && i < end) {
+            //         var meta = this.newMeta(i);
+            //     }
+            // })
             for (var i = begin; i < end; i++) {
                 var meta = this.newMeta(i);
-                var more_anchor_y = this._pool.metaDataList
-                    .filter(item => {
-                        return item.rowIndex < meta.rowIndex;
-                    }).reduce((sum, current) => {
-                        return sum + current.more_height;
-                    }, 0);
-                meta.anchor_y += more_anchor_y;
+                // var more_anchor_y = this._pool.metaDataList
+                //     .filter(item => {
+                //         return item.rowIndex < meta.rowIndex;
+                //     }).reduce((sum, current) => {
+                //         return sum + current.more_height;
+                //     }, 0);
+                // meta.anchor_y += more_anchor_y;
             }
         } else {
             this._meta.row_counter = (this.baseAdapter.getCount() - (this.baseAdapter.getCount() % this.baseAdapter._meta.no_column)) / this.baseAdapter._meta.no_column;
@@ -495,6 +506,7 @@ class AdapterUtil {
                 groupView.root_view
                     .setTop(meta.anchor_y)
                     .setLeft(meta.anchor_x);
+                this.detectRealSize(meta);
             }
         });
     }
@@ -514,6 +526,7 @@ class AdapterUtil {
         this._pool.metaDataList.filter(meta => {
             return !meta.has_rendered && !meta.isOutside;
         }).foreach(meta => {
+            // meta.more_height = 0;
             meta.has_rendered = true;
             var groupView;
             if (this._pool.group_view_unused.size() == 0) {
@@ -549,6 +562,7 @@ class AdapterUtil {
                 this._pool.metaDataList
                     .filter(i => { return i.rowIndex > meta.rowIndex })
                     .filter((item, index) => {
+                        console.log("add more size", item);
                         item.more_height -= more_height;
                         item.anchor_y += more_height;
                         return item.groupView;
@@ -562,7 +576,9 @@ class AdapterUtil {
                 this._pool.metaDataList
                     .filter(i => { return i.rowIndex > meta.rowIndex })
                     .filter((item, index) => {
+                        console.log("old anchor", item.anchor_y, item.anchor_y + (meta.more_height - old_more_height));
                         item.anchor_y += (meta.more_height - old_more_height);
+                        console.log("add more size", item);
                         return item.group_view;
                     }).foreach(item => {
                         item.group_view.root_view.setTop(item.anchor_y);

@@ -4,6 +4,8 @@ import { app_constant } from "../../res/constant.js";
 import { FrameLayout } from "../layout/frame-layout.js";
 import { senjs } from "../../index.js";
 import { BaseAdapter } from "../../adapter/base-adapter.js";
+import { List } from "../../util/list-util.js";
+import { BaseAdapterV2 } from "../../adapter/base-adapter-v2.js";
 
 export class BaseList extends View {
     constructor() {
@@ -52,6 +54,31 @@ export class BaseList extends View {
 
     }
 
+    /**
+     * 
+     * @param {Array | List} list_data 
+     */
+    setList(list_data) {
+        if (this.adapter == null) {
+            this.adapter = new BaseAdapterV2(list_data);
+            this.setAdapter(this.adapter)
+        } else {
+            this.adapter.setList(list_data);
+        }
+    }
+
+    /**
+     * 
+     * @param {import("../../adapter/base-adapter-v2.js").onRenderConvertView} returnView 
+     */
+    setView(returnView) {
+        if (this.adapter == null) {
+            this.adapter = new BaseAdapterV2(list_data);
+            this.setAdapter(this.adapter)
+        }
+        this.adapter.setView(returnView);
+        return this;
+    }
 
     /**
      * 
@@ -168,5 +195,6 @@ export class BaseList extends View {
         } else {
             this.view.frame_scroller.setPosition(app_constant.Position.ABSOLUTE).toFillParent().setWidth("auto").setHeight("auto");
         }
+        return this;
     }
 }

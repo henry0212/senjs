@@ -125,7 +125,7 @@ export class DrawerLayout extends BaseLayout {
                 }
             })
         }
-        child.events.override.onAddView(this.override_onAddView);
+        child.events.override.onAddView(this.override_onAddView.bind(this));
     }
 
     onTouched(view, ia_touch_event) {
@@ -426,21 +426,24 @@ function newDimView(drawerLayout) {
         .setAbsoluteZIndex(drawerLayout.getZIndex() - 1)
         .setTransition("opacity", '.1')
         .setBackground(dim_background);
+
     dim.setOnClick(() => {
         drawerLayout.closePage();
     })
     var isPreventTouch = false;
+    let backEvent = app.service.register.onBackPress("", "", () => {
+        drawerLayout.closePage();
+        backEvent = null;
+    });
     dim.setOnTouch((view, ia_touch_event) => {
         if (!isPreventTouch) {
             drawerLayout.onTouched(drawerLayout, ia_touch_event);
         }
     })
-    let backEvent = app.service.register.onBackPress("", "", () => {
-        drawerLayout.closePage();
-        backEvent = null;
-    });
+
     dim.events.override.onDestroy(() => {
         drawerLayout._view.dim_view = null;
+        console.log("backEvent",backEvent);
         if (backEvent) {
             backEvent.remove();
         }

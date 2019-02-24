@@ -70,6 +70,7 @@ export class IconView extends BaseTextView {
         var css_icon = document.createElement("link");
         css_icon.href = 'css/material-icon.css';
         css_icon.rel = "stylesheet";
+        css_icon.type = 'text/css';
         css_icon.onload = function () {
         }
         document.getElementsByTagName("head")[0].appendChild(css_icon);

@@ -43,7 +43,7 @@ export const app_size = {
 
 
 function init() {
-    document.body.style.fontSize = isMobile.any() ? "5pt" : "11pt";
+    document.body.style.fontSize = isMobile.any() ? "10pt" : "12pt";
     var ratio_size = (isMobile.any() || app.info.display.SCREEN_WIDTH < app.info.display.SCREEN_HEIGHT) ? 3 : 1.8;
 
 

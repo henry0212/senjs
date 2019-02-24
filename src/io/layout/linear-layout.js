@@ -1,9 +1,15 @@
 import { BaseLayout } from "./base-layout.js";
 import { app_constant } from "../../res/constant.js";
+import { senjs } from "../../index.js";
 
 
 
 export class LinearLayout extends BaseLayout {
+
+    static get GRAVITY(){
+        return senjs.constant.Gravity;
+    }
+
     constructor(width, height) {
         super(width, height);
         this._meta.gravity = app_constant.Gravity.TOP_LEFT;

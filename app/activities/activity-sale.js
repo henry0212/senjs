@@ -22,6 +22,7 @@ export class SaleActivity extends senjs.layout.FrameLayout {
         this.dbUtil = new DbUtil();
         this.dbUtil.setOnSuccess(this.onRequestSuccess.bind(this));
         this.dbUtil.setOnFailed(this.onRequestFailed.bind(this));
+        
     }
 
     onCreated() {
@@ -38,6 +39,7 @@ export class SaleActivity extends senjs.layout.FrameLayout {
         this.initViews();
         this.initData();
         this.initEvent();
+        
     }
 
     initViews() {
@@ -60,7 +62,6 @@ export class SaleActivity extends senjs.layout.FrameLayout {
             table_order_view: new TableOrderView(),
             btn_order_temp: new IconView("shopping_cart")
         }
-
 
         this.views.panel_left
             .toLeftParent()
@@ -462,7 +463,7 @@ export class SaleActivity extends senjs.layout.FrameLayout {
         var str_table = orderTable.tables.reduce((result, current) => {
             return result.length > 0 ? (result + ", " + current.tableNo) : (result + current.tableNo);
         }, "");
-        this.views.btn_table.setText(my_context.strings.table + ": " + str_table);
+            this.views.btn_table.setText(my_context.strings.table + ": " + str_table);
         this.adapters.adapter_order_detail.setList(orderTable.order.orderDetails);
         return this;
     }

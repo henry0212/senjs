@@ -26,7 +26,7 @@ export class ProductActivity extends BaseActivity {
         this.dbUtil = DbUtil.newInstance();
         this.dbUtil.setOnSuccess(this.onRequestSuccess.bind(this));
         this.dbUtil.setOnFailed(this.onRequestFailed.bind(this));
-     //    this.dbUtil.createSomeProducts();
+        //    this.dbUtil.createSomeProducts();
         this._meta.category_selecting = null;
     }
 
@@ -209,7 +209,7 @@ export class ProductActivity extends BaseActivity {
             case DbUtil.request_code.ALL_PRODUCT:
                 this._data.products = new List(responseData).orderByAscending("createdAt");
                 this.adapters.adapter_product.setList(this._data.products);
-                this.views.lb_product.setText(my_context.strings.product + ": <b>" + dataItem.name + "</b>" + " (" + this.adapters.adapter_product.getCount() + ")");
+                this.views.lb_product.setText(my_context.strings.product + ": <b>All</b>" + " (" + this.adapters.adapter_product.getCount() + ")");
                 break;
             case DbUtil.request_code.NEW_CATEGORY:
                 this.adapters.adapter_category.addItem(new CategoryModel().fromJSON(responseData));

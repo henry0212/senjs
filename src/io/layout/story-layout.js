@@ -11,6 +11,7 @@ import { TextView } from "../widget/text-view.js";
 import { app_size } from "../../res/dimen.js";
 import { Waiter } from "../../core/waiter.js";
 import { senjs } from "../../index.js";
+import { RouterUtil } from "../../util/router-util.js";
 
 const _view_config = {
     limit_text_toolbar_left: 10,
@@ -41,7 +42,7 @@ export class StoryLayout extends BaseLayout {
         this._view.toolbar
             .setBackground(app_theme.storyLayout.toolbar)
             .setWidth("100%").toLeftParent().toRightParent().toTopParent()
-            .setHeight(ScreenUtil.calculateHeightSize(8))
+            .setHeight('4em')
             .setShadow(app_theme.storyLayout.toolbar_shadow, 0, 0, 2);
 
         this._view.toolbar_pn_left = new LinearLayout("25%", "100%").setGravity(app_constant.Gravity.CENTER_LEFT);
@@ -94,7 +95,7 @@ export class StoryLayout extends BaseLayout {
         })
 
         this._view.toolbar_lb_left.setOnClick(() => {
-            this._view.toolbar_btn_back.performClick();
+            this._view.toolbar_btn_back.events.perform.click();
         })
         this.newPage();
     }
@@ -192,6 +193,7 @@ export class StoryLayout extends BaseLayout {
             this._view.toolbar_btn_back.setVisibility(app_constant.Visibility.GONE);
             this._view.toolbar_lb_left.setVisibility(app_constant.Visibility.GONE);
         }
+        this.hasRegisterRouting = false;
         var service_back = app.service.register.onBackPress(null, null, () => {
             try {
                 if (this._meta.pages.size() == 1 && this._meta.instances.size() > 0) {
@@ -204,6 +206,7 @@ export class StoryLayout extends BaseLayout {
         this.events.override.onDestroy(() => {
             service_back.remove();
         });
+
         return this;
     }
 
@@ -299,6 +302,10 @@ export class StoryLayout extends BaseLayout {
         return this;
     }
 
+    addViewToRoot(view) {
+        super.addView(view);
+        return this;
+    }
 
     /**
      * override 
@@ -420,7 +427,7 @@ export class StoryLayout extends BaseLayout {
      * New other instance of Story layout (blank page) - it is other story layout
      * @param {string} title 
      */
-    newInstance(title) {
+    newInstance(title, path) {
         this._meta.pages.last().events.system.pause();
         var hiddenPage = this._meta.pages.last();
 
@@ -483,6 +490,19 @@ export class StoryLayout extends BaseLayout {
                 break;
 
         }
+        return this;
+    }
+
+    /**
+     * @returns {StoryLayout}
+     */
+    getCurrentInstance() {
+        return this._meta.instances.size() > 0 ? this._meta.instances.last() : this;
+    }
+
+    registerRouting(path, title) {
+        this.hasRegisterRouting = true;
+        RouterUtil.replacePath(path, title);
         return this;
     }
 }

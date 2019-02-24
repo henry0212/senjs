@@ -10,6 +10,9 @@ import { SliderButton } from './slider-button.js';
 import { TabButton } from './tab-button.js';
 import { TextView } from './text-view.js';
 import { FloatingButton } from './floating-button.js';
+import { HorizontalListView } from './horizontal-list-view.js';
+import { LoadingView } from './loading-view.js';
+import { ProgressingBar } from './progressing-bar';
 
 
 export default {
@@ -20,9 +23,12 @@ export default {
     IconView,
     ImageView,
     ListView,
+    HorizontalListView,
     RadioButton,
     SliderButton,
     TabButton,
     TextView,
-    FloatingButton
+    FloatingButton,
+    LoadingView,
+    ProgressingBar
 }

@@ -12,7 +12,9 @@ var _meta = {
 
 window.addEventListener("load", () => {
     setTimeout(() => {
+        console.log("load routing");
         RouterUtil.init();
+        console.log(router_pool.routings);
     }, 200);
 });
 
@@ -34,7 +36,6 @@ var getCurrentRouting = function () {
         temp = router_pool.routings.find((item) => {
             return item.path === "" || item.path === "/";
         });
-
     }
     return temp ? temp : {
         path: "",
@@ -73,11 +74,16 @@ var jsonToParam = function (params) {
     }).join('&');
 }
 
+/**
+ * @typedef {Object} RoutingArgument
+ * @property {string} path
+ */
 
 export class RouterUtil {
     static init() {
         var detector = () => {
             var temp = getCurrentRouting();
+            console.log(temp, senjs.app.preventBackRoutingCallback);
             if (temp && senjs.app.preventBackRoutingCallback == false) {
                 temp.call();
             }
@@ -90,7 +96,7 @@ export class RouterUtil {
         });
     }
 
-    static register(path, callback) {
+    static register(path, callback, params, title) {
         if (Array.isArray(path)) {
             path.forEach(p => {
                 router_pool.routings.push({
@@ -113,7 +119,6 @@ export class RouterUtil {
 
     static updatePath(path, title) {
         var routing = getCurrentRouting();
-        console.log(routing,path);
         if (routing.path === path) {
             return;
         }
@@ -122,22 +127,38 @@ export class RouterUtil {
         return this;
     }
 
+    static replacePath(path) {
+        var routing = getCurrentRouting();
+        if (routing.path === path) {
+            return;
+        }
+        path = path.charAt(0) === "/" ? path.substring(1) : path;
+        window.history.replaceState(null, "", "/#/" + path);
+    }
+
     static updateParams(params) {
         var strParam = jsonToParam(params);
         var path = getCurrentRouting().path;
         path = path.charAt(0) === "/" ? path.substring(1) : path;
         if (strParam.length > 0) {
             window.history.pushState(null, "", "/#/" + path + "?" + strParam);
+        } else {
+            window.history.pushState(null, "", "/#/" + path);
         }
         return this;
     }
-
+    /**
+     * @returns {Object}
+     */
     static getCurrentParameter() {
         return getParameter();
+    }
+
+    static getCurrentRouting() {
+        return getCurrentRouting();
     }
 
     static parameterJsonToString(params) {
         return jsonToParam(params)
     }
-
 }

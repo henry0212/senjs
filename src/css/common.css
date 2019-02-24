@@ -1,27 +1,4 @@
-﻿@font-face {
-    font-family: 'ggroboto';
-    font-weight: normal;
-    src: url('fonts/Roboto-Medium.ttf') url('fonts/Roboto-MediumItalic.ttf') ;
-}
-
-@font-face {
-    font-family: 'ggroboto';
-    font-weight: bold;
-    src: url('fonts/Roboto-Bold.ttf') url('fonts/Roboto-BoldItalic.ttf')  ;
-}
-
-
-@font-face {
-    font-family: 'ggroboto';
-    font-weight: lighter;
-    src: url('fonts/Roboto-Light.ttf') url('fonts/Roboto-LightItalic.ttf');
-}
-
-@font-face {
-    font-family: 'ggroboto';
-    font-weight: lighter;
-    src: url('fonts/Roboto-Light.ttf');
-}
+﻿
 
 ::placeholder { /* Chrome, Firefox, Opera, Safari 10.1+ */
     opacity: 0.6; /* Firefox */

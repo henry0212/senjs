@@ -8,10 +8,15 @@ import { material_colors } from "../../res/theme.js";
 import { senjs } from "../../index.js";
 
 export class BaseTextView extends View {
+
+    static get TextAlign() {
+        return senjs.constant.TextAlign;
+    }
+
     constructor(htmlElement) {
         super(htmlElement);
         this.setTextSize(app_size.font.normal);
-        this.setLineHeight("1em")
+        this.setLineHeight("1.3em")
             .setMinHeight("1.1em");
     }
 

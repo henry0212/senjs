@@ -162,6 +162,13 @@ export class TabButton extends FrameLayout {
         return this;
     }
 
+    removeAllTabButton() {
+        this._meta.list_meta.clear();
+        this._cache.buttons.clear();
+        this._view.button_container.removeAllView();
+        return this;
+    }
+
     get focusingIndex() {
         return this._meta.focusingIndex;
     }

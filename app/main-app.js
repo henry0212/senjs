@@ -8,12 +8,12 @@ import { Button } from "../src/io/widget/button.js";
 
 
 var firebase_config = {
-    apiKey: "***********iAt6KiDD0rqOGB9jf30V5T1aM",
-    authDomain: "*********.firebaseapp.com",
-    databaseURL: "https://*********.firebaseio.com",
-    projectId: "********",
-    storageBucket: "********.appspot.com",
-    messagingSenderId: "**********"
+    apiKey: "AIzaSyALcClSZQiAt6KiDD0rqOGB9jf30V5T1aM",
+    authDomain: "senpos-220706.firebaseapp.com",
+    databaseURL: "https://senpos-220706.firebaseio.com",
+    projectId: "senpos-220706",
+    storageBucket: "senpos-220706.appspot.com",
+    messagingSenderId: "386131387515"
 };
 firebase.initializeApp(firebase_config);
 
@@ -90,6 +90,13 @@ function initMenu() {
             static_view.main_frame.addView(static_view.pageOpening);
             stickyMenu.destroy();
         });
+        // btn_product_page.setOnClick(view => {
+        //     var sticky = new senjs.dialog.BaseDialog();
+        //     sticky.setWidth("70%").setHeight("90%");
+        //     sticky.show();
+        //     sticky.addView(new ProductActivity());
+        //     stickyMenu.destroy();
+        // })
 
 
     })

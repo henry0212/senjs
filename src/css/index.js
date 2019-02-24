@@ -1,4 +1,4 @@
-import './common.css!';
-import './anim.css!';
-import './animation.css!';
+import './common.css';
+import './anim.css';
+import './animation.css';
  

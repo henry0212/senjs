@@ -13,6 +13,7 @@ import { FrameLayout } from '../io/layout/frame-layout.js';
 import { IconView } from '../io/widget/icon-view.js';
 import { Service } from './service.js';
 import res from '../res/index.js';
+import { senjs } from '../index.js';
 
 var app_url = "";
 
@@ -50,6 +51,7 @@ const app_context = {
     readyListener: null,
     preventKeyUp: false,
     isMouseDown: 0,
+    customMainWindowElemId: null,
     libs: {
         chart: {
             imported: false,
@@ -274,51 +276,58 @@ export var senjsAdps = {
 }
 
 var application_start = async () => {
-    app_url = window.location.pathname;
-    app_context.SCREEN_WIDTH = window.innerWidth;
-    app_context.SCREEN_HEIGHT = window.innerHeight;
-    app.info.display.SCREEN_WIDTH = window.innerWidth;
-    app.info.display.SCREEN_HEIGHT = window.innerHeight;
-    app_context.REAL_WIDTH = window.innerWidth;
-    app_context.REAL_HEIGHT = window.innerHeight;
-    app_size.init();
-    app_context.IS_HORIZENTAL = true;
+    setTimeout(() => {
+        app_url = window.location.pathname;
+        app_context.SCREEN_WIDTH = window.innerWidth;
+        app_context.SCREEN_HEIGHT = window.innerHeight;
+        app.info.display.SCREEN_WIDTH = window.innerWidth;
+        app.info.display.SCREEN_HEIGHT = window.innerHeight;
+        app_context.REAL_WIDTH = window.innerWidth;
+        app_context.REAL_HEIGHT = window.innerHeight;
+        app_size.init();
+        app_context.IS_HORIZENTAL = true;
 
-    app_context.ROOT_BODY = new View(document.body);
-    app_context.ROOT_BODY.setPosition("fixed");
-    app_context.ROOT_BODY.info.isCreated = true;
-    app_context.ROOT_BODY.info.state = app_constant.VIEW_STATE.running;
-    senjsCts.lists.clear();
-    app_context.APP_WINDOW = app.mainFrame = new FrameLayout().toFillParent();
-    app_context.ROOT_BODY._dom.appendChild(app.mainFrame._dom);
-    delete app.mainFrame.getParentView;
+        app_context.ROOT_BODY = new View(document.body);
+        app_context.ROOT_BODY.setPosition("fixed");
+        app_context.ROOT_BODY.info.isCreated = true;
+        app_context.ROOT_BODY.info.state = app_constant.VIEW_STATE.running;
+        senjsCts.lists.clear();
+        app_context.APP_WINDOW = app.mainFrame = new FrameLayout().toFillParent();
+        app_context.APP_WINDOW.setWidth("100%");
+        app_context.APP_WINDOW.setHeight("100%");
+        app_context.APP_WINDOW.info.id = 0;
 
-    app_context.APP_WINDOW.info.isCreated = true;
-    app_context.APP_WINDOW.info.state = app_constant.VIEW_STATE.running;
+        if (app_context.customMainWindowElemId != null && document.getElementById(app_context.customMainWindowElemId) != undefined) {
+            document.getElementById(app_context.customMainWindowElemId).appendChild(app.mainFrame._dom);
+        } else {
+            app_context.ROOT_BODY._dom.appendChild(app.mainFrame._dom);
+        }
+        delete app.mainFrame.getParentView;
 
-    app.mainFrame.setPosition(app_constant.Position.ABSOLUTE);
-    _view_pool.add(app_context.APP_WINDOW);
-    app_context.APP_WINDOW.setBackgroundColor(app_theme.APPICATION_COLOR);
+        app_context.APP_WINDOW.info.isCreated = true;
+        app_context.APP_WINDOW.info.state = app_constant.VIEW_STATE.running;
+
+        app.mainFrame.setPosition(app_constant.Position.ABSOLUTE);
+        _view_pool.add(app_context.APP_WINDOW);
+        app_context.APP_WINDOW.setBackgroundColor(app_theme.APPICATION_COLOR);
 
 
-    app_context.APP_WINDOW.setWidth("100%");
-    app_context.APP_WINDOW.setHeight("100%");
-    app_context.APP_WINDOW.info.id = 0;
 
-    //app_size.init();
-    IconView.init();
-    app_service_context.start();
-    app_service_context.registerDashboard = function (returnView) {
-        on_custom_dashboard = returnView;
-    }
 
-    for (var i = 0; i < app_context.onAppStarted.length; i++) {
-        app_context.onAppStarted[i](app_context.APP_WINDOW);
-    }
-    service_reduceControlPool();
-    service_freeMemory();
-    // service_clearTrash();
+        //app_size.init();
+        IconView.init();
+        app_service_context.start();
+        app_service_context.registerDashboard = function (returnView) {
+            on_custom_dashboard = returnView;
+        }
 
+        for (var i = 0; i < app_context.onAppStarted.length; i++) {
+            app_context.onAppStarted[i](app_context.APP_WINDOW);
+        }
+        service_reduceControlPool();
+        service_freeMemory();
+        // service_clearTrash();
+    }, 200);
 }
 
 /**
@@ -665,17 +674,23 @@ const app_service_context = {
 
             var queue = new Object();
             var url = app_url;
-            if (params && params instanceof Array) {
-                var str_params = params.reduce((str, item) => {
-                    console.log("item", item);
-                    return str + "&" + item.key + "=" + item.value;
-                }, "");
-                if (str_params.length > 0) {
-                    url += "?" + str_params.substring(1, str_params.length);
-                }
-            }
-            url += url.indexOf("?") == -1 ? "?" : "&";
-            url += "_app_tag_=" + new Date().getTime();
+            // if (params && params instanceof Array) {
+            //     var str_params = params.reduce((str, item) => {
+            //         return str + "&" + item.key + "=" + item.value;
+            //     }, "");
+            //     if (str_params.length > 0) {
+            //         url += "?" + str_params.substring(1, str_params.length);
+            //     }
+            // }
+
+            var params = senjs.util.RouterUtil.getCurrentParameter();
+            params = params == null ? {} : params;
+            params._app_tag_ = new Date().getTime();
+            senjs.util.RouterUtil.updateParams(params);
+            // senjs.util.RouterUtil.register()
+
+            // url += url.indexOf("?") == -1 ? "?" : "&";
+            // url += "_app_tag_=" + new Date().getTime();
 
             app_service_context.stackPopStates.add(queue);
             queue.id = parseFloat(new Date().getTime() + "" + app_service_context.stackPopStates.size());
@@ -686,12 +701,19 @@ const app_service_context = {
                 if (app_service_context.stackPopStates.size() > 0) {
                     app_service_context.stackPopStates.remove(app_service_context.stackPopStates.find.equal("id", this.id).get(0));
                 }
+                delete params._app_tag_;
+                senjs.util.RouterUtil.updateParams(params);
+
             };
-            window.history.pushState(data, "", url);
             return queue;
         }
     }
 }
+
+/**
+ * @callback onAppStarted 
+ * @param {View} mainFrame
+ */
 
 export var app = {
     mainFrame: app_context.APP_WINDOW,
@@ -710,6 +732,10 @@ export var app = {
             }
         }
     },
+    /**
+     * 
+     * @param { onAppStarted } callback 
+     */
     onStart: function (callback) {
         app_context.onAppStarted.push(callback);
     },
@@ -719,6 +745,10 @@ export var app = {
     isMobile: _isMobile,
     event: app_event,
     Thread: app_thread,
+    registerMainFrame: function (elemId) {
+        app_context.customMainWindowElemId = elemId;
+        console.log("registerMainFrame", elemId);
+    },
     findViewById: function (id) {
         if (!isNaN(id)) {
             return senjsCts.get(id);

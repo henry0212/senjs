@@ -69,18 +69,17 @@ export class StickyLayout extends BaseLayout {
             if (this._meta && this._meta.isMouseOut && !this._meta.preventDismiss) {
                 this.destroy();
             }
-
         })
 
         this.events.override.onDestroy(() => {
             button_dismiss.destroy();
         })
+        this.events.override.onCreated(this.overr_onCreated.bind(this));
     }
 
-    override_onCreated(view) {
+    overr_onCreated(view) {
         var limitToHide, opa = 1;
         var onParentScrolled = (parentNode, scrollX, scrollY, e) => {
-            console.log("scroll y", scrollY);
             var translateToY = currentParentScrollY - scrollY;
             if (Math.abs(translateToY) < limitToHide) {
                 if (translateToY < -limitToHide / 3 || translateToY > limitToHide / 3) {
@@ -97,8 +96,18 @@ export class StickyLayout extends BaseLayout {
                 super.destroy();
             }
         }
+        var parents = senjsCts.allParents(this._view.focusView.info.id);
+        var dialog = parents.toArray().find((item) => {
+            return item.info._dialog;
+        });
+        console.log("dialog", dialog);
+        if (dialog) {
+            this.moveTo(dialog);
+            parent = senjsCts.allParents(this._view.focusView.info.id);
+        }
 
-        this._cache.view_parents = senjsCts.allParents(this._view.focusView.info.id).filter(function (parent) { return parent.info.isScrollY == true || parent.info.isScrollX == true; });
+        this._cache.view_parents = parents.filter(function (parent) { return parent.info.isScrollY == true || parent.info.isScrollX == true; });
+
         var currentParentScrollY = 0;
         if (this._cache.view_parents.size() > 0) {
             this._cache.view_parents.foreach(function (parent, idx) {

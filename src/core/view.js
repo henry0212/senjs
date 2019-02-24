@@ -18,7 +18,7 @@ export class View {
         this.TAG = this.constructor.name;
         this._dom = htmlElement || document.createElement("div");
         this._super = {};
-
+        this._addViews = null;
         this._meta = {};
         this._senjs = senjs;
         var self = this;
@@ -61,7 +61,12 @@ export class View {
             if (this.events.override[real_func] != undefined) {
                 this.events.override[real_func](this[ovr_func].bind(this));
             }
-        })
+        });
+        if (this._addviews) {
+            Object.keys(this._addviews).forEach(key => {
+                this.addView(this._addviews[key]);
+            });
+        }
     }
     /**
      * Call when the view have been created
@@ -397,6 +402,7 @@ export class View {
             perform: {
                 click: function () {
                     self._dom.click();
+                    
                 }
             },
             system: {
@@ -1249,12 +1255,20 @@ export class View {
         return this;
     }
 
+    /**
+     * 
+     * @param {View} view 
+     */
+    addToParent(view) {
+        view.addView(this);
+        return this;
+    }
 
     setClassName(className) {
         if (this.info.classNames.indexOf(className) == -1) {
             this.info.classNames.add(className);
-            this.info.className += " " + className;
-            this._dom.className += " " + className;
+            this.info.className = (this.info.className + " " + className).trim();
+            this._dom.className = (this._dom.className + " " + className).trim();
         }
         return this;
     }
@@ -1264,7 +1278,7 @@ export class View {
         if (className != undefined) {
             this.info.classNames.remove(className);
             this.info.className = "";
-            this._dom.className = this._dom.className.replace(className, "");
+            this._dom.className = this._dom.className.replace(className, "").trim();
         }
         else {
             this._dom.className = "";
@@ -1833,9 +1847,9 @@ export class View {
 
     circle() {
         this._dom.style.borderRadius = "50%";
-        this.events.override.onMeasured(function (view, width, height) {
+        this.events.override.onMeasured((view, width, height) => {
             var size = width > height ? width : height;
-            this.setWidth(size).setHeight(size).Padding(0);
+            this.setWidth(size).setHeight(size).setPadding(0);
         }
         );
         return this;
@@ -2453,7 +2467,6 @@ export class View {
     setCss(arg) {
         Object.keys(arg).forEach(item => {
             var key = item.split("-");
-            console.log(key);
             if (key.length > 1) {
                 for (var i = 1; i < key.length; i++) {
                     console.log(key[i])
@@ -2466,6 +2479,7 @@ export class View {
             }
             this._dom.style[key] = arg[item];
         });
+        return this;
     }
 
     destroyWithAnimate() {

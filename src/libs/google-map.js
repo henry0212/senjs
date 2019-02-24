@@ -71,14 +71,22 @@ export class GoogleMap extends FrameLayout {
         return ia_marker.marker;
     }
 
-    setMapCenter(lat,lng) {
+    setMapCenter(lat, lng) {
         this._meta._google_map.setCenter({ lat: lat, lng: lng });
         return this
     }
 
-    setMapZoom(value){
+    getMapCenter() {
+        return this._meta._google_map.getCenter();
+    }
+
+    setMapZoom(value) {
         this._meta._google_map.setZoom(value);
         return this
+    }
+
+    getMapZoom() {
+        return this._meta._google_map.getZoom();
     }
 
     findMarkerById(id) {
@@ -108,15 +116,33 @@ export class GoogleMap extends FrameLayout {
 
     findPlacesByText(request) {
         return new Promise((next, reject) => {
-            this.getGoogleMapService().textSearch(request, (results, status) => {
+            var rs = [];
+            this.getGoogleMapService().textSearch(request, (results, status, pagination) => {
                 if (status == google.maps.places.PlacesServiceStatus.OK) {
-                    next(results)
+                    // rs = rs.concat(results);
+                    // if (pagination.hasNextPage) {
+                    //     pagination.nextPage();
+                    // } else {
+                    //     next(rs);
+                    // }
+                    next(results);
                 } else {
                     reject(results);
                 }
             });
         })
+    }
 
+    searchPlaceByKey(request) {
+        return new Promise((next, reject) => {
+            this.getGoogleMapService().textSearch(request, (results, status, pagination) => {
+                if (status == google.maps.places.PlacesServiceStatus.OK) {
+                    next(results);
+                } else {
+                    reject(results);
+                }
+            });
+        })
     }
 
     findPlaceDetail(placeId, fields) {
@@ -151,6 +177,10 @@ export class GoogleMap extends FrameLayout {
             ia_marker.marker.remove();
         })
         this._pool.ia_markers.clear();
+    }
+
+    getGoogleMap() {
+        return this._meta._google_map;
     }
 }
 
@@ -189,7 +219,7 @@ class IaGoogleMarker {
             marker.setMap(null);
         }
         marker.setId = (id) => {
-            thiss.id = id;
+            this.id = id;
             return marker;
         }
         marker.setOnClick = function (onMarkerClicked) {
