@@ -19,6 +19,7 @@ export class BaseLayout extends View {
         }
     }
 
+
     showLoading() {
         if (this._cache.loadingView == null) {
             this._cache.loadingView = new senjs.widget.LoadingView().toFillParent();
@@ -48,7 +49,6 @@ export class BaseLayout extends View {
         return board;
     }
 }
-
 
 class QuiclyLayout extends BaseLayout {
     constructor() {
@@ -94,7 +94,8 @@ class QuiclyLayout extends BaseLayout {
         this.setOnTouch(this.onTouch);
         this.btnBelow.setOnClick(this.onClicked.bind(this));
         this.setZIndex(10001);
-
+        this.setBackground("#fff");
+       
     }
 
     onCreated() {
@@ -103,7 +104,6 @@ class QuiclyLayout extends BaseLayout {
         var limit_count = 0;
         var blurView;
         self.getParentView()._super.addView(self.btnBelow);
-        this.setBackground("#fff");
         new Thread(function (thread) {
             if (blurView != null) {
                 blurView.opacity(1).setAnimation("fadeIn");

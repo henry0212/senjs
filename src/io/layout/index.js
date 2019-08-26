@@ -7,6 +7,7 @@ import { StickyLayout } from './sticky-layout.js';
 import { StoryLayout } from './story-layout.js';
 import { RatioLayout } from './ratio-layout.js';
 import { BannerLayout } from './banner-layout.js';
+import { WindowLayout } from './window-layout.js';
 
 export default {
     BaseLayout,
@@ -17,5 +18,6 @@ export default {
     StickyLayout,
     StoryLayout,
     RatioLayout,
-    BannerLayout
+    BannerLayout,
+    WindowLayout
 }

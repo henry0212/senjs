@@ -13,6 +13,7 @@ export class EditText extends BaseTextView {
             .setBorderBottom(1, material_colors.Grey.g300)
             .setBackground("transparent");
         this._dom.style.boxSizing = "border-box";
+        this._dom.setAttribute('autocomplete','false');
         this.setTextSize
         this._listener = {
             onTextChanged: null,

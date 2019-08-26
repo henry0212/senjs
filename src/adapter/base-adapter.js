@@ -81,7 +81,6 @@ export class BaseAdapter {
         this._meta.min_view_height = -1;
         this._view.baseListView = baseListView;
         baseListView = !isNaN(baseListView) ? senjsCts.get(baseListView) : baseListView;
-        console.log("baseListView", baseListView, this._meta.list_data);
         if (baseListView == undefined || baseListView.view == undefined) {
             return;
         }

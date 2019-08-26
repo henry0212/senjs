@@ -107,80 +107,96 @@
 
 @keyframes storyBoardOpen {
     0% {
-        transform: translateX(101%);
+        /* transform: translateX(101%); */
+        transform: translate3d(100%,0,0);
     }
 
-    40% {
-        transform: translateX(5%);
+    65% {
+        /* transform: translateX(5%); */
+        transform: translate3d(10%,0,0);
     }
 
     100% {
-        transform: translateX(0);
+        /* transform: translateX(0); */
+        transform: translate3d(0,0,0); 
     }
 }
 
 
 @-webkit-keyframes storyBoardOpen {
     0% {
-        -webkit-transform: translateX(101%);
+        /* -webkit-transform: translateX(101%); */
+        -webkit-transform: translateX(100%);
     }
 
-    40% {
-           -webkit-transform: translateX(5%);
+    65% {
+           /* -webkit-transform: translateX(5%); */
+           -webkit-transform:translate3d(10%,0,0);
     }
 
 
     100% {
-        -webkit-transform: translateX(0);
+        /* -webkit-transform: translateX(0); */
+        -webkit-transform: translate3d(0,0,0); 
     }
 }
 
 @keyframes storyBoardOpenBelow{
     0% {
-        transform: translateX(-10%);
+        transform: translate3d(-10%,0,0);
+        /* transform: translateX(-10%); */
     }
 
     100% {
-        transform: translateX(0%);
+        transform: translate3d(0%,0,0);
+        /* transform: translateX(0%); */
     }
 }
 
 @-webkit-keyframes storyBoardOpenBelow{
     0% {
-        -webkit-transform: translateX(-10%);
+        -webkit-transform: translate3d(-10%,0,0);
+        /* -webkit-transform: translateX(-10%); */
     }
 
     100% {
-        -webkit-transform: translateX(0%);
+        -webkit-transform: translate3d(0%,0,0);
+        /* -webkit-transform: translateX(0%); */
     }
 }
 
 @keyframes storyBoardClose {
     0% {
-        transform: translateX(0%);
+        transform: translate3d(0%,0,0);
+        /* transform: translateX(0%); */
     }
 
-    50%{
-       transform: translateX(95%);
+    70%{
+        transform: translate3d(90%,0,0);
+        /* transform: translateX(95%); */
     }
 
     100% {
-        transform: translateX(100%);
+        transform: translate3d(100%,0,0);
+        /* transform: translateX(100%); */
     }
 
 }
 
 @-webkit-keyframes storyBoardClose {
     0% {
-        -webkit-transform: translateX(0%);
+        -webkit-transform:translate3d(0%,0,0);
+        /* -webkit-transform: translateX(0%); */
     }
 
-    50%{
-        -webkit-transform: translateX(95%);
+    70%{
+        -webkit-transform: translate3d(90%,0,0);
+        /* -webkit-transform: translateX(95%); */
     }
 
     100% {
-        -webkit-transform: translateX(101%);
+        -webkit-transform:  translate3d(100%,0,0);
+        /* -webkit-transform: translateX(101%); */
     }
 
 }
@@ -1643,11 +1659,9 @@
 @keyframes translate_100_in {
     from {
         transform: translateY(100%);
-        opacity: 0;
     }
     to {
         transform: translateY(0px);
-        opacity: 1;
     }
 }
 
@@ -3152,13 +3166,13 @@
 
 .storyBoardOpen {
     animation-name: storyBoardOpen;
-    animation-duration: .5s;
+    animation-duration: 2s;
     animation-fill-mode: forwards;
     -webkit-animation-name: storyBoardOpen;
-    -webkit-animation-duration: .5s;
+    -webkit-animation-duration: 2s;
     -webkit-animation-fill-mode: forwards;
-    animation-timing-function: cubic-bezier(0,0.2,0.1,1);
-    -webkit-animation-timing-function: cubic-bezier(0,0.2,0.1,1);
+    /* animation-timing-function: cubic-bezier(0,0.2,0.1,1);
+    -webkit-animation-timing-function: cubic-bezier(0,0.2,0.1,1); */
     box-shadow: rgba(0,0,0,0.2) 0px 0px 20px;
     animation-timing-function: cubic-bezier(0,0,.15,1);
     -webkit-animation-timing-function: cubic-bezier(0,0,.15,1);

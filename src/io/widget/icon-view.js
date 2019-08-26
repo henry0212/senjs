@@ -15,13 +15,20 @@ export class IconView extends BaseTextView {
 
     constructor(icon_name) {
         super(document.createElement("i"));
-        this.setHTML(icon_name)
-            .setClassName(iconClassKey)
+        this.iconClassKey = iconClassKey;
+        this.setHTML(icon_name ? icon_name : "")
+            .setClassName(this.iconClassKey)
             .setDisplayType(app_constant.Display.INLINE_FLEX)
             .setGravity(senjs.constant.Gravity.CENTER)
         this.setIconSize(app_size.icon.normal);
     }
 
+    setIconClassKey(classKey) {
+        this.removeClassName(this.iconClassKey);
+        this.iconClassKey = classKey;
+        this.setClassName(classKey);
+        return this;
+    }
 
     onDestroy(view) {
 
@@ -66,11 +73,14 @@ export class IconView extends BaseTextView {
         return this;
     }
 
-    static init(icon_class_name) {
+    static init(css_url) {
+        if (css_url == undefined || css_url.length == 0) {
+            return;
+        }
         var css_icon = document.createElement("link");
-        css_icon.href = 'css/material-icon.css';
+        css_icon.href = css_url;
         css_icon.rel = "stylesheet";
-        css_icon.type = 'text/css';
+        // css_icon.type = 'text/css';
         css_icon.onload = function () {
         }
         document.getElementsByTagName("head")[0].appendChild(css_icon);

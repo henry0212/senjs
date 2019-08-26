@@ -1,85 +1,85 @@
 
 
 export const app_theme = {
-    dialog:{
-        background:"#ffffff",
+    dialog: {
+        background: "#ffffff",
         radius: 4
     },
-    stickyLayout:{
-        shadow:"rgba(0,0,0,0.2) 0px 0px 4px",
+    stickyLayout: {
+        shadow: "rgba(0,0,0,0.2) 0px 0px 4px",
         radius: '3px',
         background: '#ffffff'
     },
-    storyLayout:{
-        toolbar:"rgb(255,255,255)",
-        toolbar_shadow:"rgba(0,0,0,0.2)",
-        container:"rgb(253,253,253)"
+    storyLayout: {
+        toolbar: "rgb(255,255,255)",
+        toolbar_shadow: "rgba(0,0,0,0.2)",
+        container: "rgb(253,253,253)"
     },
-    sliderButton:{
+    sliderButton: {
         status_default: {
             thum: "#ffffff",
             background: "#f9f9f9"
         },
-        status_checked:{
+        status_checked: {
             thum: "#ffffff",
             background: "#00C853"
         }
     },
-    checkbox:{
-        status_default:{
+    checkbox: {
+        status_default: {
             icon: "#888",
             background: "transparent",
-            text:"rgba(0,0,0,0.5)",
-            fontWeight:"normal"
+            text: "rgba(0,0,0,0.5)",
+            fontWeight: "normal"
         },
-        status_checked:{
-            icon:"#222",
+        status_checked: {
+            icon: "#222",
             background: "transparent",
-            text:"rgba(0,0,0,0.9)",
-            fontWeight:"bold"
-        } 
-    },
-    radio_button:{
-        status_default:{
-            icon: "#888",
-            background: "transparent",
-            text:"rgba(0,0,0,0.5)",
-            fontWeight:"normal"
-        },
-        status_checked:{
-            icon:"#222",
-            background: "transparent",
-            text:"rgba(0,0,0,0.9)",
-            fontWeight:"bold"
-        } 
-    },
-    combobox:{
-        status_default:{
-            icon:"#888",
-            background:"transparent",
-        },
-        status_checked:{
-            icon:"#888",
-            background:"transparent",
+            text: "rgba(0,0,0,0.9)",
+            fontWeight: "bold"
         }
     },
-    tabButton:{
-        status_default:{
-            icon:"#888",
-            text:"#888",
-            cursor: "#888",
-            background:"transparent"
+    radio_button: {
+        status_default: {
+            icon: "#888",
+            background: "transparent",
+            text: "rgba(0,0,0,0.5)",
+            fontWeight: "normal"
         },
-        status_selecting:{
-            icon:"#222",
-            text:"#222",
-            cursor:"#222",
-            background:"transparent"
-        }        
+        status_checked: {
+            icon: "#222",
+            background: "transparent",
+            text: "rgba(0,0,0,0.9)",
+            fontWeight: "bold"
+        }
+    },
+    combobox: {
+        status_default: {
+            icon: "#888",
+            background: "transparent",
+        },
+        status_checked: {
+            icon: "#888",
+            background: "transparent",
+        }
+    },
+    tabButton: {
+        status_default: {
+            icon: "#888",
+            text: "#888",
+            cursor: "#888",
+            background: "transparent"
+        },
+        status_selecting: {
+            icon: "#222",
+            text: "#222",
+            cursor: "#222",
+            background: "transparent"
+        }
     }
 }
 
-export const material_colors = { 
+export const material_colors = {
     Red: {
         g500: "#F44336",
         g50: "#FFEBEE",

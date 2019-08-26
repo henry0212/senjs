@@ -10,15 +10,14 @@ import { BaseAdapterV2 } from "../../adapter/base-adapter-v2.js";
 export class BaseList extends View {
     constructor() {
         super(document.createElement("div"));
-        this.view = {
-            frame_dataList: new FrameLayout(app_constant.Size.FILL_PARENT, app_constant.Size.WRAP_CONTENT),
-            frame_scroller: new FrameLayout().toFillParent("absolute").setScrollType(app_constant.ScrollType.VERTICAL)
-        };
+        if (this.view == undefined) {
+            this.__render_wrapper();
+        }
 
         this.setScrollType(app_constant.ScrollType.NONE);
 
         this.view.panel_loadmore = new senjs.layout.LinearLayout("100%")
-            .toLeftParent().toRightParent()
+            .toLeftParent().toRightParent().setBackground("rgba(255,255,255,0.8)").setRadius(100)
             .setGravity(senjs.constant.Gravity.CENTER)
             .setVisibility(senjs.constant.Visibility.GONE);
 
@@ -29,10 +28,11 @@ export class BaseList extends View {
             .setIconColor(senjs.res.material_colors.Grey.g600)
             .setIconSize(senjs.res.dimen.icon.larger);
 
-        this.adapter = {};
+        this.adapter = null;
         this.setScrollType(app_constant.ScrollType.VERTICAL);
         this.listener = {
             onItemClicked: null,
+            onItemDoubleClicked: null,
             onItemLongClicked: null,
             onScrollToBottom: null
         };
@@ -48,6 +48,13 @@ export class BaseList extends View {
             this.view.frame_scroller.events.override.onScrolled(listener);
             return this;
         })
+    }
+
+    __render_wrapper() {
+        this.view = {
+            frame_dataList: new FrameLayout(app_constant.Size.FILL_PARENT, app_constant.Size.WRAP_CONTENT),
+            frame_scroller: new FrameLayout().toFillParent("absolute").setScrollType(app_constant.ScrollType.VERTICAL)
+        };
     }
 
     onCreated(view) {
@@ -73,7 +80,7 @@ export class BaseList extends View {
      */
     setView(returnView) {
         if (this.adapter == null) {
-            this.adapter = new BaseAdapterV2(list_data);
+            this.adapter = new BaseAdapterV2();
             this.setAdapter(this.adapter)
         }
         this.adapter.setView(returnView);
@@ -94,18 +101,21 @@ export class BaseList extends View {
             rootView.setOnClick((view) => {
                 if (self.listener.onItemClicked != null) {
                     self.listener.onItemClicked(view.getTag().convertView, adapter.getItem(view.getTag().position), view.getTag().position);
-                } else {
-                    view.setAcceptClickAnimation(false);
                 }
             });
 
             rootView.setOnLongClick((view) => {
                 if (self.listener.onItemLongClicked) {
                     self.listener.onItemLongClicked(adapter.getView(view.getTag().position), adapter.getItem(view.getTag()), view.getTag());
-                } else {
-                    view.setAcceptClickAnimation(false);
                 }
             });
+
+            if (self.listener.onItemDoubleClicked) {
+                rootView.setOnDoubleClick((view) => {
+                    self.listener.onItemDoubleClicked(view.getTag().convertView, adapter.getItem(view.getTag().position), view.getTag().position);
+                });
+
+            }
 
             rootView.reload = function (v, item, position) {
                 view = v;
@@ -126,13 +136,24 @@ export class BaseList extends View {
         return this;
     }
 
+    setScrollY(value) {
+        this.view.frame_scroller.setScrollY(value);
+        return this;
+    }
+
     setOnItemClicked(callback) {
         this.listener.onItemClicked = callback;
         return this;
     }
 
     setOnItemLongClicked(callback) {
+        this.adapter.notifyDataSetChanged();
         this.listener.onItemLongClicked = callback;
+        return this;
+    }
+
+    setOnItemDoubleClicked(callback) {
+        this.listener.onItemDoubleClicked = callback;
         return this;
     }
 

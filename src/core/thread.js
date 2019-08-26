@@ -15,6 +15,15 @@ const thread_context = {
 
 
 export class Thread {
+
+    static get SERIAL_EXECUTOR() {
+        return SERIAL_EXECUTOR;
+    }
+
+    static get POOL_EXECUTOR() {
+        return POOL_EXECUTOR;
+    }
+
     constructor(callback, duration, runType) {
         this.runType = runType || thread_context.SERIAL_EXECUTOR;
         this.startTime = null;
@@ -26,15 +35,17 @@ export class Thread {
         this.isRemoved = false;
         this.delay = duration;
         var self = this;
-        if (thread_context.info.ThreadStack.length <= thread_context.info.limit && this.runType == thread_context.SERIAL_EXECUTOR) {
+        this.processId = thread_context.info.currentId;
+        thread_context.info.currentId++;
+        if (this.runType == thread_context.POOL_EXECUTOR || (thread_context.info.ThreadStack.length <= thread_context.info.limit && this.runType == thread_context.SERIAL_EXECUTOR)) {
             this.startTime = new Date();
-            this.processId = thread_context.info.currentId;
             this.process = _initWorker(callback, this);
             thread_context.info.ThreadStack.push(this);
-            thread_context.info.currentId++;
         } else {
+            this.processId = thread_context.info.currentId;
             self.process = callback;
             thread_context.info.ThreadWaitStack.push(this);
+            thread_context.info.currentId++;
         }
     }
 
@@ -62,6 +73,7 @@ export class Thread {
 }
 
 var _remove = (processId) => {
+
     for (var i = 0; i < thread_context.info.ThreadStack.length; i++) {
         if (thread_context.info.ThreadStack[i].processId == processId) {
             // clearInterval(thread_context.info.ThreadStack[i].process);

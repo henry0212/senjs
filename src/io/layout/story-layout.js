@@ -12,11 +12,13 @@ import { app_size } from "../../res/dimen.js";
 import { Waiter } from "../../core/waiter.js";
 import { senjs } from "../../index.js";
 import { RouterUtil } from "../../util/router-util.js";
+import { View } from "../../core/view.js";
 
 const _view_config = {
     limit_text_toolbar_left: 10,
     icon_back: "arrow_back_ios",
-    icon_color: "#222"
+    icon_color: "#222",
+    default_toolbar_height: '4em'
 }
 
 export class StoryLayout extends BaseLayout {
@@ -30,7 +32,12 @@ export class StoryLayout extends BaseLayout {
             backIconsName: new List(),
             saveStates: new List(),
             toolbarVisibilityState: new List(),
-            instances: new List()
+            toolbarOffsetTop: new List(),
+            instances: new List(),
+        }
+
+        this._tracking = {
+            allow_new_page: true
         }
         this._listener = {
             onPageChanged: null,
@@ -42,7 +49,7 @@ export class StoryLayout extends BaseLayout {
         this._view.toolbar
             .setBackground(app_theme.storyLayout.toolbar)
             .setWidth("100%").toLeftParent().toRightParent().toTopParent()
-            .setHeight('4em')
+            .setHeight(_view_config.default_toolbar_height)
             .setShadow(app_theme.storyLayout.toolbar_shadow, 0, 0, 2);
 
         this._view.toolbar_pn_left = new LinearLayout("25%", "100%").setGravity(app_constant.Gravity.CENTER_LEFT);
@@ -54,9 +61,9 @@ export class StoryLayout extends BaseLayout {
         this._view.toolbar_lb_left = new TextView();
         this._view.toolbar_lb_left
             .setTextAlign("left")
+            .ellipsis()
             .setAbsoluteZIndex(1)
-            .setTextSize(app_size.font.small)
-            .setTextGravity(app_constant.Gravity.CENTER_LEFT)
+            .setTextSize('70%')
             .bold();
 
         this._view.toolbar
@@ -70,7 +77,7 @@ export class StoryLayout extends BaseLayout {
 
         this._view.frame_content = new FrameLayout("100%");
         this._view.frame_content
-            .toBelowOf(this._view.toolbar)
+            .toTopParent()
             .toLeftParent()
             .toRightParent()
             .toBottomParent();
@@ -105,25 +112,26 @@ export class StoryLayout extends BaseLayout {
      * @param title:string - the header text of page - place at toolbar
      */
     newPage(title) {
-        this._meta.toolbarVisibilityState.add(senjs.constant.Visibility.VISIBLE);
-        this.setToolbarVisibility(senjs.constant.Visibility.VISIBLE);
         let frame_newPage = new FrameLayout();
-        frame_newPage.setScrollType(app_constant.ScrollType.VERTICAL);
         let lb_newTitle = new TextView().bold()
             .setWidth("100%")
+            .ellipsis()
             .toFillParent()
             .setTextGravity(app_constant.Gravity.CENTER);
         lb_newTitle.setText(title || "");
         frame_newPage
             .setBackground(app_theme.storyLayout.container)
-            .toFillParent()
+            .setScrollType(app_constant.ScrollType.VERTICAL)
+            .toFillParent().setTop(_view_config.default_toolbar_height)
             .setAbsoluteZIndex(this._meta.pages.size() + 2);
 
         frame_newPage.events.override.onResume(() => {
             if (this._listener.onPageChanged) {
                 this._listener.onPageChanged(this, this._meta.pages.size() - 1, true);
             }
-        })
+        });
+
+
         var frame_prevent = new FrameLayout().toFillParent();
         var closePage;
         if (this._meta.pages.size() >= 1) {
@@ -206,7 +214,9 @@ export class StoryLayout extends BaseLayout {
         this.events.override.onDestroy(() => {
             service_back.remove();
         });
-
+        this._meta.toolbarVisibilityState.add(senjs.constant.Visibility.VISIBLE);
+        this._meta.toolbarOffsetTop.add(0);
+        this.setToolbarVisibility(senjs.constant.Visibility.VISIBLE);
         return this;
     }
 
@@ -244,6 +254,12 @@ export class StoryLayout extends BaseLayout {
                 let openPage = this._meta.pages.get(this._meta.pages.size() - 2);
                 openPage.restoreState();
                 this._meta.backIconsName.pop();
+                this._meta.toolbarOffsetTop.pop();
+                if (this._meta.toolbarVisibilityState.last() != senjs.constant.Visibility.GONE) {
+                    var top = this._meta.toolbarOffsetTop.last();
+                    this.getPageOpening().setTop(top);
+                    this._view.toolbar.setTranslateY(-top);
+                }
                 if (this._meta.backIconsName.last() != null) {
                     this._view.toolbar_btn_back.updateIcon(this._meta.backIconsName.last() || _view_config.icon_back);
 
@@ -294,6 +310,15 @@ export class StoryLayout extends BaseLayout {
         return this._meta.pages.last();
     }
 
+    backToHome() {
+        while (this._meta.instances.size() > 0) {
+            this.backInstance();
+        }
+        while (this._meta.pages.size() > 1) {
+            this.backPage();
+        }
+        return this;
+    }
     /**
      * @description add view to current page opening
      */
@@ -345,6 +370,55 @@ export class StoryLayout extends BaseLayout {
             this._meta.toolbarViews.remove(container);
             container.destroy();
         }
+        return this;
+    }
+
+    /**
+     * 
+     * @param {View} scroll_view 
+     */
+    setHideToolbarWhenScroll(scroll_view) {
+        // if(true){
+        //     return;
+        // }
+        var top = null, real_top = 0, anchor_scroll = null, is_down = false;
+        var wrapper = this.getPageOpening();
+        scroll_view.events.override.onScrolled((view, args) => {
+            if (args.scrollY + view.getHeight() > view.getDOM().scrollHeight || args.scrollY < 0) {
+                return;
+            }
+            if (top == null) {
+                top = wrapper.getTop();
+                real_top = top;
+            }
+
+            if (is_down != args.isScrollDown) {
+                anchor_scroll = args.scrollY;
+                is_down = args.isScrollDown;
+            }
+            if (args.isScrollDown && top != 0) {
+                top = real_top - (args.scrollY - anchor_scroll);
+                if (top > 0) {
+                    wrapper.setTop(top);
+                    this._view.toolbar.setTranslateY(top - real_top);
+                } else if (top < 0) {
+                    top = 0;
+                    wrapper.setTop(0)
+                    this._view.toolbar.setTranslateY(-real_top - 5);
+                }
+                this._meta.toolbarOffsetTop.set(this._meta.toolbarOffsetTop.size() - 1, top);
+            } else if (!args.isScrollDown && top < real_top) {
+                top = anchor_scroll - args.scrollY;
+                if (top > real_top || args.scrollY == 0) {
+                    wrapper.setTop(real_top)
+                    this._view.toolbar.setTranslateY(0);
+                } else if (top < real_top) {
+                    wrapper.setTop(top);
+                    this._view.toolbar.setTranslateY(-real_top + top);
+                }
+                this._meta.toolbarOffsetTop.set(this._meta.toolbarOffsetTop.size() - 1, top);
+            }
+        });
         return this;
     }
 
@@ -483,10 +557,22 @@ export class StoryLayout extends BaseLayout {
         switch (visibility) {
             case app_constant.Visibility.VISIBLE:
             case app_constant.Visibility.INVISIBLE:
-                this._view.frame_content.toBelowOf(this._view.toolbar);
+                if (this.getPageOpening() && this.getPageOpening().info.isCreated) {
+                    this.getPageOpening().setTop(this._view.toolbar.getHeight());
+                }
+
+                //  else if (this.getPageOpening()) {
+                //     this.getPageOpening().events.override.onCreated(() => {
+                //         this.setToolbarVisibility(visibility);
+                //     });
+                // }
+
+
+                // .toBelowOf(this._view.toolbar);
                 break;
             case app_constant.Visibility.GONE:
-                this._view.frame_content.toTopParent();
+                if (this.getPageOpening())
+                    this.getPageOpening().toTopParent();
                 break;
 
         }
@@ -500,13 +586,13 @@ export class StoryLayout extends BaseLayout {
         return this._meta.instances.size() > 0 ? this._meta.instances.last() : this;
     }
 
+
     registerRouting(path, title) {
         this.hasRegisterRouting = true;
         RouterUtil.replacePath(path, title);
         return this;
     }
 }
-
 
 function checkAllChildCreated() {
     return new Promise(next => {
@@ -518,9 +604,11 @@ function checkAllChildCreated() {
             if (size == 0) {
                 next()
             } else {
-                return checkAllChildCreated.bind(this)();
+                (checkAllChildCreated.bind(this)()).then(() => {
+                    next();
+                });
             }
-        }, 30);
+        }, 100);
     });
 
 }

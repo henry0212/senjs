@@ -6,6 +6,7 @@ import { app_size } from "../../res/dimen.js";
 import { StickyLayout } from "../layout/sticky-layout.js";
 import { material_colors } from "../../res/theme.js";
 import { senjs } from "../../index.js";
+import { FrameLayout } from "../layout/frame-layout.js";
 
 export class BaseTextView extends View {
 
@@ -124,18 +125,21 @@ export class BaseTextView extends View {
                 break;
             case app_constant.Gravity.CENTER_LEFT:
                 this.setDisplayType(app_constant.Display.FLEX);
-                this._dom.style.flexDirection = "column";
-                this.setTextAlign("left")._dom.style.justifyContent = "center";
+                this._dom.style.flexDirection = "row";
+                this._dom.style.alignItems = "center";
+                this.setTextAlign("left")._dom.style.justifyContent = "flex-start";
                 break;
             case app_constant.Gravity.CENTER:
                 this.setDisplayType(app_constant.Display.FLEX);
-                this._dom.style.flexDirection = "column";
+                this._dom.style.flexDirection = "row";
+                this._dom.style.alignItems = "center";
                 this.setTextAlign("center")._dom.style.justifyContent = "center";
                 break;
             case app_constant.Gravity.CENTER_RIGHT:
-                this._dom.style.flexDirection = "column";
+                this._dom.style.flexDirection = "row";
                 this._dom.style.textAlign = "right";
-                this.setTextAlign("right")._dom.style.justifyContent = "right";
+                this._dom.style.alignItems = "center";
+                this.setTextAlign("right")._dom.style.justifyContent = "flex-end";
                 break;
             case app_constant.Gravity.BOTTOM_LEFT:
                 this._dom.style.flexDirection = "column-reverse";
@@ -166,7 +170,9 @@ export class BaseTextView extends View {
             return this;
         }
         this._cache.layout_error = new StickyLayout(this);
+
         this._cache.layout_error
+            .setDirection(senjs.constant.Direction.BOTTOM)
             .setAnimation("fadeIn")
             .setWidth(this.getWidth())
             .setBackground("rgba(0,0,0,0.8)")
@@ -190,6 +196,113 @@ export class BaseTextView extends View {
         });
 
         return this;
+    }
+
+    /**
+     * Set tips when user hover mouse to it
+     * @param {string} text 
+     */
+    setTooltip(text) {
+        // if (this.__tips_uitl == undefined) {
+        //     this.__tips_uitl = new ToolTipUtils(this);
+        // }
+        // this.__tips_uitl.setTips(text);
+        return this;
+    }
+}
+
+let _tips_instance = null;
+
+class ToolTipUtils {
+    /**
+     * 
+     * @param {BaseTextView} focusView 
+     */
+    constructor(focusView) {
+        this.focusView = focusView;
+        this.focusView.getDOM().addEventListener("mouseenter", this.onMouseEnter.bind(this));
+        this.focusView.getDOM().addEventListener("mouseout", this.onMouseOut.bind(this));
+        this.focusView.getDOM().addEventListener("mousemove", this.onMouseMove.bind(this));
+        this.pn_tooltip = null;
+        this.tips = "";
+        this.is_out = false;
+    }
+
+
+    onMouseEnter(e) {
+        this.is_out = false;
+        if (_tips_instance != null) {
+            _tips_instance.destroy();
+        }
+        if (this.pn_tooltip == null) {
+            setTimeout(() => {
+                if (this.is_out) {
+                    return;
+                }
+
+                this.pn_tooltip = _tips_instance = new senjs.layout.FrameLayout()
+                    .setPosition(senjs.constant.Position.FIXED)
+                    .setBackground('#fff').setShadow("rgba(0,0,0,0.1)", 0, 0, 3)
+                    .setTop(e.clientY + 2)
+                    .setLeft(e.clientX + 2)
+                    .setMaxWidth((senjs.app.info.display.SCREEN_WIDTH - this.focusView.getRelativeLeft() - 10))
+                    .setHtml(this.tips)
+                    .setAbsoluteZIndex(senjs.app.findHighestZIndex() + 1)
+                    .setMinWidth(this.focusView.getWidth() * 0.8).setCss({
+                        'font-size': '0.75em'
+                    }).setPadding('0.7em');
+                senjs.app._addViewToSuperRoot(this.pn_tooltip);
+                this.pn_tooltip.events.override.onMeasured((view, w, h) => {
+                    var anchor_y = e.clientY + 5;
+                    if (anchor_y + h > senjs.app.info.display.SCREEN_HEIGHT) {
+                        anchor_y -= h + 5;
+                        view.setTop(anchor_y);
+                    }
+                });
+                this.focusView.events.override.onDestroy(() => {
+                    if (this.pn_tooltip != null) {
+                        this.pn_tooltip.destroy();
+                    }
+                });
+                this.pn_tooltip.events.override.onDestroy((view) => {
+                    this.pn_tooltip = null;
+                    if (_tips_instance == view) {
+                        _tips_instance = null;
+                    }
+                });
+            }, 400);
+        }
+    }
+
+    onMouseMove(e) {
+        if (_tips_instance != null) {
+            var anchor_y = e.clientY;
+            if (anchor_y + _tips_instance.getHeight() > senjs.app.info.display.SCREEN_HEIGHT) {
+                anchor_y -= _tips_instance.getHeight() + 5;
+            } else {
+                anchor_y += 5;
+            }
+            _tips_instance
+                .setTop(anchor_y)
+                .setLeft(e.clientX + 2);
+        }
+    }
+
+
+
+    onMouseOut(e) {
+        if (_tips_instance != null) {
+            _tips_instance.destroy();
+            _tips_instance = null;
+        }
+        this.is_out = true;
+    }
+
+    setTips(text) {
+        if (_tips_instance != null) {
+            _tips_instance.setHtml(text);
+        }
+        this.tips = text;
     }
 
 }

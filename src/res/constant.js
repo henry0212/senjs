@@ -106,7 +106,8 @@ export const app_constant = {
     ScrollType: {
         NONE: 0,
         VERTICAL: 1,
-        HORIZONTAL: 2
+        HORIZONTAL: 2,
+        BOTH: 3
     },
     Orientation:{
         HORIZONTAL: 1,
@@ -126,7 +127,7 @@ export const app_duration = {
 }
 
 export const app_animation = {
-    DESTROY: "scaleClose90",
+    DESTROY: "dialog_out",
     STICKY_LAYOUT_SHOW: "scaleOpen90",
     STICKY_LAYOUT_HIDE: "scaleClose90"
 }

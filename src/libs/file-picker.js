@@ -49,6 +49,8 @@ export class FilePicker {
             var file = document.createElement("input");
             file.type = "file";
             file.multiple = "multiple";
+            file.style.zIndex = -1;
+            file.style.visibility = 'hidden';
             if (options.hasOwnProperty("accept")) {
                 file.accept = options.accept;
             }
@@ -111,12 +113,11 @@ export class FilePicker {
     static singleFileToArrayBuffer(file) {
         return new Promise(next => {
             var reader = new FileReader();
-            reader.onload = function () {
-                var base64 = reader.result.toString();
-                next(base64);
+            reader.onload = function (e) {
+                next(e.target.result);
             }
             reader.readAsArrayBuffer(file);
-        })
+        });
     }
 
     static loadFileToBlob(file) {

@@ -5,7 +5,7 @@ import { app_constant, app_animation } from '../res/constant.js'
 import { List } from '../util/list-util.js';
 import { StringUtil } from '../util/string-util.js';
 import { senjs } from '../index.js';
-import { ClickListener, ScrollListener, TouchListener, FocusChangeListener } from './event-v2.js';
+import { ClickListener, ScrollListener, TouchListener, FocusChangeListener, DoubleClickListener } from './event-v2.js';
 
 var countAnimation = 0;
 
@@ -16,12 +16,13 @@ var countAnimation = 0;
 export class View {
     constructor(htmlElement) {
         this.TAG = this.constructor.name;
+
         this._dom = htmlElement || document.createElement("div");
         this._super = {};
         this._addViews = null;
-        this._meta = {};
-        this._senjs = senjs;
-        var self = this;
+        Object.defineProperty(this, "__meta", { value: {}, writable: false });
+        Object.defineProperty(this, "_senjs", { value: senjs, writable: false });
+        //var self = this;
         // var obj_keys = Object.getOwnPropertyNames(Object.getPrototypeOf(this));
         // for (var i = 0; i < obj_keys.length; i++) {
         //     if (this[obj_keys[i]]) {
@@ -115,6 +116,7 @@ export class View {
 
     }
 
+
     _prepare() {
         var self = this;
         var self_thread = {
@@ -128,7 +130,8 @@ export class View {
             resumseChilds: new List(),
             pauseChilds: new List()
         }
-        this.info = {
+
+        var _info = {
             arrangeLayoutType: -1,
             absoluteZindex: -1,
             isModifiedId: false,
@@ -317,6 +320,10 @@ export class View {
                     onTouchCallbacks: new List(),
                 },
                 onCreated: function (listener) {
+                    if (self.hasCreated) {
+                        listener(self);
+                        return;
+                    }
                     self.events.override.variables.createCallback.push(listener);
                     return self;
                 },
@@ -402,7 +409,7 @@ export class View {
             perform: {
                 click: function () {
                     self._dom.click();
-                    
+
                 }
             },
             system: {
@@ -457,9 +464,10 @@ export class View {
                     }
                     if (!self.info.hasCallCreatedStack) {
                         self.info.hasCallCreatedStack = true;
-                        self.events.override.variables.createCallback.forEach(function (action, i) {
-                            action(self);
-                        });
+                        var cb_created;
+                        while ((cb_created = self.events.override.variables.createCallback.shift())) {
+                            cb_created.call(self, self);
+                        }
                     }
 
                     this.measured();
@@ -470,12 +478,12 @@ export class View {
                         if (delay > 0) {
                             self.postDelay(() => {
                                 self.events.override.variables.resumeCallback.foreach(function (call) {
-                                    call(self);
+                                    call.call(self, self);
                                 });
                             }, delay + 50);
                         } else {
                             self.events.override.variables.resumeCallback.foreach(function (call) {
-                                call(self);
+                                call.call(self, self);
                             });
                         }
                     }
@@ -485,7 +493,7 @@ export class View {
                     if (self.events.override.variables.beforeDestroyCallBack.size() > 0) {
                         self.events.override.variables.beforeDestroyCallBack.foreach(function (item, count) {
                             if (item instanceof Function || item === "function") {
-                                item(self);
+                                item.call(self, self);
                             }
                         });
                         self.events.override.variables.beforeDestroyCallBack.clear();
@@ -509,6 +517,8 @@ export class View {
                         }
                         if (p._dom.contains(self._dom)) {
                             p._dom.removeChild(self._dom);
+                        } else if (self._dom && typeof (self._dom.remove) === 'function') {
+                            self._dom.remove();
                         }
 
                         p.events.override.variables.onRemovedChild.foreach(function (call, position) {
@@ -519,8 +529,8 @@ export class View {
                         //});
                     }
                     self.events.override.variables.destroyCallBack.foreach(function (item, count) {
-                        if (item instanceof Function || item === "function") {
-                            item(self);
+                        if (item instanceof Function || typeof item === "function") {
+                            item.call(self, self);
                         }
                     });
                     var rootChilds = app.senjs_viewPool.allRootChilds(self.info.id);
@@ -578,13 +588,13 @@ export class View {
                         viewChild.info.state = app_constant.VIEW_STATE.pause;
                         viewChild.info.isPaused = true;
                         viewChild.events.override.variables.pauseCallback.foreach(function (call, position) {
-                            call(viewChild);
+                            call.call(viewChild, viewChild);
                         });
                     }, function () {
                         self_thread.pause = null;
                     }, false, 1);
                     self.events.override.variables.pauseCallback.foreach(function (call, position) {
-                        call(self);
+                        call.call(self, self);
                     });
                     return self;
                 },
@@ -609,13 +619,13 @@ export class View {
                         viewChild.info.state = app_constant.VIEW_STATE.running;
                         viewChild.info.isPaused = false;
                         viewChild.events.override.variables.resumeCallback.foreach(function (call, position) {
-                            call(viewChild);
+                            call.call(viewChild, viewChild);
                         });
                     }, function () {
                         self_thread.resume = null;
                     }, false, 1);
                     self.events.override.variables.resumeCallback.foreach(function (call, position) {
-                        call(self);
+                        call.call(self, self);
                     });
                     return self;
                 },
@@ -695,10 +705,30 @@ export class View {
                 return self;
             }
         }
+
+        Object.defineProperty(this, "info", { value: _info, writable: false });
     }
 
+    get _meta() {
+        return this.__meta;
+    }
+
+    set _meta(args) {
+        Object.keys(args).forEach(key => {
+            this.__meta[key] = args[key];
+        });
+    }
+
+
+    /**
+     * @returns {HTMLElement}
+     */
     getDOM() {
         return this._dom;
+    }
+
+    get hasCreated() {
+        return this.info.state == senjs.constant.VIEW_STATE.running;
     }
 
     setId(id) {
@@ -929,6 +959,10 @@ export class View {
 
 
     setBackgroundSize(width, height) {
+        if (width === 'cover' || width === 'contain') {
+            this._dom.style.backgroundSize = width;
+            return;
+        }
         this._dom.style.backgroundSize = (width || "auto") + " " + (height || "auto");
         return this;
     }
@@ -937,7 +971,6 @@ export class View {
         this._dom.style.backgroundPosition = left + " " + top;
         return this;
     }
-
 
     getViewAt(index) {
         if (this.childCount() > 0) {
@@ -948,6 +981,9 @@ export class View {
         }
     }
 
+    /**
+     * @returns {[View]}
+     */
     getAllViews() {
         return app.senjs_viewPool.allChilds(this.info.id);
     }
@@ -1131,10 +1167,18 @@ export class View {
                 this._dom.style.overflowY = "hidden";
                 this.info.isScrollY = false;
                 this.info.isScrollX = true;
+                break;
             case app_constant.ScrollType.NONE:
                 this._dom.style.overflow = "hidden";
                 this.info.isScrollY = false;
                 this.info.isScrollX = false;
+                break;
+            case app_constant.ScrollType.BOTH:
+                this._dom.style.overflowX = "auto";
+                this._dom.style.overflowY = "auto";
+                this.info.isScrollY = true;
+                this.info.isScrollX = true;
+                break;
         }
         return this;
     }
@@ -1405,7 +1449,7 @@ export class View {
         //     top = getComputedStyle(this).marginTop;
         // }
         // return isNaN(top) ? 0 : top;
-        return parseInt(IOUtil.isAbsouteOrFixed(this) ? getComputedStyle(this._dom).bottom : getComputedStyle(this._dom).marginBottom);
+        return parseInt(IOUtil.isAbsouteOrFixed(this) ? getComputedStyle(this._dom).top : getComputedStyle(this._dom).marginTop);
     }
 
 
@@ -1598,7 +1642,6 @@ export class View {
 
 
     setHeightSameAs(view) {
-        console.log("view", view)
         if (view && view.info.isCreated) {
             this.setHeight(view._dom.offsetHeight - ((parseInt(this._dom.style.borderBottomWidth) || 0) + (parseInt(this._dom.style.borderTopWidth) || 0)));
         }
@@ -1938,11 +1981,10 @@ export class View {
 
 
     getAbsoluteTop() {
-        return app.senjs_viewPool.allParents(this.info.id).filter(function (item) {
+        return senjsCts.allParents(this.info.id).filter(function (item) {
             return item != null && item.isTableCol && item.info.parent >= 0;
-        }
-        ).Sum(function (a, b) {
-            return (a || 0) + b._dom.offsetTop;
+        }).Sum(function (a, b) {
+            return a + b._dom.offsetTop;
         }) + this._dom.offsetTop;
     }
 
@@ -2004,20 +2046,26 @@ export class View {
 
 
     setVisibility(visibility) {
+        if (this.info.visibility == visibility) {
+            return this;
+        }
         switch (visibility) {
-            case app_constant.Visibility.VISIBLE: if (this._dom.style.display == "none") {
-                this._dom.style.display = this.info.display_type;
-                this.events.system.reLayout();
-            }
-            else {
-                this.setOpacity(1);
-                this._dom.style.visibility = "visible";
-            }
+            case app_constant.Visibility.VISIBLE:
+                if (this._dom.style.display == "none") {
+                    this._dom.style.display = this.info.display_type;
+                    this.events.system.reLayout();
+                }
+                else {
+                    this.setOpacity(1);
+                    this._dom.style.visibility = "visible";
+                }
                 break;
-            case app_constant.Visibility.INVISIBLE: this.setOpacity(0);
+            case app_constant.Visibility.INVISIBLE:
+                this.setOpacity(0);
                 this._dom.style.visibility = "hidden";
                 break;
-            case app_constant.Visibility.GONE: this._dom.style.display = "none";
+            case app_constant.Visibility.GONE:
+                this._dom.style.display = "none";
                 break;
         }
         this.info.visibility = visibility;
@@ -2440,7 +2488,8 @@ export class View {
 
 
     destroy() {
-        this.events.system.destroy();
+        if (this.events)
+            this.events.system.destroy();
         return this;
     }
 
@@ -2469,13 +2518,11 @@ export class View {
             var key = item.split("-");
             if (key.length > 1) {
                 for (var i = 1; i < key.length; i++) {
-                    console.log(key[i])
                     key[i] = key[i].charAt(0).toUpperCase() + key[i].substr(1);
                 }
                 key = key.reduce((a, b) => {
                     return a + b;
                 }, "");
-                console.log(key);
             }
             this._dom.style[key] = arg[item];
         });
@@ -2499,7 +2546,7 @@ export class View {
             this.events.system.destroy();
             return this;
         }
-        if (this.info.parent != null) {
+        if (this.info && this.info.parent != null) {
             this._cache._destroyAnim = animation;
             this.events.system.destroy();
         }
@@ -2567,7 +2614,10 @@ export class View {
         return this;
     }
 
-
+    setAttribute(key, value) {
+        this._dom.setAttribute(key, value);
+        return this;
+    }
 
     showPinnerPanel() {
         var btnHidden = senjs.IO.buttonNonTextView("").setPosition(app_constant.Position.FIXED).zIndex(1001).toFillParent();
@@ -2636,13 +2686,6 @@ export class View {
     }
 
 
-    setOnDoubleClick(callback) {
-        this.info.onDoubleClickListener = callback;
-        app.event.init(this).setOnDoubleClick(callback);
-        return this;
-    }
-
-
     setOnLongClick(listener) {
         app.event.init(this).setOnLongClick(listener);
         return this;
@@ -2705,6 +2748,19 @@ export class View {
         } else {
             // Listener - function for old version
             new ClickListener(listener).bindToView(this);
+        }
+        return this;
+    }
+    /**
+        * 
+        * @param {DoubleClickListener} listener 
+        */
+    setOnDoubleClick(listener) {
+        if (listener instanceof DoubleClickListener) {
+            listener.bindToView(this);
+        } else {
+            // Listener - function for old version
+            new DoubleClickListener(listener).bindToView(this);
         }
         return this;
     }
@@ -2952,6 +3008,7 @@ var orderControl = {
         var parent = item.fView.getParentView();
         item.fView.setPosition(app_constant.Position.ABSOLUTE);
         if (parent.info.position != app_constant.Position.ABSOLUTE
+            && parent.info.position != app_constant.Position.FIXED
             && parent.info.position != app_constant.Position.RELATIVE) {
             parent.setPosition(app_constant.Position.RELATIVE);
         }
@@ -3080,8 +3137,7 @@ var _bindOnViewCreated = (control, callback) => {
                                                 vChild.info.state = app_constant.VIEW_STATE.running;
                                             });
                                         }, view.getAnimationDuration());
-                                    }
-                                    else {
+                                    } else {
                                         view.info.state = senjs.constant.VIEW_STATE.running;
                                     }
                                 } else if (!view.info.isDestroy) {
@@ -3092,11 +3148,46 @@ var _bindOnViewCreated = (control, callback) => {
                             }
                         }
                     }
-                }, 10);
+                }, 0);
             }
         }
     }
     else {
         callback(control);
     }
+}
+
+function getViewportOffset(element) {
+    var node = element
+        , left = node.offsetLeft
+        , top = node.offsetTop
+        ;
+
+    node = node.parentNode;
+
+    do {
+        var styles = getComputedStyle(node);
+
+        if (styles) {
+            var position = styles.getPropertyValue('position');
+
+            left -= node.scrollLeft;
+            top -= node.scrollTop;
+
+            if (/relative|absolute|fixed/.test(position)) {
+                left += parseInt(styles.getPropertyValue('border-left-width'), 10);
+                top += parseInt(styles.getPropertyValue('border-top-width'), 10);
+
+                left += node.offsetLeft;
+                top += node.offsetTop;
+            }
+
+            node = position === 'fixed' ? null : node.parentNode;
+        } else {
+            node = node.parentNode;
+        }
+
+    } while (node);
+
+    return { left: left, top: top };
 }

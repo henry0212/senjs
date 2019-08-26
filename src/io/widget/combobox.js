@@ -104,7 +104,7 @@ export class Combobox extends LinearLayout {
             case Combobox.PICKER_BOX_TYPE.DROP_DOWN:
                 stickyList = new StickyLayout(this)
                     .setShadow("rgba(0,0,0,0.2)", 0, 0, 4)
-                    .setMaxHeight(this._senjs.app.info.display.SCREEN_HEIGHT - this.getRelativeTop() + this.getHeight() + 10)
+                    .setMaxHeight(this._senjs.app.info.display.SCREEN_HEIGHT - (this.getRelativeTop() + this.getHeight() + 10))
                     .setScrollType(app_constant.ScrollType.VERTICAL)
                     .setMinWidth(100);
                 console.log(this._senjs.app.info.display.SCREEN_HEIGHT - this.getRelativeTop() + this.getHeight() + 10);
@@ -163,7 +163,7 @@ export class Combobox extends LinearLayout {
      */
 
     /**
-     * Triggered when user select a item
+     * l when user select a item
      * @param {onSelected} cb 
      */
     setOnSelected(cb) {

@@ -86,6 +86,17 @@
     -webkit-animation-timing-function: "ease-out";
 }
 
+.scale_out_95{
+    animation-name: scale_out_95;
+    animation-duration: .2s;
+    animation-fill-mode: forwards;
+    animation-timing-function: "ease-in";
+    -webkit-animation-name: scale_out_95;
+    -webkit-animation-duration: .2s;
+    -webkit-animation-fill-mode: forwards;
+    -webkit-animation-timing-function: "ease-out";
+}
+
 .anim_click::before{
     position: absolute;
     left: 0;

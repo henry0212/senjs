@@ -1,6 +1,7 @@
 import { Thread } from '../core/thread.js'
 
 
+
 export class List {
     constructor(list) {
         this.src_array = list != null ? list : new Array();
@@ -58,6 +59,7 @@ export class List {
         else {
             this.src_array = this.src_array.concat(list.toArray());
         }
+        return this;
     }
 
     remove(object) {
@@ -96,7 +98,7 @@ export class List {
     }
 
     clear() {
-        this.src_array = new Array();
+        this.src_array = [];
     }
 
     clone() {

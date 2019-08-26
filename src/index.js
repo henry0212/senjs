@@ -6,9 +6,8 @@ import util from './util/index.js';
 import adapter from './adapter/index.js';
 import lib from './libs/index.js';
 import dialog from './io/dialog/index.js';
-import './css/common.css';
-import './css/anim.css';
-import './css/animation.css';
+import './css/index.js';
+import { SandBoxAplication } from './core/application.js';
 
 export const senjs = {
     app: core.app,
@@ -27,5 +26,8 @@ export const senjs = {
         theme: res.app_theme,
         dimen: res.app_size,
         material_colors: res.material_colors
+    },
+    sandbox: {
+        Application: SandBoxAplication
     }
 }

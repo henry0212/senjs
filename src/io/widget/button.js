@@ -11,6 +11,9 @@ export class Button extends BaseTextView {
             .setWidth("max-content")
             .setBorder(0, "transparent")
             .setBackground("transparent")
+            .setCss({
+                'margin': '0px'
+            })
             .bold();
     }
 }

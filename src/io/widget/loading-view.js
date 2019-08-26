@@ -1,4 +1,4 @@
-import { LinearLayout } from "../layout/linear-layout";
+import { LinearLayout } from "../layout/linear-layout.js";
 import { senjs } from "../../index.js";
 
 

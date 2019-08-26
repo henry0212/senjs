@@ -21,7 +21,11 @@ export class Waiter {
         }
 
         this._waiter = setTimeout(() => {
-            callback();
+            try{
+                callback();
+            }catch(e){
+
+            }
             this.remove();
         }, duration);
         info.currentId++;

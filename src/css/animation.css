@@ -104,14 +104,14 @@
     }
 } */
 
-
+/* 
 @keyframes storyBoardOpen {
     0% {
-        transform: translateX(101%);
+        transform: translateX(60%);
     }
 
-    40% {
-        transform: translateX(5%);
+    50% {
+        transform: translateX(6%);
     }
 
     100% {
@@ -122,18 +122,43 @@
 
 @-webkit-keyframes storyBoardOpen {
     0% {
-        -webkit-transform: translateX(101%);
+        -webkit-transform: translateX(60%);
     }
 
-    40% {
-           -webkit-transform: translateX(5%);
+
+    50% {
+           -webkit-transform: translateX(6%);
     }
 
 
     100% {
         -webkit-transform: translateX(0);
     }
+} */
+
+
+@keyframes storyBoardOpen {
+    0% {
+        transform: translateX(50%);
+    }
+
+    100% {
+        transform: translateX(0);
+    }
 }
+
+
+@-webkit-keyframes storyBoardOpen {
+    0% {
+        -webkit-transform: translateX(50%);
+    }
+
+    100% {
+        -webkit-transform: translateX(0);
+    }
+}
+
+
 
 @keyframes storyBoardOpenBelow{
     0% {
@@ -190,9 +215,10 @@
         transform: translateX(0%);
     }
     
+    
 
     100% {
-        transform: translateX(-15%);
+        transform: translateX(-30%);
     }
 
 }
@@ -203,7 +229,7 @@
     }
 
     100% {
-        -webkit-transform: translateX(-10%);
+        -webkit-transform: translateX(-30%);
     }
 }
 
@@ -3129,16 +3155,15 @@
 
 .storyBoardOpen {
     animation-name: storyBoardOpen;
-    animation-duration: .5s;
+    animation-duration: 400ms;
     animation-fill-mode: forwards;
     -webkit-animation-name: storyBoardOpen;
-    -webkit-animation-duration: .5s;
+    -webkit-animation-duration: 400ms;
     -webkit-animation-fill-mode: forwards;
-    animation-timing-function: cubic-bezier(0,0.2,0.1,1);
-    -webkit-animation-timing-function: cubic-bezier(0,0.2,0.1,1);
+    /* animation-timing-function: cubic-bezier(0,0.2,0.1,1); */
     box-shadow: rgba(0,0,0,0.2) 0px 0px 20px;
-    animation-timing-function: cubic-bezier(0,0,.15,1);
-    -webkit-animation-timing-function: cubic-bezier(0,0,.15,1);
+    animation-timing-function: cubic-bezier(0,0,0.1,1);
+    -webkit-animation-timing-function: cubic-bezier(0,0,0.1,1);
 }
 
 .storyBoardOpenBelow {
@@ -3148,6 +3173,8 @@
     -webkit-animation-name: storyBoardOpenBelow;
     -webkit-animation-duration: .4s;
     -webkit-animation-fill-mode: forwards;
+    /* animation-timing-function: linear;
+    -webkit-animation-timing-function: linear; */
     animation-timing-function: cubic-bezier(0.4,0.2,0.1,1);
     -webkit-animation-timing-function:cubic-bezier(0.4,0.2,0.1,1);
 }
@@ -3155,27 +3182,30 @@
 
 .storyBoardClose {
     animation-name: storyBoardClose;
-    animation-duration: .4s;
+    animation-duration: 400ms;
     animation-timing-function: cubic-bezier(0.4,0.2,0.1,1);
     animation-fill-mode: forwards;
     -webkit-animation-name: storyBoardClose;
-    -webkit-animation-duration: .4s;
+    -webkit-animation-duration: 400ms;
     -webkit-animation-fill-mode: forwards;
     -webkit-animation-timing-function:  cubic-bezier(0.4,0.2,0.1,1);
     box-shadow: rgba(0,0,0,0.1) 0px 0px 40px;
-    animation-timing-function: cubic-bezier(0.1,0.1,.15,1);
-    -webkit-animation-timing-function: cubic-bezier(0.1,0.1,.15,1);
+    animation-timing-function: cubic-bezier(0.1,0.3,.3,1);
+    -webkit-animation-timing-function: cubic-bezier(0.1,0.3,.3,1);
 }
 
 .storyBoardCloseBelow {
     animation-name: storyBoardCloseBelow;
     animation-duration: .4s;
-    animation-timing-function: linear;
     animation-fill-mode: forwards;
     -webkit-animation-name: storyBoardCloseBelow;
     -webkit-animation-duration: .4s;
     -webkit-animation-fill-mode: forwards;
-    -webkit-animation-timing-function: linear;
+    /* animation-timing-function: linear;
+    -webkit-animation-timing-function: linear; */
+    
+    animation-timing-function: cubic-bezier(0.1,0.3,.3,.8);
+    -webkit-animation-timing-function:cubic-bezier(0.1,0.3,.3,0.8);
 }
 
 

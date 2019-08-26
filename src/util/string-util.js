@@ -1,4 +1,11 @@
-export class StringUtil{
+
+String.prototype.replaceAll = function (search, replacement) {
+    var target = this;
+    return target.replace(new RegExp(search, 'g'), replacement);
+};
+
+export class StringUtil {
+
 
     static highLightText(text, key, highLightColor, textColor) {
         var temp = removeVietnameseCharacter(text);

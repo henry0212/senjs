@@ -42,6 +42,13 @@ var event_context = {
     }
 }
 
+const EVENT_TAG_NAME = {
+    CLICK: "sen_click",
+    DOUBLE_CLICK: "sen_dbl_click",
+    SCROLL: "sen_scroll",
+    TOUCH: 'sen_touch',
+}
+
 
 /**
    * @callback app_listener
@@ -60,6 +67,11 @@ class BaseListener {
         }
         this._e = null;
         this._listener = listener;
+
+    }
+
+    static get TAG() {
+        return this.name;
     }
 
 
@@ -85,7 +97,7 @@ class BaseListener {
     }
 
     _callListener(view) {
-        this._listener(view, this._args);
+        this._listener.call(this._listener, view, this._args);
         return true;
     }
 
@@ -93,6 +105,10 @@ class BaseListener {
         if (view == null) {
             throw new Error("Need a View here");
         }
+        if (view._meta.event_pool == undefined) {
+            view._meta.event_pool = new senjs.util.List();;
+        }
+        view._meta.event_pool.add(this.constructor.name);
         return this;
     }
 }
@@ -131,17 +147,20 @@ export class ClickListener extends BaseListener {
      */
     bindToView(view) {
         super.bindToView(view);
-        // view.setCursor(app_constant.Cursor.POINTER);
         var allowClick = true;
         var tick = 0;
+        var count_click = 0;
         if (this._listener == null) {
             view._dom.onclick = null;
             view.setCursor("auto");
             return;
         }
         view.setCursor("pointer");
-
+        var pause_click = false;
         var onClick = (e) => {
+            if (pause_click) {
+                return;
+            }
             /* Detect child clicked */
             if (senjsCts.allRootChilds(view.info.id)
                 .filter(child => {
@@ -149,18 +168,36 @@ export class ClickListener extends BaseListener {
                 }).size() > 0 || view.info.isLongClick) {
                 return;
             }
+            pause_click = true;
+            view.postDelay(() => {
+                pause_click = false;
+            }, 200);
+            e.stopPropagation();
             this._e = e;
             view.info.isClicked = true;
             if (!view._dom.disabled) {
-                view.setClassName("anim_click")
-                if (allowClick && this._listener != null && view.info.allowClick) {
+                count_click++;
+                if (view._meta.event_pool.indexOf(DoubleClickListener.TAG) > -1 && view.info.allowClick && count_click == 1) {
+                    view.postDelay(() => {
+                        if (allowClick && this._listener != null && view.info.allowClick && count_click == 1) {
+                            this._callListener(view);
+                        }
+                        new Waiter(function () {
+                            view.info.isClicked = false;
+                            view.info.allowClick = true;
+                            count_click = 0;
+                        }, 100);
+                    }, 150);
+                    return;
+                } else if (allowClick && this._listener != null && view.info.allowClick && count_click == 1) {
                     this._callListener(view);
+                    new Waiter(function () {
+                        // view.removeClassName("anim_click");
+                        view.info.isClicked = false;
+                        view.info.allowClick = true;
+                        count_click = 0;
+                    }, 100);
                 }
-                new Waiter(function () {
-                    view.removeClassName("anim_click");
-                    view.info.isClicked = false;
-                    view.info.allowClick = true;
-                }, 100);
             }
         }
         if (isMobile.any()) {
@@ -209,6 +246,126 @@ export class ClickListener extends BaseListener {
     }
 }
 
+
+/**
+   * @callback click_listener
+   * @param {View} view
+   * @param {any} args     
+*/
+
+/**
+* @typedef {Object} ClickArgument
+* @property {View} view
+*/
+export class DoubleClickListener extends BaseListener {
+
+    /**
+    * 
+    * @param {click_listener} listener 
+    */
+    constructor(listener) {
+        super(listener);
+    }
+
+    get args() {
+        return this._args;
+    }
+
+    /**
+     * @returns {ClickArgument};
+     */
+    get event_args() {
+        return this._args;
+    }
+
+    /**
+     * Bind event to view
+     * @param {View} view
+     * @returns {ClickListener} 
+     */
+    bindToView(view) {
+        super.bindToView(view);
+        // view.setCursor(app_constant.Cursor.POINTER);
+        var allowClick = true;
+        var tick = 0;
+        if (this._listener == null) {
+            view._dom.onclick = null;
+            view.setCursor("auto");
+            return;
+        }
+        view.setCursor("pointer");
+
+        var onDblClick = (e) => {
+            /* Detect child clicked */
+            if (senjsCts.allRootChilds(view.info.id)
+                .filter(child => {
+                    return child.info.isClicked;
+                }).size() > 0 || view.info.isLongClick) {
+                return;
+            }
+            this._e = e;
+            if (!view._dom.disabled) {
+                if (allowClick && this._listener != null && view.info.allowClick) {
+                    view.info.allowClick = false;
+                    this._callListener(view);
+                }
+                new Waiter(function () {
+                    view.info.isClicked = false;
+                    view.info.allowClick = true;
+                }, 150);
+            }
+        }
+        if (isMobile.any()) {
+            var allowClick = false;
+            var count_click = 0;
+            var firstTouchY = 0, lastTouchY = 0, lastTouchX = 0, firstTouchX = 0;
+            view._dom.addEventListener("touchstart", (e) => {
+                if (!view.info.isClicked) {
+                    allowClick = true;
+                    firstTouchY = e.changedTouches[0].clientY;
+                    firstTouchX = e.changedTouches[0].clientX;
+                    tick = performance.now();
+                }
+            });
+            view._dom.addEventListener("touchmove", (e) => {
+                if (Math.abs(e.changedTouches[0].clientX - firstTouchX) > 30 || Math.abs(e.changedTouches[0].clientY - firstTouchY) > 30) {
+                    allowClick = false;
+                }
+            });
+            view._dom.addEventListener("touchend", (e) => {
+                if (!view.info.isClicked && performance.now() - tick < 600) {
+                    lastTouchY = e.changedTouches[0].clientY;
+                    lastTouchX = e.changedTouches[0].clientX;
+                    if (firstTouchX > lastTouchX) {
+                        var a = lastTouchX;
+                        firstTouchX = lastTouchX;
+                        lastTouchX = a;
+                    }
+                    if (firstTouchY > lastTouchY) {
+                        var a = lastTouchY;
+                        firstTouchY = lastTouchY;
+                        lastTouchY = a;
+                    }
+                    count_click++;
+                    if (count_click == 2) {
+                        ondblclick(e);
+                    }
+                    if (count_click == 1) {
+                        setTimeout(() => {
+                            count_click = 0;
+                        }, 80);
+                    }
+                }
+            });
+        }
+        else {
+            view._dom.ondblclick = onDblClick;
+        }
+        view.performDoubleClick = onDblClick;
+
+        return this;
+    }
+}
 
 
 /**
@@ -266,13 +423,13 @@ export class ScrollListener extends BaseListener {
             view._dom.onscroll = null;
             return;
         }
-        var LIMIT_FAST_TICK = 20, LIMIT_FAST_RANGE = senjs.app.info.display.SCREEN_HEIGHT * 0.15;
+        var LIMIT_FAST_TICK = 80, LIMIT_FAST_RANGE = senjs.app.info.display.SCREEN_HEIGHT * 0.05;
         var time_tick = 0;
         view._dom.onscroll = (e) => {
             this._args.tickPerScroll = performance.now() - time_tick;
             this._args.isScrollDown = this._args.scrollY < view._dom.scrollTop;
             this._args.isScrollLeft = this._args.scrollX < view._dom.scrollLeft;
-            this._args.rangeEachTime = this._args.isScrollDown ? (this.scrollTop - this._args.scrollY) : (this._args.scrollY - view._dom.scrollTop);
+            this._args.rangeEachTime = this._args.isScrollDown ? (e.target.scrollTop - this._args.scrollY) : (this._args.scrollY - e.target.scrollTop);
             this._args.scrollY = view._dom.scrollTop;
             this._args.scrollX = view._dom.scrollLeft;
             this.original_event = e;
@@ -280,7 +437,8 @@ export class ScrollListener extends BaseListener {
             this._args.speed = ((this._args.tickPerScroll < LIMIT_FAST_TICK && this._args.rangeEachTime > LIMIT_FAST_RANGE) ? 1 : 0);
             this._callListener(view);
             view.events.override.variables.onScrolledCallbacks.foreach((listener, idx) => {
-                listener(view, this._args, e);
+                if (listener)
+                    listener(view, this._args, e);
             });
             if (this._args.scrollY <= 0 || this._args.scrollY >= view._dom.scrollHeight - view._dom.offsetHeight) {
                 e.preventDefault();
@@ -289,8 +447,6 @@ export class ScrollListener extends BaseListener {
         return this;
     }
 }
-
-
 
 export const touch_constant = {
     TOUCH_DOWN: 11,
@@ -302,8 +458,6 @@ export const touch_constant = {
     TOUCH_PINCH: 17,
     NONE: 18
 }
-
-
 
 /**
 * @typedef {Object} TouchArgument
@@ -372,6 +526,7 @@ export class TouchListener extends BaseListener {
      * @returns {TouchListener} 
      */
     bindToView(view) {
+        super.bindToView(view);
         var firstX = -1,
             firstY = -1;
         var currentX = 0, currentY = 0;
@@ -566,7 +721,7 @@ export class FocusChangeListener extends BaseListener {
         * @returns {FocusChangeListener} 
         */
     bindToView(view) {
-
+        super.bindToView(view);
         var call_override = (hasFocused) => {
             self.events.override.variables.onFocusChanged.foreach(listener => {
                 listener(view, hasFocused);
@@ -638,7 +793,7 @@ export class KeyChangeListener extends BaseListener {
         * @returns {OnKeyChangeListener} 
         */
     bindToView(view) {
-
+        super.bindToView(view);
         var call_override = () => {
             view.events.override.variables.onKeyChangedCallback.foreach(listener => {
                 listener(view, this._args);
@@ -703,34 +858,94 @@ export class MouseChangeListener extends BaseListener {
     }
 
     bindToView(view) {
-        view._dom.onmouseenter = (e) => {
-            this.original_event = e;
-            this._args.action = _mouse_motion_action.MOUSE_ENTER;
-            this._callListener(view);
-        }
+        super.bindToView(view);
+        if (isMobile.any()) {
+            // view._dom.onmouseenter = (e) => {
+            //     e.pageX = e.changedTouches[0].pageX;
+            //     e.pageY = e.changedTouches[0].pageY;
+            //     this.original_event = e;
+            //     this._args.action = _mouse_motion_action.MOUSE_ENTER;
+            //     this._callListener(view);
+            // }
 
-        view._dom.onmouseout = (e) => {
-            this.original_event = e;
-            this._args.action = _mouse_motion_action.MOUSE_OUT;
-            this._callListener(view);
-        }
+            // view._dom.onmouseout = (e) => {
+            //     e.pageX = e.changedTouches[0].pageX;
+            //     e.pageY = e.changedTouches[0].pageY;
+            //     this.original_event = e;
+            //     this._args.action = _mouse_motion_action.MOUSE_OUT;
+            //     this._callListener(view);
+            // }
 
-        view._dom.onmousemove = (e) => {
-            this.original_event = e;
-            this._args.action = _mouse_motion_action.MOUSE_MOVE;
-            this._callListener(view);
-        }
+            view._dom.addEventListener("touch_move", (e) => {
+                if (e.pageX == undefined) {
+                    e.pageX = e.changedTouches[0].pageX;
+                    e.pageY = e.changedTouches[0].pageY;
+                }
+                this.original_event = e;
+                this._args.action = _mouse_motion_action.MOUSE_MOVE;
+                this._callListener(view);
+            })
+            // view._dom.ontouchmove = (e) => {
+            //     e.pageX = e.changedTouches[0].pageX;
+            //     e.pageY = e.changedTouches[0].pageY;
+            //     this.original_event = e;
+            //     this._args.action = _mouse_motion_action.MOUSE_MOVE;
+            //     this._callListener(view);
+            // }
 
-        view._dom.onmousedown = (e) => {
-            this.original_event = e;
-            this._args.action = _mouse_motion_action.MOUSE_DOWN;
-            this._callListener(view);
-        }
+            view._dom.addEventListener("touch_down", (e) => {
+                // view._dom.ontouchstart = (e) => {
+                if (e.pageX == undefined) {
+                    e.pageX = e.changedTouches[0].pageX;
+                    e.pageY = e.changedTouches[0].pageY;
+                }
+                this.original_event = e;
+                this._args.action = _mouse_motion_action.MOUSE_DOWN;
+                this._callListener(view);
+                // }
+            });
 
-        view._dom.onmouseup = (e) => {
-            this.original_event = e;
-            this._args.action = _mouse_motion_action.MOUSE_UP;
-            this._callListener(view);
+            view._dom.addEventListener("touch_up", (e) => {
+                // view._dom.ontouchend = (e) => {
+                if (e.pageX == undefined) {
+                    e.pageX = e.changedTouches[0].pageX;
+                    e.pageY = e.changedTouches[0].pageY;
+                }
+                this.original_event = e;
+                this._args.action = _mouse_motion_action.MOUSE_UP;
+                this._callListener(view);
+                // }
+            });
+        } else {
+            view._dom.onmouseenter = (e) => {
+                this.original_event = e;
+                this._args.action = _mouse_motion_action.MOUSE_ENTER;
+                this._callListener(view);
+            }
+
+            view._dom.onmouseout = (e) => {
+                this.original_event = e;
+                this._args.action = _mouse_motion_action.MOUSE_OUT;
+                this._callListener(view);
+            }
+
+            view._dom.onmousemove = (e) => {
+                this.original_event = e;
+                this._args.action = _mouse_motion_action.MOUSE_MOVE;
+                this._callListener(view);
+            }
+
+            view._dom.onmousedown = (e) => {
+                this.original_event = e;
+                this._args.action = _mouse_motion_action.MOUSE_DOWN;
+                this._callListener(view);
+            }
+
+            view._dom.onmouseup = (e) => {
+                this.original_event = e;
+                this._args.action = _mouse_motion_action.MOUSE_UP;
+                this._callListener(view);
+            }
         }
         return this;
     }

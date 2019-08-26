@@ -51,6 +51,17 @@ export class ImageView extends View {
 
     }
 
+    setShadow(color, l, r, range, inset) {
+        if (inset) {
+            this._view.pn_thum.setShadow(color, l, r, range, inset);
+            super.removeShadow();
+        } else {
+            super.setShadow(color, l, r, range, inset);
+            this._view.pn_thum.removeShadow();
+        }
+        return this;
+    }
+
     setImage(src) {
         this._cache.imageSrc = src;
         if (src == null || src.length == 0) {

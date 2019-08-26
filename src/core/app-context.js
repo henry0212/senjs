@@ -14,24 +14,26 @@ import { IconView } from '../io/widget/icon-view.js';
 import { Service } from './service.js';
 import res from '../res/index.js';
 import { senjs } from '../index.js';
+import { AwesomeIcon } from '../io/widget/awesome-icon.js';
+import { GlobalVariableService } from './global-variable.js';
 
 var app_url = "";
 
 var _isMobile = {
     Android: function () {
-        return navigator.userAgent.match(/Android/i);
+        return navigator.userAgent.match(/Android/i) != null;
     },
     BlackBerry: function () {
-        return navigator.userAgent.match(/BlackBerry/i);
+        return navigator.userAgent.match(/BlackBerry/i) != null;
     },
     iOS: function () {
-        return navigator.userAgent.match(/iPhone|iPad|iPod/i);
+        return navigator.userAgent.match(/iPhone|iPad|iPod/i) != null;
     },
     Opera: function () {
-        return navigator.userAgent.match(/Opera Mini/i);
+        return navigator.userAgent.match(/Opera Mini/i) != null;
     },
     Windows: function () {
-        return navigator.userAgent.match(/IEMobile/i);
+        return navigator.userAgent.match(/IEMobile/i) != null;
     },
     any: function () {
         return (this.Android() || this.BlackBerry() || this.iOS() || this.Opera() || this.Windows());
@@ -137,8 +139,11 @@ var _view_pool = {
     remove: function (controlId) {
         let free_item = _view_pool.lists.src_array[controlId];
         if (free_item) {
-            _view_destroy_pool.add(free_item);
-            _view_pool.lists.src_array[controlId] = null;
+            _view_destroy_pool.add({
+                idx: controlId,
+                view: free_item
+            });
+            // _view_pool.lists.src_array[controlId] = null;
             this.emptyIds.add(controlId);
             if (thread_freeMemory) {
                 thread_freeMemory.stop();
@@ -218,13 +223,10 @@ var _view_pool = {
             if (parent != null) {
                 parentId = parent.info.id
                 senjs.List(parent.info.childControls).remove(viewId);
-                console.log(" parent", parent.info.id);
             }
             var childs = this.allRootChilds(parentId);
             childs.filter(function (child, i) {
-                console.log("clear parent", child.info.parents);
                 senjs.List(child.info.parents).remove(parentId);
-                console.log("cleared parent", child.info.parents);
                 return child;
             });
         }
@@ -293,6 +295,7 @@ var application_start = async () => {
         app_context.ROOT_BODY.info.state = app_constant.VIEW_STATE.running;
         senjsCts.lists.clear();
         app_context.APP_WINDOW = app.mainFrame = new FrameLayout().toFillParent();
+        
         app_context.APP_WINDOW.setWidth("100%");
         app_context.APP_WINDOW.setHeight("100%");
         app_context.APP_WINDOW.info.id = 0;
@@ -316,6 +319,7 @@ var application_start = async () => {
 
         //app_size.init();
         IconView.init();
+        AwesomeIcon.init();
         app_service_context.start();
         app_service_context.registerDashboard = function (returnView) {
             on_custom_dashboard = returnView;
@@ -430,34 +434,74 @@ const app_service_context = {
 
             document.body.addEventListener("touchstart", (e) => {
                 app_service_context.isMouseDown = true;
-                if (app_service_context.override_mouse_down != null) {
-                    app_service_context.override_mouse_down.listener(e);
+                // if (app_service_context.override_mouse_down != null) {
+                //     app_service_context.override_mouse_down.listener(e);
+                // }
+                if (e.pageX == undefined) {
+                    e.pageX = e.changedTouches[0].pageX;
+                    e.pageY = e.changedTouches[0].pageY;
                 }
+                app_service_context.stackMouseDown.foreach((item) => {
+                    item.listener(e);
+                });
             })
             document.body.addEventListener("touchend", (e) => {
                 app_service_context.isMouseDown = false;
-                if (app_service_context.override_mouse_up != null) {
-                    app_service_context.override_mouse_up.listener(e);
+                // if (app_service_context.override_mouse_up != null) {
+                //     app_service_context.override_mouse_up.listener(e);
+                // }
+                if (e.pageX == undefined) {
+                    e.pageX = e.changedTouches[0].pageX;
+                    e.pageY = e.changedTouches[0].pageY;
                 }
+                app_service_context.stackMouseUp.foreach((item) => {
+                    item.listener(e);
+                });
+            })
+
+            document.body.addEventListener("touchmove", (e) => {
+                // if (app_service_context.override_mouse_move != null) {
+                //     app_service_context.override_mouse_move.listener(e);
+                // }
+                console.log(e);
+                if (e.pageX == undefined) {
+                    e.pageX = e.changedTouches[0].pageX;
+                    e.pageY = e.changedTouches[0].pageY;
+                }
+                app_service_context.stackMouseMove.foreach((item) => {
+                    item.listener(e);
+                });
             })
         } else {
-            document.body.onmouseup = function (e) {
+            document.body.addEventListener("mouseup", (e) => {
                 app_service_context.isMouseDown = false;
-                if (app_service_context.override_mouse_up != null) {
-                    app_service_context.override_mouse_up.listener(e);
-                }
-            };
-            document.body.onmousedown = function (e) {
+                app_service_context.stackMouseUp.foreach((item) => {
+                    item.listener(e);
+                });
+                // if (app_service_context.override_mouse_up != null) {
+                //     app_service_context.override_mouse_up.listener(e);
+                // }
+            })
+
+            document.body.addEventListener("mousedown", (e) => {
                 app_service_context.isMouseDown = true;
-                if (app_service_context.override_mouse_down != null) {
-                    app_service_context.override_mouse_down.listener(e);
-                }
-            };
-            document.body.onmousemove = function (e) {
-                if (app_service_context.override_mouse_move != null) {
-                    app_service_context.override_mouse_move.listener(e);
-                }
-            }
+                app_service_context.stackMouseDown.foreach((item) => {
+                    item.listener(e);
+                });
+                // if (app_service_context.override_mouse_down != null) {
+                //     app_service_context.override_mouse_down.listener(e);
+                // }
+            });
+
+            document.body.addEventListener("mousemove", (e) => {
+                // if (app_service_context.override_mouse_move != null) {
+                //     app_service_context.override_mouse_move.listener(e);
+                // }
+                app_service_context.stackMouseMove.foreach((item) => {
+                    item.listener(e);
+                });
+
+            });
         }
         window.addEventListener("popstate", function (e) {
             if (app_service_context.stackPopStates.size() > 0) {
@@ -732,6 +776,7 @@ export var app = {
             }
         }
     },
+    globalVariable: GlobalVariableService,
     /**
      * 
      * @param { onAppStarted } callback 
@@ -747,7 +792,6 @@ export var app = {
     Thread: app_thread,
     registerMainFrame: function (elemId) {
         app_context.customMainWindowElemId = elemId;
-        console.log("registerMainFrame", elemId);
     },
     findViewById: function (id) {
         if (!isNaN(id)) {
@@ -756,11 +800,33 @@ export var app = {
             return senjsCts.getByUid(id);
         }
     },
+    findHighestZIndex: function () {
+        var indexs = app_context.ROOT_BODY.getAllViews().toArray().map(item => {
+            return item.info.zIndex;
+        });
+        indexs.push(1);
+        return Math.max(indexs);
+    },
     findAdapterById: function (id) {
         return senjsAdps.find(id);
     },
     _addViewToRoot: function (view) {
         app_context.APP_WINDOW.addView(view);
+        return app;
+    },
+    _addViewToSuperRoot: function (view) {
+        app_context.ROOT_BODY.addView(view);
+        view.setZIndex(app_context.INDEX_DIALOG);
+        // var destroy = view.destroy.bind(view);
+        // view.destroy = () => {
+        //     destroy();
+        //     if (view.getDOM() instanceof Node) {
+        //         view.getDOM().remove();
+        //     } else {
+        //         app_context.ROOT_BODY.getDOM().removeChild(view.getDOM());
+        //     }
+        //     return view;
+        // }
         return app;
     },
     _addDialog: function (dialog) {
@@ -799,12 +865,14 @@ export var app = {
             }
             // app_context.APP_WINDOW.filterBlur(0);
             layer_below.setOpacity(0).postDelay(() => {
-                app_context.ROOT_BODY.removeChild(frame);
+                // app_context.ROOT_BODY.removeChild(frame);
+                frame.destroy();
             }, dialog.getAnimationDuration() - 150);
         })
         layer_below.setOnClick(() => {
-            dialog.dismiss();
-
+            if (dialog._meta.preventTouchOutside == false) {
+                dialog.dismiss();
+            }
         })
         var service_back = app.service.register.onBackPress("", "", () => {
             service_back = null;
@@ -912,6 +980,7 @@ function service_reduceControlPool() {
 var thread_freeMemory;
 function service_freeMemory() {
     var forceClearing = false;
+
     var serv_reduce = Service.register(function () {
         // Force Clear 
         /* if (_view_destroy_pool.size() > 2000 && !forceClearing) {
@@ -932,19 +1001,21 @@ function service_freeMemory() {
              });
          } else */
         if (_view_destroy_pool.size() > 0 && thread_freeMemory == null && !forceClearing) {
-            thread_freeMemory = _view_destroy_pool.splice(0, 150).asyncForeach((free_item, index) => {
+            thread_freeMemory = _view_destroy_pool.splice(0, 300).asyncForeach((free_item, index) => {
                 if (free_item) {
-                    Object.keys(free_item).forEach(key => {
-                        free_item[key] = null;
-                        delete free_item[key];
+                    Object.keys(free_item.view).forEach(key => {
+                        free_item.view[key] = null;
+                        delete free_item.view[key];
                     });
+                    _view_pool.lists.src_array[free_item.idx] = null;
                 }
             }, function () {
                 thread_freeMemory = null;
             });
+            console.log("run clear");
         }
     });
-    serv_reduce.delay = 5000;
+    serv_reduce.delay = 8000;
 }
 
 function service_clearTrash() {

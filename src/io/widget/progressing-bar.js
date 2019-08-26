@@ -6,7 +6,7 @@ export class ProgressingBar extends FrameLayout {
         super();
         this.__views = {
             percent_bar: new senjs.layout.LinearLayout('0%').setGravity(senjs.constant.Gravity.CENTER)
-                .toTopParent().toBottomParent().toLeftParent().setTransitionAll('0.1','linear')
+                .toTopParent().toBottomParent().toLeftParent().setTransitionAll('0.1', 'linear')
                 .addToParent(this).setCss({
                     'font-size': '70%'
                 })
@@ -28,6 +28,11 @@ export class ProgressingBar extends FrameLayout {
     setPercent(number) {
         this.__views.percent_bar.setWidth(number + "%").setHtml(number + "%");
         return this;
+    }
+
+    setRadius(radius) {
+        this.__views.percent_bar.setRadius(radius);
+        return super.setRadius(radius);
     }
 
 }

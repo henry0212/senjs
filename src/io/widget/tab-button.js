@@ -33,7 +33,8 @@ export class TabButton extends FrameLayout {
                 text: "#222",
                 cursor: "#222",
                 background: "transparent"
-            }
+            },
+            text_size: '100%'
         }
 
         this._cache.buttons = new List();
@@ -74,10 +75,12 @@ export class TabButton extends FrameLayout {
         var label = new TextView()
             .setText(meta.text).setHeight("100%")
             .setTextGravity(app_constant.Gravity.CENTER)
+            .setTextSize(this._config.text_size)
             .setTextColor(this._config.status_default.text);
 
         var icon = new IconView(meta.icon).setHeight("100%")
             .setRight(2)
+            .setTextSize(this._config.text_size)
             .setIconColor(this._config.status_default.icon)
 
         panel.setTag(this._meta.list_meta.size() - 1);
@@ -159,6 +162,14 @@ export class TabButton extends FrameLayout {
     setIconColor(color_focusing, color_default) {
         this._config.status_default.icon = color_default;
         this._config.status_selecting.icon = color_focusing;
+        return this;
+    }
+
+    setTextSize(val) {
+        this._cache.buttons.foreach(item => {
+            item.setTextSize(val);
+        })
+        this._config.text_size = val;
         return this;
     }
 

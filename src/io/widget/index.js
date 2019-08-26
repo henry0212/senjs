@@ -12,7 +12,10 @@ import { TextView } from './text-view.js';
 import { FloatingButton } from './floating-button.js';
 import { HorizontalListView } from './horizontal-list-view.js';
 import { LoadingView } from './loading-view.js';
-import { ProgressingBar } from './progressing-bar';
+import { ProgressingBar } from './progressing-bar.js';
+import { DataListView } from './data-list-view.js';
+import { AwesomeIcon } from './awesome-icon.js';
+import { TextArea } from './textarea.js';
 
 
 export default {
@@ -30,5 +33,8 @@ export default {
     TextView,
     FloatingButton,
     LoadingView,
-    ProgressingBar
+    ProgressingBar,
+    DataListView,
+    AwesomeIcon,
+    TextArea
 }

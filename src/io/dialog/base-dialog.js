@@ -12,6 +12,9 @@ export class BaseDialog extends FrameLayout {
     constructor() {
         super();
         this.info._dialog = true;
+
+        this._meta.preventTouchOutside = false;
+
         this.setMinWidth(100);
         this.setBackground(app_theme.dialog.background)
             .setRadius(app_theme.dialog.radius);
@@ -25,6 +28,11 @@ export class BaseDialog extends FrameLayout {
 
     dismiss() {
         super.destroyWithCustomAnimation(dialog_context.hideAnim);
+        return this;
+    }
+
+    setEnableTouchOutside(flag) {
+        this._meta.preventTouchOutside = !flag;
         return this;
     }
 
