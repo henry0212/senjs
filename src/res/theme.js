@@ -18,7 +18,7 @@ export const app_theme = {
     sliderButton: {
         status_default: {
             thum: "#ffffff",
-            background: "#f9f9f9"
+            background: "#f1f1f1"
         },
         status_checked: {
             thum: "#ffffff",

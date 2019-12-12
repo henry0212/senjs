@@ -204,17 +204,22 @@ export class ClickListener extends BaseListener {
             var allowClick = false;
             var firstTouchY = 0, lastTouchY = 0, lastTouchX = 0, firstTouchX = 0;
             view._dom.addEventListener("touchstart", (e) => {
+                console.log("isClicked", view.info.isClicked)
                 if (!view.info.isClicked) {
                     allowClick = true;
                     firstTouchY = e.changedTouches[0].clientY;
                     firstTouchX = e.changedTouches[0].clientX;
                     tick = performance.now();
+                    e.stopPropagation();
                 }
             }
             );
             view._dom.addEventListener("touchmove", (e) => {
+                // console.log("touchmove", e);
                 if (Math.abs(e.changedTouches[0].clientX - firstTouchX) > 30 || Math.abs(e.changedTouches[0].clientY - firstTouchY) > 30) {
                     allowClick = false;
+                } else {
+                    e.stopPropagation();
                 }
             });
             view._dom.addEventListener("touchend", (e) => {
@@ -231,14 +236,18 @@ export class ClickListener extends BaseListener {
                         firstTouchY = lastTouchY;
                         lastTouchY = a;
                     }
+                    e.stopPropagation();
                     onClick(e);
+                    view.info.isClicked = false;
+                    count_click = 0;
                 }
             });
         }
         else {
-            view._dom.onclick = onClick;
+            view._dom.removeEventListener("click", onClick);
+            view._dom.addEventListener("click", onClick);
         }
-        view.performClick = onclick;
+        view.performClick = onClick;
         view.events.perform.click = () => {
             this._callListener(view);
         };
@@ -440,10 +449,12 @@ export class ScrollListener extends BaseListener {
                 if (listener)
                     listener(view, this._args, e);
             });
+            e.stopPropagation();
             if (this._args.scrollY <= 0 || this._args.scrollY >= view._dom.scrollHeight - view._dom.offsetHeight) {
                 e.preventDefault();
             }
         }
+
         return this;
     }
 }
@@ -712,7 +723,7 @@ export class FocusChangeListener extends BaseListener {
    * 
    */
     constructor(listener) {
-
+        super(listener);
     }
 
     /**
@@ -723,7 +734,7 @@ export class FocusChangeListener extends BaseListener {
     bindToView(view) {
         super.bindToView(view);
         var call_override = (hasFocused) => {
-            self.events.override.variables.onFocusChanged.foreach(listener => {
+            view.events.override.variables.onFocusChanged.foreach(listener => {
                 listener(view, hasFocused);
             })
         }

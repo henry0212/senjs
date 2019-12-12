@@ -17,7 +17,7 @@ export class BaseList extends View {
         this.setScrollType(app_constant.ScrollType.NONE);
 
         this.view.panel_loadmore = new senjs.layout.LinearLayout("100%")
-            .toLeftParent().toRightParent().setBackground("rgba(255,255,255,0.8)").setRadius(100)
+            .toLeftParent().toRightParent().setBackground("rgba(255,255,255,0.05)").setRadius(0)
             .setGravity(senjs.constant.Gravity.CENTER)
             .setVisibility(senjs.constant.Visibility.GONE);
 
@@ -40,6 +40,7 @@ export class BaseList extends View {
         this.view.frame_scroller.addView(this.view.frame_dataList);
 
         this._meta.hasBindScroll = false;
+        this._meta.enable_lazy_loading = true;
         this.view.panel_loadmore.addView(this.view.icon_loadmore);
         this.addView(this.view.frame_scroller)
             .addView(this.view.panel_loadmore);
@@ -59,6 +60,29 @@ export class BaseList extends View {
 
     onCreated(view) {
 
+    }
+
+
+    showLoading() {
+        if (this._cache.loadingView == null) {
+            this._cache.loadingView = new senjs.widget.LoadingView().toFillParent();
+            this._cache.loadingView.setCircleColor(senjs.res.material_colors.Blue.g500).setBackground("rgba(255,255,255,0.1)");
+            this.addView(this._cache.loadingView);
+            this._cache.loadingView.events.override.onDestroy(() => {
+                this._cache.loadingView = null;
+            })
+        }
+        return this;
+    }
+
+    hideLoading() {
+        setTimeout(() => {
+            if (this._cache.loadingView != null) {
+                this._cache.loadingView.destroy();
+            }
+        }, 50);
+
+        return this;
     }
 
     /**
@@ -173,6 +197,7 @@ export class BaseList extends View {
         this.view.panel_loadmore
             // .setTop(this._dom.scrollHeight - 100)
             .setVisibility(senjs.constant.Visibility.VISIBLE);
+        this._cache.wt_show_loadmore = null;
         return this;
     }
     hideLoadMoreProgress() {
@@ -212,10 +237,27 @@ export class BaseList extends View {
 
     setHeightSameContent(flag) {
         if (flag) {
+            this._meta.enable_lazy_loading = false;
             this.view.frame_scroller.setPosition(app_constant.Position.RELATIVE).setWidth("100%").setHeight("auto");
         } else {
+            this._meta.enable_lazy_loading = true;
             this.view.frame_scroller.setPosition(app_constant.Position.ABSOLUTE).toFillParent().setWidth("auto").setHeight("auto");
         }
+        if (this.adapter)
+            this.adapter.notifyDataSetChanged();
+        return this;
+    }
+
+    setEnableLazyLoading(flag) {
+        if (flag == false) {
+            this._meta.enable_lazy_loading = false;
+            this.view.frame_scroller.setPosition(app_constant.Position.RELATIVE).setWidth("100%").setHeight("auto");
+        } else {
+            this._meta.enable_lazy_loading = true;
+            this.view.frame_scroller.setPosition(app_constant.Position.ABSOLUTE).toFillParent().setWidth("auto").setHeight("auto");
+        }
+        if (this.adapter)
+            this.adapter.notifyDataSetChanged();
         return this;
     }
 }

@@ -62,6 +62,7 @@ export class BaseAdapterV2 {
      * @param { BaseList } baseListViewComponent 
      */
     _bind(onRootViewRendering, baseListViewComponent) {
+       
         this._meta._view.baseListView = !isNaN(baseListViewComponent) ? senjsCts.get(baseListViewComponent) : baseListViewComponent;
         this._meta._view.scroller = this._meta._view.baseListView.view.frame_scroller;
         this._meta._view.view_container = this._meta._view.baseListView.view.frame_dataList;
@@ -305,7 +306,7 @@ class AdapterUtil {
     }
 
     reRender() {
-        console.log("compare ",this._pool.metaDataList.size() ,this.baseAdapter.getCount());
+        console.log("compare ", this._pool.metaDataList.size(), this.baseAdapter.getCount());
         if (this._pool.metaDataList.size() == 0 || this.baseAdapter._meta.force_render_again) {
             return false;
         } else if (this._pool.metaDataList.size() > this.baseAdapter.getCount()) {
@@ -322,7 +323,7 @@ class AdapterUtil {
             //     this._pool.metaShowing.remove(meta);
             // }
             // this._meta.row_counter = (this.baseAdapter.getCount() - (this.baseAdapter.getCount() % this.baseAdapter._meta.no_column)) / this.baseAdapter._meta.no_column;
-                   return false;
+            return false;
         } else if (this._pool.metaDataList.size() < this.baseAdapter.getCount()) {
             this.updateRowCounter();
             let begin = this._pool.metaDataList.size(), end = this.baseAdapter.getCount();
@@ -355,7 +356,7 @@ class AdapterUtil {
             });
             return true;
         }
-        
+
 
         this._caching.tracking.scroll_arg.scrollY = 0;
         this._caching.tracking.scroll_arg.scrollX = 0;

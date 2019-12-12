@@ -17,7 +17,6 @@ export class LoadingView extends LinearLayout {
         }
         this.setGravity(senjs.constant.Gravity.CENTER);
         this.setCss({ 'color': senjs.res.material_colors.Grey.g500 });
-
     }
 
     setCircleColor(color) {

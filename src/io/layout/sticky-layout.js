@@ -60,37 +60,62 @@ export class StickyLayout extends BaseLayout {
             .setAnimation(app_animation.STICKY_LAYOUT_SHOW)
             .setDirection(this._meta.direction);
 
-        var button_dismiss = new BaseLayout().toFillParent()
-        // .setAbsoluteZIndex(40000);
-        // this.setAbsoluteZIndex(40001);
+        // var button_dismiss = new BaseLayout().toFillParent()
+        // // .setAbsoluteZIndex(40000);
+        // // this.setAbsoluteZIndex(40001);
 
-        app._addViewToSuperRoot(button_dismiss);
+        // app._addViewToSuperRoot(button_dismiss);
         app._addViewToSuperRoot(this);
 
-        button_dismiss.setOnMouseEnter((view) => {
-            this._meta.isMouseOut = true;
-            button_dismiss.setVisibility(app_constant.Visibility.GONE);
+        let mouse_down = (e) => {
+            console.log("destroy");
+            this.destroy();
+        }
+
+        this.getDOM().addEventListener('mousedown', (e) => {
+            e.stopPropagation();
+        });
+        this.getDOM().addEventListener('touchstart', (e) => {
+            e.stopPropagation();
         })
 
 
-        super.setOnMouseEnter(() => {
-            this._meta.isMouseOut = false;
-            button_dismiss.setVisibility(app_constant.Visibility.VISIBLE);
-        })
 
-        this._meta.mouseDownService = app.service.register.onMouseDown((service, e) => {
-            if (senjs.app.isMobile.any() && e.targetTouches && compareBound(this, e.targetTouches[0].clientX, e.targetTouches[0].clientY)) {
-                return;
-            }
-            if (this._meta && this._meta.isMouseOut && !this._meta.preventDismiss) {
-                this.destroy();
-            }
-        })
+        // button_dismiss.setOnMouseEnter((view) => {
+        //     this._meta.isMouseOut = true;
+        //     button_dismiss.setVisibility(app_constant.Visibility.GONE);
+        // })
+
+
+        // super.setOnMouseEnter(() => {
+        //     this._meta.isMouseOut = false;
+        //     button_dismiss.setVisibility(app_constant.Visibility.VISIBLE);
+        // })
+
+        // this._meta.mouseDownService = app.service.register.onMouseDown((service, e) => {
+        //     if (senjs.app.isMobile.any() && e.targetTouches && compareBound(this, e.targetTouches[0].clientX, e.targetTouches[0].clientY)) {
+        //         return;
+        //     }
+        //     if (this._meta && this._meta.isMouseOut && !this._meta.preventDismiss) {
+        //         this.destroy();
+        //     }
+        // });
 
         this.events.override.onDestroy(() => {
-            try {
-                button_dismiss.destroy();
-            } catch (e) { }
+            // try {
+            //     button_dismiss.destroy();
+            // } catch (e) { }
+            setTimeout(() => {
+                document.body.removeEventListener('mousedown', mouse_down);
+                document.body.removeEventListener('touchstart', mouse_down);
+            }, 200);
+        });
+
+        this.events.override.onCreated(() => {
+            setTimeout(() => {
+                document.body.addEventListener('mousedown', mouse_down);
+                document.body.addEventListener('touchstart', mouse_down);
+            }, 200);
         });
         this.events.override.onCreated(this.overr_onCreated.bind(this));
         // if (__current_sticky_showing != null) {

@@ -50,7 +50,8 @@ export class DateFormatUtil {
             month = _MONTH_FULL[date.getMonth()].substr(0, 3);
             pattern = pattern.replace("MMM", month);
         } else if (pattern.indexOf("MM")) {
-            month = date.getMonth() >= 10 ? date.getMonth() : `0${date.getMonth()}`;
+            month = date.getMonth() + 1;
+            month = month >= 10 ? month : `0${month}`;
             pattern = pattern.replace("MM", month);
         }
 

@@ -33,6 +33,8 @@ export class DataListView extends BaseList {
             no_of_colum: 0,
         }
 
+
+
         // Number Listview
         this.adapter_number = new senjs.adapter.BaseAdapterV2();
         this.adapter.setOnRenderFinished(() => {
@@ -121,7 +123,6 @@ export class DataListView extends BaseList {
         this.view.frame_scroller.toBelowOf(this.view.frame_header);
         this.view.listview_number.toBelowOf(this.view.frame_header);
         this.view.listview_number.view.frame_scroller.setScrollType(senjs.constant.ScrollType.NONE);
-
         this.view.btn_option.setOnClick(() => {
             this.showSettingOptions();
         });
@@ -157,6 +158,10 @@ export class DataListView extends BaseList {
         return this;
     }
 
+    setEnableLazyLoading() {
+        throw "Cannot. Lazyload turn off by default";
+    }
+
     /**
      * 
      * @param {View} header_view 
@@ -166,6 +171,7 @@ export class DataListView extends BaseList {
         let isChanged = false, is_a_z_sort = true;
         var sticky = new senjs.layout.StickyLayout(header_view, senjs.layout.StickyLayout.DIRECTION.BOTTOM
         ).setMinWidth("15em").setHeight('20em').setMaxWidth('15%')
+            .setAnimation("")
             .setShadow("rgba(0,0,0,0.2)", 0, 0, 3).setRadius(0);
         var lsv_suggestion = new senjs.widget.ListView().toFillParent().setLeft(5).setRight(5).setBackground("#fdfdfd").setShadow("rgba(0,0,0,0.2)", 0, 0, 2, true);
 
@@ -210,8 +216,17 @@ export class DataListView extends BaseList {
         var btn_check_all = new senjs.widget.IconView(this._self_cache.suggestion_is_check_all[col_index] ? "check_box" : "check_box_outline_blank").setIconSize("1.2em")
             .setTag(false).setPadding("0.2em").setPaddingLeft("0.15em").setPaddingRight("0.2em").setIconColor(senjs.res.material_colors.Grey.g800);
 
+        var btn_clear_check = new senjs.widget.IconView('delete_forever').setIconSize("1.2em")
+            .setTag(false).setPadding("0.2em").setPaddingLeft("0.1em").setPaddingRight("0.1em").setIconColor(
+                this._self_cache.suggestion_selecting[col_index].length > 0
+                    ? senjs.res.material_colors.Grey.g800
+                    : senjs.res.material_colors.Grey.g300);
+
         btn_check_all.toBottomParent()
             .toLeftParent().setLeft(5).setBottom(5);
+
+        btn_clear_check.toRightOf(btn_check_all)
+            .setLeft(2).setBottom(5);
 
         btn_apply.toBottomParent()
             .toRightParent().setRight(5).setBottom(5);
@@ -233,6 +248,7 @@ export class DataListView extends BaseList {
             .addView(pn_search)
             .addView(lsv_suggestion)
             .addView(btn_check_all)
+            .addView(btn_clear_check)
             .addView(btn_apply);
 
         let adapter = new senjs.adapter.BaseAdapterV2().setView((suggestionItem, position, convertView) => {
@@ -268,6 +284,11 @@ export class DataListView extends BaseList {
             } else {
                 this._self_cache.suggestion_selecting[col_index].splice(idx, 1);
                 convertView.getViewAt(0).setIcon("check_box_outline_blank");
+            }
+            if (this._self_cache.suggestion_selecting[col_index].length > 0) {
+                btn_clear_check.setIconColor(senjs.res.material_colors.Grey.g800);
+            } else {
+                btn_clear_check.setIconColor(senjs.res.material_colors.Grey.g300);
             }
             isChanged = true;
         });
@@ -350,16 +371,30 @@ export class DataListView extends BaseList {
             isChanged = true;
             this._self_cache.suggestion_is_check_all[col_index] = !this._self_cache.suggestion_is_check_all[col_index];
             if (this._self_cache.suggestion_is_check_all[col_index] == true) {
+                btn_clear_check.setIconColor(senjs.res.material_colors.Grey.g800);
                 view.setIcon("check_box");
                 this._self_cache.suggestion_selecting[col_index] = adapter.getList().toArray().map((dataItem, index) => {
                     return this._self_cache.suggestion_keys[col_index].indexOf(dataItem);
                 });
             } else {
+                btn_clear_check.setIconColor(senjs.res.material_colors.Grey.g300);
                 view.setIcon("check_box_outline_blank");
                 this._self_cache.suggestion_selecting[col_index] = [];
             }
             adapter.notifyDataSetChanged();
             //  _executeFilter();
+        })
+
+        btn_clear_check.setOnClick((view) => {
+            if (this._self_cache.suggestion_selecting[col_index].length == 0) {
+                return;
+            }
+            this._self_cache.suggestion_selecting[col_index] = [];
+            this._self_cache.suggestion_is_check_all[col_index] = false;
+            btn_check_all.setIcon("check_box_outline_blank");
+            btn_clear_check.setIconColor(senjs.res.material_colors.Grey.g300);
+            isChanged = true;
+            adapter.notifyDataSetChanged();
         })
 
         btn_apply.setOnClick(() => {
@@ -372,6 +407,8 @@ export class DataListView extends BaseList {
             if (isChanged == false) {
                 return;
             }
+            //   this.showLoadMoreProgress();
+            //setTimeout(() => {
             isChanged = false;
             if (this._self_cache.suggestion_selecting[col_index].length > 0 && header_view) {
                 header_view.getViewAt(1).setIconColor(senjs.res.material_colors.Blue.g500);
@@ -415,11 +452,14 @@ export class DataListView extends BaseList {
                 this.adapter.setList(this._sources);
                 this._filter_source = [];
             }
+            // this.hideLoadMoreProgress();
+            //}, 1);
         }
 
         /* Bind Data */
         if (this._self_cache.suggestion_keys.length > 0 && this._self_cache.suggestion_values[col_index].length == 0) {
             lsv_suggestion.showLoadMoreProgress();
+            console.log(this._sources, "col_index", col_index);
             setTimeout(() => {
                 var temp = this._sources.reduce((output, row, index) => {
                     if (typeof row[col_index] == "undefined" || row[col_index] == null || typeof row[col_index] == "") {
@@ -439,9 +479,9 @@ export class DataListView extends BaseList {
                     }
                     return output;
                 }, {
-                        keys: this._self_cache.suggestion_keys,
-                        values: this._self_cache.suggestion_values
-                    });
+                    keys: this._self_cache.suggestion_keys,
+                    values: this._self_cache.suggestion_values
+                });
                 this._self_cache.suggestion_keys = temp.keys.reduce((array, item) => {
                     array.push(Object.values(item))
                     return array;
@@ -449,7 +489,7 @@ export class DataListView extends BaseList {
                 this._self_cache.suggestion_values = temp.values;
                 lsv_suggestion.hideLoadMoreProgress();
                 adapter.setList(this._self_cache.suggestion_keys[col_index]);
-            }, 10);
+            }, 2);
         } else {
             adapter.setList(this._self_cache.suggestion_keys[col_index]);
         }
@@ -463,6 +503,18 @@ export class DataListView extends BaseList {
             _executeFilter();
         });
 
+    }
+
+    showLoadMoreProgress() {
+        // this.view.icon_loadmore
+        //     .setBackground("#ffffff")
+        //     .setRadius('50%').setshadow("rgba(0,0,0,0.2)", 0, 0, 5);
+        this.view.panel_loadmore.toFillParent().toBelowOf(this.view.frame_header)
+            .setBackground('rgba(255,255,255,0.4)')
+            .setPaddingTop(20)
+            .setGravity(senjs.constant.Gravity.TOP_CENTER);
+        super.showLoadMoreProgress();
+        return this;
     }
 
     setOnHeaderColumnClicked(listener) {
@@ -531,9 +583,9 @@ export class DataListView extends BaseList {
      * @param {[[string|number]]} list 
      */
     setList(list) {
-        list = list.filter(row => {
-            return row.length > 0 && row[0] != "";
-        })
+        // list = list.filter(row => {
+        //     return row.length > 0 && row[0] != undefined;
+        // })
         this._self_cache.suggestion_keys = [];
         this._self_cache.suggestion_values = [];
         this._self_cache.suggestion_selecting = [];
@@ -622,6 +674,68 @@ export class DataListView extends BaseList {
         }, 10);
     }
 
+    saveAsCSV(fileName, delimiter) {
+        if (typeof fileSaver == "undefined") {
+            throw "FileSave.js plugin not existed. Please add it first";
+        }
+        fileName = fileName || Date.now() + ".csv";
+        senjs.app.showLoading();
+        let array_rows = [];
+        array_rows.push(this._headers);
+        array_rows = array_rows.concat(this.adapter.getList().toArray());
+        setTimeout(() => {
+            let work_book = XLSX.utils.book_new();
+            work_book.SheetNames.push("Sheet 1");
+
+            let work_sheet = XLSX.utils.aoa_to_sheet(array_rows);
+            work_book.Sheets["Sheet 1"] = work_sheet;
+
+            let exporter_csv = XLSX.write(work_book, { bookType: 'csv', type: 'binary', FS: delimiter || "|" });
+            fileSaver.saveAs(new Blob([s2ab(exporter_csv)], { type: "application/octet-stream" }), fileName);
+            senjs.app.hideLoading();
+        }, 10);
+    }
+
+    saveAsPlainTextWithDelimiter(fileName, delimiter) {
+        if (typeof fileSaver == "undefined") {
+            throw "FileSave.js plugin not existed. Please add it first";
+        }
+        fileName = fileName || Date.now() + ".txt";
+        senjs.app.showLoading();
+        let array_rows = [];
+        array_rows.push(this._headers);
+        array_rows = array_rows.concat(this.adapter.getList().toArray());
+        setTimeout(() => {
+            let work_book = XLSX.utils.book_new();
+            work_book.SheetNames.push("Sheet 1");
+
+            let work_sheet = XLSX.utils.aoa_to_sheet(array_rows);
+            work_book.Sheets["Sheet 1"] = work_sheet;
+
+            // let exporter_csv = XLSX.write(work_book, { bookType: 'txt', type: 'binary', });
+            // let exporter_csv = XLSX.write(work_book, { bookType: 'txt', type: 'binary', FS: delimiter || "|" });
+
+            let str_csv = XLSX.utils.sheet_to_csv(work_sheet, { FS: "|", RS: "\n" });
+
+            fileSaver.saveAs(new Blob([s2ab(str_csv)], { type: "text/plain" }), fileName);
+            senjs.app.hideLoading();
+        }, 10);
+    }
+
+    getDataAsText(delimiter) {
+        let array_rows = [];
+        array_rows = array_rows.concat(this.adapter.getList().toArray());
+
+
+        let work_sheet = XLSX.utils.aoa_to_sheet(array_rows);
+
+        // let exporter_csv = XLSX.write(work_book, { bookType: 'txt', type: 'binary', });
+        // let exporter_csv = XLSX.write(work_book, { bookType: 'txt', type: 'binary', FS: delimiter || "|" });
+
+        let str_csv = XLSX.utils.sheet_to_csv(work_sheet, { FS: delimiter, RS: "\r\n" });
+        return str_csv;
+    }
+
     showSettingOptions() {
         showSettingOptions.call(this);
     }
@@ -636,7 +750,10 @@ function showSettingOptions() {
     sticky.setWidth("200px").setRadius(4).setShadow("rgba(0,0,0,0.3)", 0, 0, 6);
     var options = [
         "<i class='material-icons'>file_copy</i>&nbsp Copy to clipboard",
-        "<i class='material-icons'>save</i>&nbsp Save as Excel"];
+        "<i class='material-icons'>save</i>&nbsp Save as Excel",
+        "<i class='material-icons'>save</i>&nbsp Save as CSV",
+        "<i class='material-icons'>save</i>&nbsp Save as Text",
+    ];
 
     var onClicked = (view) => {
         switch (view.getTag()) {
@@ -647,6 +764,14 @@ function showSettingOptions() {
                 break;
             case 1:
                 this.saveAsExcel();
+                sticky.destroyWithAnimate();
+                break;
+            case 2:
+                this.saveAsCSV(null, "|");
+                sticky.destroyWithAnimate();
+                break;
+            case 3:
+                this.saveAsPlainTextWithDelimiter(null, "|");
                 sticky.destroyWithAnimate();
                 break;
         }
@@ -675,6 +800,7 @@ function showFullText(colum_view, text) {
         .setShadow('rgba(0,0,0,0.2)', 0, 0, 6);
     sticky.setPadding("0.8em").setHtml(text);
     sticky._dom.style.userSelect = 'text';
+    sticky.setContentEditable(true);
     return sticky;
 }
 
@@ -724,7 +850,7 @@ class DataListAdapter extends BaseAdapterV2 {
 
             clearTimeout(waiter_is_scrolling);
             waiter_is_scrolling = setTimeout(() => {
-                this.view_listview.view.listview_number.setScrollY(scroll_y);   
+                this.view_listview.view.listview_number.setScrollY(scroll_y);
             }, 66);
 
             if (scroll_y % this._adapterDirector._meta.est_view_height > 5) {
@@ -742,7 +868,7 @@ class DataListAdapter extends BaseAdapterV2 {
     }
 
     getColumn() {
-        return 5;
+        return 1;
     }
 
 }
@@ -809,6 +935,10 @@ class ViewRowDataItem extends View {
         this.row_data = row;
         this.row_index = position;
         // this.setPaddingBottom(position);
+        // this.array_col.map((item, idx) => {
+        //     var text = row[idx];
+        //     item.setHtml(text + "").setTitle(text);
+        // })
         var i = row.length;
         while (i--) {
             var text = row[i];

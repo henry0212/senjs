@@ -50,6 +50,15 @@ export class TextArea extends BaseTextView {
         return this;
     }
 
+    focus() {
+        this.getDOM().focus();
+        return this;
+    }
+
+    blur() {
+        this.getDOM().blur();
+        return this;
+    }
 
     /**
      * 

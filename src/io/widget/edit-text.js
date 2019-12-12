@@ -13,14 +13,15 @@ export class EditText extends BaseTextView {
             .setBorderBottom(1, material_colors.Grey.g300)
             .setBackground("transparent");
         this._dom.style.boxSizing = "border-box";
-        this._dom.setAttribute('autocomplete','false');
+        this._dom.setAttribute('autocomplete', 'false');
         this.setTextSize
         this._listener = {
             onTextChanged: null,
             onKeyUp: null,
+            onKeyDown: null,
             onKeyChanged: null
         };
-
+        this.setAttribute('autocomplete', 'off');
         new KeyChangeListener(this.override_onKeyChange.bind(this))
             .bindToView(this);
     }
@@ -41,6 +42,9 @@ export class EditText extends BaseTextView {
         if (args.action == KeyChangeListener.MotionAction.KEY_UP && this._listener.onKeyUp) {
             this._listener.onKeyUp(this, args.keycode, args._e);
         }
+        if (args.action == KeyChangeListener.MotionAction.KEY_DOWN && this._listener.onKeyDown) {
+            this._listener.onKeyDown(this, args.keycode, args._e);
+        }
         if (this._listener.onKeyChanged) {
             this._listener.onKeyChanged(view, args);
         }
@@ -51,6 +55,16 @@ export class EditText extends BaseTextView {
         return this;
     }
 
+
+    focus() {
+        this.getDOM().focus();
+        return this;
+    }
+
+    blur() {
+        this.getDOM().blur();
+        return this;
+    }
 
     /**
      * 
@@ -70,6 +84,11 @@ export class EditText extends BaseTextView {
         return this;
     }
 
+    setOnKeyDown(listener) {
+        this._listener.onKeyDown = listener;
+        return this;
+    }
+
     setOnTextChanged(listener) {
         this._listener.onTextChanged = listener;
         return this;
@@ -81,7 +100,7 @@ export class EditText extends BaseTextView {
 
     /**
      * 
-     * @param {KeyChangeListener} listener 
+     * @param {import("../../core/event-v2.js").key_change_listener} listener 
      * @returns {EditText}
      */
     setOnKeyChanged(listener) {

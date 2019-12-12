@@ -13,6 +13,7 @@ export class FilePicker {
      *  capture: 'camera...'
      * }
      * @param {Object} options 
+     * @returns {Promise<file>}
      */
     static onFilePicked(options) {
         options = options || {};

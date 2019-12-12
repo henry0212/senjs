@@ -6,7 +6,7 @@ export class ImageRefactor {
         document.body.appendChild(this.canvas);
         this.canvas.style.position = 'fixed';
         this.canvas.style.visibility = 'hidden';
-        this.canvas.style.zIndex = 1000;
+        this.canvas.style.zIndex = -1;
         this.ctx = this.canvas.getContext("2d");
         this._meta = {
             translate: {
@@ -105,7 +105,7 @@ export class ImageRefactor {
                         this._meta.scale.x = scale, this._meta.scale.y = scale;
                         translatex = translatex * scale;
                         translatey = translatey * scale;
-                        this.ctx.scale(scale, scale)
+                        this.ctx.scale(scale, scale);
                     }
                     this.ctx.drawImage(this._meta.image, translatex, translatey);
                     this.ctx.restore();

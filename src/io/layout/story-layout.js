@@ -175,10 +175,10 @@ export class StoryLayout extends BaseLayout {
                 lb_newTitle.setVisibility(app_constant.Visibility.VISIBLE)
                 lb_newTitle.setAnimation("storyBoardTitleOpen");
                 frame_newPage.setAnimation("storyBoardOpen");
-                var layer_black = new FrameLayout();
-                layer_black
-                    .setBackground("rgba(0,0,0,0)").toFillParent()
-                    .setAbsoluteZIndex(this._meta.pages.size());
+                // var layer_black = new FrameLayout();
+                // layer_black
+                //     .setBackground("rgba(0,0,0,0)").toFillParent()
+                //     .setAbsoluteZIndex(this._meta.pages.size());
                 if (closePage) {
                     closePage.setAnimation("storyBoardCloseBelow").events.system.pause();
                     frame_newPage.events.override.onBeforeDestroy(() => {
@@ -186,13 +186,12 @@ export class StoryLayout extends BaseLayout {
                     })
                 }
                 closePage._cache.pageIndex = this._meta.pages.size() - 2;
-                layer_black.postDelay((view) => {
-                    view.destroy();
+                frame_prevent.postDelay((view) => {
                     frame_prevent.destroy();
+                    view.destroy();
                     closePage.saveState();
                 }, frame_newPage.getAnimationDuration() + 30);
-                this._view.frame_content.addView(layer_black);
-
+                // this._view.frame_content.addView(layer_black);
                 super.addView(frame_prevent);
                 this._view.toolbar_btn_back.setVisibility(app_constant.Visibility.VISIBLE);
                 this._view.toolbar_lb_left.setVisibility(app_constant.Visibility.VISIBLE);
@@ -283,20 +282,20 @@ export class StoryLayout extends BaseLayout {
                 if (this._listener.onPageBeginChange) {
                     this._listener.onPageBeginChange(this, this._meta.pages.size() - 2, false);
                 }
-                var layer_black = new FrameLayout();
+                // var layer_black = new FrameLayout();
 
-                layer_black
-                    .setBackground("rgba(0,0,0,0)").toFillParent()
-                    .setAbsoluteZIndex(this._meta.pages.size() + 1);
+                // layer_black
+                //     .setBackground("rgba(0,0,0,0)").toFillParent()
+                //     .setAbsoluteZIndex(this._meta.pages.size() + 1);
 
-                this._view.frame_content.addView(layer_black);
+                // this._view.frame_content.addView(layer_black);
 
                 openTitle.setAnimation("storyBoardTitleOpen_back");
                 openPage.setAnimation("storyBoardOpenBelow").postDelay(() => {
                     if (this._listener.onPageChanged) {
                         this._listener.onPageChanged(this, this._meta.pages.size() - 1, false);
                     }
-                    layer_black.destroy();
+                    // layer_black.destroy();
                 }, openPage.getAnimationDuration());
                 openPage.events.system.resume();
                 break;

@@ -29,6 +29,7 @@ let debug_tool = {
     adapters: []
 }
 
+const PRE_RENDER_ITEM = 6;
 
 export class BaseAdapterV2 {
 
@@ -105,11 +106,13 @@ export class BaseAdapterV2 {
      * @param {List} list 
      */
     setList(list) {
-        this._data.list = Array.isArray(list) ? new senjs.util.List(list) : list;
-        if (this._meta._view.scroller) {
-            this._meta._view.scroller.setScrollY(0);
+        if (this._data) {
+            this._data.list = Array.isArray(list) ? new senjs.util.List(list) : list;
+            if (this._meta._view.scroller) {
+                this._meta._view.scroller.setScrollY(0);
+            }
+            this._adapterDirector.render();
         }
-        this._adapterDirector.render();
         return this;
     }
 
@@ -337,7 +340,9 @@ class AdapterDirector {
             more_height: 0,
             more_width: 0,
             position: position,
-            dataItem: this.base_adapter.getItem(position),
+            get dataItem() {
+                return self.base_adapter.getItem(position);
+            },
             real_size: 0,
             __has_rendered: false,
             get has_rendered() {
@@ -390,6 +395,7 @@ class AdapterDirector {
                 }
 
                 this.anchor_y = coordinates.row_index * self._meta.est_view_height;
+
             },
 
             get is_outside() {
@@ -414,7 +420,7 @@ class AdapterDirector {
     }
 
     getNumberOfColumn() {
-        return 1;
+        return this.base_adapter.getColumn();
     }
 
     ready() {
@@ -438,7 +444,13 @@ class AdapterDirector {
 
     renderFirstMeta() {
         return new Promise(next => {
-            if (this.base_adapter.getCount() > 0) {
+            if (this.base_adapter.getCount() > 0 && this._meta.est_view_height > 0) {
+                let meta = this.generateMetaItem(0);
+                let group_view = this.renderRootView(meta)
+                this._meta.est_view_height = group_view.root_view.getHeight();
+                this._meta.est_view_width = group_view.root_view.getWidth();
+                next();
+            } else if (this.base_adapter.getCount() > 0) {
                 let meta = this.generateMetaItem(0);
                 let group_view = this.renderRootView(meta);
                 group_view.root_view.setOpacity(0);
@@ -458,7 +470,12 @@ class AdapterDirector {
                 this.generateMetaItem(i);
             }
             let no_showing = (Math.round((this._meta.lim_bottom + this._meta.lim_top) / this._meta.est_view_height)) * this.getNumberOfColumn();
-            let end = this.base_adapter.getCount() > no_showing ? no_showing : this.base_adapter.getCount();
+            let end = 0;
+            if (this.base_adapter.view_listview._meta.enable_lazy_loading) {
+                end = this.base_adapter.getCount() > no_showing ? no_showing : this.base_adapter.getCount();
+            } else {
+                end = this.base_adapter.getCount();
+            }
             // this.base_adapter.getList().src_array.slice(1, end).map((item, position) => {
             //     this.renderRootView(this._pool.meta_list.get(position + 1));
             // })
@@ -472,9 +489,11 @@ class AdapterDirector {
     }
 
     calcViewportLimit() {
-        this._meta.lim_top = Math.floor(this._meta.est_view_height * 2);
-        this._meta.lim_bottom = Math.floor(this._meta.container_height + this._meta.est_view_height * 3);
-        this._meta.est_no_item_in_view_port = Math.floor(this._meta.container_height / this._meta.est_view_height) + 6;
+        this._meta.container_height = this.base_adapter.view_listview.getHeight();
+        this._meta.container_width = this.base_adapter.view_listview.getWidth();
+        this._meta.lim_top = Math.floor(this._meta.est_view_height * PRE_RENDER_ITEM);
+        this._meta.lim_bottom = Math.floor(this._meta.container_height + this._meta.est_view_height * PRE_RENDER_ITEM);
+        this._meta.est_no_item_in_view_port = Math.floor(this._meta.container_height / this._meta.est_view_height) + (PRE_RENDER_ITEM * 2);
     }
 
     onBeginRender() {
@@ -498,9 +517,26 @@ class AdapterDirector {
         this.ready().then(() => {
             this.reset();
             if (this._tracking.has_bind_destroy == false) {
+                let tv_detect_size = setInterval(this.calcViewportLimit.bind(this), 2000);
                 this.base_adapter.view_listview.events.override.onDestroy(() => {
+                    if (this._tracking.thread_measure) {
+                        this._tracking.thread_measure.remove();
+                    }
+                    clearInterval(tv_detect_size);
                     this.reset();
                     this.base_adapter._data.list.clear();
+                    let temp = [this.base_adapter, this];
+                    let keys, max, obj;
+                    while (temp.length > 0) {
+                        obj = temp.shift();
+                        keys = Object.keys(obj);
+                        max = keys.length;
+                        for (let i = 0; i < max; i++) {
+                            obj[keys[i]] = null;
+                            delete obj[keys[i]];
+                        }
+                    }
+                    keys = null;
                 })
                 this._tracking.has_bind_destroy = true;
             }
@@ -513,9 +549,7 @@ class AdapterDirector {
             new ScrollListener(this.onScrolling.bind(this)).bindToView(this.base_adapter.view_scroller);
             this.onRenderFinished();
         }).catch((err) => {
-            if (err) {
-                throw err;
-            }
+            console.log(err);
             console.warn("Adapter was not initial");
         });
     }
@@ -669,14 +703,19 @@ class AdapterDirector {
                 this.detectRealSize(meta);
             })
         }
-        // group_view.root_view.setTop(meta.anchor_y).setLeft(meta.anchor_x);
-        group_view.root_view.setTransform(`translate3d(${meta.anchor_x}px, ${meta.anchor_y}px,0)`);
-        group_view.root_view.setZIndex(meta.position + 1);
-        this._pool.group_view_busy.add(group_view);
-        this._pool.meta_list_showing.add(meta);
-        meta.has_rendered = true;
-        group_view.root_view._dom.style.display = 'block';
+        if (this.base_adapter.view_listview._meta.enable_lazy_loading) {
+            group_view.root_view.setTop(meta.anchor_y).setLeft(meta.anchor_x);
+            group_view.root_view.setZIndex(meta.position + 1);
+            this._pool.group_view_busy.add(group_view);
+            this._pool.meta_list_showing.add(meta);
+            meta.has_rendered = true;
+            group_view.root_view._dom.style.display = 'block';
+        } else {
+            group_view.root_view.setTop(0).setLeft(0).setPosition(senjs.constant.Position.RELATIVE);
+        }
+
         return group_view;
+
     }
 
     /**
@@ -712,15 +751,13 @@ class AdapterDirector {
         }
         this._tracking.est_showing_index = Math.round(args.scrollY / this._meta.est_view_height) - 2;
         this._tracking.est_showing_index = this._tracking.est_showing_index < 0 ? 0 : this._tracking.est_showing_index;
-        this._tracking.expected_scroll = this._meta.est_view_height * (Math.round(args.scrollY / this._meta.est_view_height) + (args.isScrollDown ? 1 : -1));
+        this._tracking.expected_scroll = this._meta.est_view_height * (Math.round(args.scrollY / this._meta.est_view_height) + (args.isScrollDown ? PRE_RENDER_ITEM : -PRE_RENDER_ITEM));
         this._tracking.expected_scroll = this._tracking.expected_scroll < 0 ? 0 : this._tracking.expected_scroll;
-        if (this._tracking.wt_pain) {
-            clearTimeout(this._tracking.wt_pain);
-        }
-     //   this._tracking.wt_pain = setTimeout(() => {
-            this.scroll2Rendering();
-            this._tracking.wt_pain = null;
-     //   }, 5);
+        // clearTimeout(this._tracking.wt_pain);
+        //     this._tracking.wt_pain = setTimeout(() => {
+        this.scroll2Rendering();
+        // this._tracking.wt_pain = null;
+        //   }, 1);
 
         if (this._tracking.re_pain) {
             this._tracking.re_pain.remove();
@@ -731,7 +768,7 @@ class AdapterDirector {
             this._tracking.expected_scroll = this._meta.est_view_height * (Math.round(args.scrollY / this._meta.est_view_height) + (args.isScrollDown ? 1 : -1));
             this._tracking.expected_scroll = this._tracking.expected_scroll < 0 ? 0 : this._tracking.expected_scroll;
             this.scroll2Rendering();
-        }, 400);
+        }, 200);
 
     }
 
@@ -788,13 +825,14 @@ class AdapterDirector {
         //     : this._pool.meta_list.src_array;
         if (this._meta.is_convert_view_fix_size && this._meta.no_of_col == 1) {
             let items = this._pool.meta_list.src_array
-                .slice(this._tracking.est_showing_index, this._tracking.est_showing_index + this._meta.est_no_item_in_view_port);
+                .slice(this._tracking.est_showing_index, this._tracking.est_showing_index + this._meta.est_no_item_in_view_port)
+                .filter(meta => {
+                    return !meta.is_outside && meta.has_rendered == false;
+                });
             let max = items.length, meta;
             for (let i = 0; i < max; i++) {
                 meta = items[i];
-                if (!meta.is_outside && meta.has_rendered == false) {
-                    this.renderRootView(meta);
-                }
+                this.renderRootView(meta);
             }
             max = null;
             meta = null;
@@ -842,7 +880,8 @@ class AdapterDirector {
                             return false;
                         }
                     }).forEach(item => {
-                        item.group_view.root_view.setTransform(`translate3d(0,${item.anchor_y}px,0)`);
+                        // item.group_view.root_view.setTransform(`translate3d(0,${item.anchor_y}px,0)`);
+                        item.group_view.root_view.setTop(item.anchor_y);
                     });
                     this._meta.est_container_height = Math.max.apply(null, this._pool.array_est_container_height);
                     this.base_adapter.view_container.setMinHeight(this._meta.est_container_height);

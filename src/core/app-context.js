@@ -84,10 +84,10 @@ const app_context = {
 }
 
 
-var _view_destroy_pool = new List();
+let _view_destroy_pool = new List();
 var _dialog_loading = null;
 
-var _view_pool = {
+const _view_pool = {
     info: {
         threadRemove: 0,
         removeList: new Array()
@@ -132,6 +132,10 @@ var _view_pool = {
         _view_pool.lists.filter(function (view, position) {
             if (view != null && view.info.parents.indexOf(controlId) != -1 && view.info.id != -1) {
                 _view_pool.remove(view.info.id);
+                _view_destroy_pool.add({
+                    idx: controlId,
+                    view: free_item
+                });
             }
             return view;
         });
@@ -143,7 +147,7 @@ var _view_pool = {
                 idx: controlId,
                 view: free_item
             });
-            // _view_pool.lists.src_array[controlId] = null;
+            //  _view_pool.lists.src_array[controlId] = null;
             this.emptyIds.add(controlId);
             if (thread_freeMemory) {
                 thread_freeMemory.stop();
@@ -260,8 +264,85 @@ var _viewId_pool = {
 }
 
 
+let _toast_loading;
 
-export var senjsAdps = {
+export const Toast = {
+
+    Base: function (icon_name, message, options) {
+        let default_otps = {
+            duration: 3000,
+            text_color: '#222222',
+            icon_color: '#222222',
+            background: '#ffffff'
+        }
+        options = Object.assign(default_otps, options);
+        let wrapper = new senjs.layout.LinearLayout()
+            .setPadding(5).setGravity(senjs.constant.Gravity.CENTER)
+            .setBackground(options.background || default_otps.background)
+            .toTopParent().toLeftParent().toRightParent().setRadiusAt(0, 0, 4, 4).setTop(0).setMargin("auto").setShadow('rgba(0,0,0,0.4)', 0, 0, 8)
+            .setAnimation("openPageFromTop");
+
+        let icon = icon_name.search("fa-") > -1 ? new senjs.widget.AwesomeIcon(icon_name) : new senjs.widget.IconView(icon_name);
+
+        icon.setIconColor(options.icon_color || default_otps.icon_color)
+            .setIconSize("2em");
+
+        let lb_message = new senjs.widget.TextView(message).setTextColor(options.text_color || default_otps.text_color).setLeft(5).setRight(5);
+
+        wrapper.addView(icon).addView(lb_message);
+        wrapper.setZIndex(10000);
+        app._addViewToSuperRoot(wrapper);
+        if (options.duration > 0) {
+            setTimeout(() => {
+                wrapper.destroyWithCustomAnimation("closePageFromTop")
+            }, options.duration);
+        }
+        // wrapper.events.override.onCreated((view) => {
+        //     view.setLeft((window.innerWidth - view.getWidth()) / 2);
+        // })
+        return wrapper;
+    },
+    Error: function (message, duration) {
+        this.Base("error", message, {
+            text_color: '#ffffff',
+            icon_color: '#ffffff',
+            background: senjs.res.material_colors.Red.g500,
+            duration: duration || 1500
+        });
+    },
+    Success: function (message, duration) {
+        this.Base("check_circle", message, {
+            text_color: '#ffffff',
+            icon_color: '#ffffff',
+            background: senjs.res.material_colors.Green.g500,
+            duration: duration || 1500
+        });
+    },
+    ShowLoading: function (message, options) {
+        if (_toast_loading != null) {
+            return;
+        }
+        options = Object.assign({
+            text_color: '#ffffff',
+            icon_color: '#ffffff',
+            background: senjs.res.material_colors.Blue.g500,
+            duration: 0
+        }, options || {})
+        _toast_loading = this.Base("autorenew", message, options);
+        _toast_loading.getViewAt(0).setAnimation("rotate_infinite");
+    },
+    HideLoading: function () {
+        if (_toast_loading) {
+            setTimeout(() => {
+                _toast_loading.destroyWithCustomAnimation("closePageFromTop")
+                _toast_loading = null;
+            }, 200);
+        }
+    }
+}
+
+
+export const senjsAdps = {
     lists: new List(),
     count: 0,
     add: function (senjsAdapter) {
@@ -290,12 +371,11 @@ var application_start = async () => {
         app_context.IS_HORIZENTAL = true;
 
         app_context.ROOT_BODY = new View(document.body);
-        app_context.ROOT_BODY.setPosition("fixed");
+        app_context.ROOT_BODY.setPosition("relative");
         app_context.ROOT_BODY.info.isCreated = true;
         app_context.ROOT_BODY.info.state = app_constant.VIEW_STATE.running;
         senjsCts.lists.clear();
         app_context.APP_WINDOW = app.mainFrame = new FrameLayout().toFillParent();
-        
         app_context.APP_WINDOW.setWidth("100%");
         app_context.APP_WINDOW.setHeight("100%");
         app_context.APP_WINDOW.info.id = 0;
@@ -463,7 +543,6 @@ const app_service_context = {
                 // if (app_service_context.override_mouse_move != null) {
                 //     app_service_context.override_mouse_move.listener(e);
                 // }
-                console.log(e);
                 if (e.pageX == undefined) {
                     e.pageX = e.changedTouches[0].pageX;
                     e.pageY = e.changedTouches[0].pageY;
@@ -814,6 +893,7 @@ export var app = {
         app_context.APP_WINDOW.addView(view);
         return app;
     },
+    Toast: Toast,
     _addViewToSuperRoot: function (view) {
         app_context.ROOT_BODY.addView(view);
         view.setZIndex(app_context.INDEX_DIALOG);
@@ -1001,21 +1081,23 @@ function service_freeMemory() {
              });
          } else */
         if (_view_destroy_pool.size() > 0 && thread_freeMemory == null && !forceClearing) {
-            thread_freeMemory = _view_destroy_pool.splice(0, 300).asyncForeach((free_item, index) => {
+            thread_freeMemory = _view_destroy_pool.splice(0, 600).asyncForeach((free_item, index) => {
                 if (free_item) {
-                    Object.keys(free_item.view).forEach(key => {
-                        free_item.view[key] = null;
-                        delete free_item.view[key];
-                    });
+                    let keys = Object.keys(free_item.view), max = keys.length;
+                    for (let i = 0; i < max; i++) {
+                        free_item.view[keys[i]] = null;
+                        delete free_item.view[keys[i]];
+                    }
                     _view_pool.lists.src_array[free_item.idx] = null;
+                    delete free_item.view;
+                    delete free_item.idx;
                 }
             }, function () {
                 thread_freeMemory = null;
             });
-            console.log("run clear");
         }
     });
-    serv_reduce.delay = 8000;
+    serv_reduce.delay = 15000;
 }
 
 function service_clearTrash() {

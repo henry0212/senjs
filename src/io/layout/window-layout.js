@@ -144,7 +144,7 @@ var _mouse_move_service = {
 
             });
             this.serivce_mouse_down = senjs.app.service.register.onMouseDown((service, args) => {
-                if (_window_focusing == null || _window_focusing._tracking.action == _WINDOW_ACTION.NONE) {
+                if (_window_focusing == null || _window_focusing._tracking == undefined || _window_focusing._tracking.action == _WINDOW_ACTION.NONE) {
                     return;
                 }
                 _canResize.bind(_window_focusing, args);
@@ -225,7 +225,8 @@ var _WINDOW_ACTION = {
 export class WindowLayout extends BaseLayout {
     constructor() {
         super('100%', '100%');
-        this.setAnimation('scaleOpen95')
+        this.setAnimation('window-open')
+            .setScrollType(senjs.constant.ScrollType.NONE);
         this.toTopParent().toLeftParent();
         this._initView();
         this._initEvent();
@@ -247,14 +248,28 @@ export class WindowLayout extends BaseLayout {
             waiter_resize: null
         }
         _pool_windows.add(this);
+        let cb = () => {
+            let str = this.showMessWhenUserTurnOffSite();
+            console.log(str);
+            return str.length > 0 ? str : false;
+        };
+        window.addEventListener("beforeunload", cb);
+        this.events.override.onDestroy(() => {
+            window.removeEventListener("beforeunload", cb);
+        });
+    }
+
+    showMessWhenUserTurnOffSite() {
+        return "";
     }
 
     _onCreated(view) {
         _window_focusing = this;
         this._tracking.height = this.getHeight();
         this._tracking.width = this.getWidth();
-        var left = (this.getParentView().getWidth() - this._tracking.width) / 2,
-            top = (this.getParentView().getHeight() - this._tracking.height) / 2;
+
+        var left = this.getLeft() > 0 ? this.getLeft() : (this.getParentView().getWidth() - this._tracking.width) / 2,
+            top = this.getTop() > 0 ? this.getTop() : (this.getParentView().getHeight() - this._tracking.height) / 2;
         this.setAnchor(left, top);
         this.setCss({ 'visibility': 'visible' });
         this.bringWindowToFront();
@@ -281,7 +296,7 @@ export class WindowLayout extends BaseLayout {
             .addView(this._views.lb_title)
             .addView(this._views.btn_full_screen)
             .addView(this._views.btn_close);
-        this.getDOM().style.overflow = 'visible';
+        this.getDOM().style.overflow = 'hidden';
         this._views.pn_toolbar.toTopParent().toLeftParent().toRightParent();
         this._views.pn_body.toBottomParent().toLeftParent().toRightParent().toBelowOf(this._views.pn_toolbar).setScrollType(senjs.constant.ScrollType.BOTH);
 
@@ -306,7 +321,25 @@ export class WindowLayout extends BaseLayout {
         this._views.btn_close.setOnClick(this._onClicked.bind(this));
         this._views.btn_full_screen.setOnClick(this._onClicked.bind(this));
         this._views.pn_toolbar.setOnDoubleClick(this._onClicked.bind(this));
+    }
 
+    setFullScreen(flag) {
+        this.setTransitionAll('.25', 'ease-out');
+        this._tracking.is_fullscreen = flag;
+        if (this._tracking.is_fullscreen) {
+            this._tracking.width = this.getWidth();
+            this._tracking.height = this.getHeight();
+            this.setLeft(0).setTop(0).setWidth('100%').setHeight('100%');
+            this._views.btn_full_screen.setIcon("remove_circle_outline")
+        } else {
+            this.setAnchor(this._tracking.anchor_x, this._tracking.anchor_y).setWidth(this._tracking.width).setHeight(this._tracking.height);
+            //    this.setTranslateX(`translate3d(${})`)
+            this._views.btn_full_screen.setIcon("add_circle")
+        }
+        this.postDelay(() => {
+            this.setTransitionAll('0');
+        }, 50)
+        return this;
     }
 
     _onClicked(view) {
@@ -317,20 +350,8 @@ export class WindowLayout extends BaseLayout {
                 break;
             case this._views.btn_full_screen:
             case this._views.pn_toolbar:
-                this.setTransitionAll('.2');
                 this._tracking.is_fullscreen = !this._tracking.is_fullscreen;
-                if (this._tracking.is_fullscreen) {
-                    this._tracking.width = this.getWidth();
-                    this._tracking.height = this.getHeight();
-                    this.setLeft(0).setTop(0).setWidth('100%').setHeight('100%');
-                    this._views.btn_full_screen.setIcon("remove_circle_outline")
-                } else {
-                    this.setLeft(this._tracking.anchor_x).setTop(this._tracking.anchor_y).setWidth(this._tracking.width).setHeight(this._tracking.height);
-                    this._views.btn_full_screen.setIcon("add_circle")
-                }
-                this.postDelay(() => {
-                    this.setTransitionAll('0');
-                }, 50)
+                this.setFullScreen(this._tracking.is_fullscreen);
                 break;
         }
     }
@@ -404,33 +425,39 @@ export class WindowLayout extends BaseLayout {
         this._tracking.anchor_x = x;
         this._tracking.anchor_y = y;
         this.setLeft(x).setTop(y);
+        // this.setTransform(`translate3d(${x}px,${y}px,0px)`)
         return this;
     }
 
     bringWindowToFront() {
-        var z_index_largest = 1;
-        var z_index_largest_window = null;
-        var same_parent = _pool_windows.filter((item) => {
-            return item.getParentView() == this.getParentView();
-        })
-        same_parent.foreach((item) => {
-            if (item.getZIndex() > z_index_largest) {
-                z_index_largest = item.getZIndex();
-                z_index_largest_window = item;
+        try {
+            var z_index_largest = 1;
+            var z_index_largest_window = null;
+            var same_parent = _pool_windows.filter((item) => {
+                return item.getParentView() == this.getParentView();
+            })
+            same_parent.foreach((item) => {
+                if (item.getZIndex() > z_index_largest) {
+                    z_index_largest = item.getZIndex();
+                    z_index_largest_window = item;
+                }
+                if (item != this) {
+                    item.blur();
+                }
+            });
+            if (z_index_largest_window) {
+                z_index_largest_window.setZIndex(this.getZIndex());
+                this.setZIndex(z_index_largest);
+                this._views.pn_toolbar.setBackground(senjs.res.material_colors.Grey.g200);
+                if (this._views.pn_blur) {
+                    this._views.pn_blur.destroy();
+                    this._views.pn_blur = null;
+                }
             }
-            if (item != this) {
-                item.blur();
-            }
-        });
-        if (z_index_largest_window) {
-            z_index_largest_window.setZIndex(this.getZIndex());
-            this.setZIndex(z_index_largest);
-            this._views.pn_toolbar.setBackground(senjs.res.material_colors.Grey.g200);
-            if (this._views.pn_blur) {
-                this._views.pn_blur.destroy();
-                this._views.pn_blur = null;
-            }
+        } catch (err) {
+
         }
+
     }
 
     blur() {
@@ -510,9 +537,22 @@ export class WindowLayout extends BaseLayout {
         return this;
     }
 
+    setGravity(gravity) {
+        this._views.pn_body.setGravity.apply(this._views.pn_body, arguments);
+        return this;
+    }
+
     setBackground(value) {
         super.setBackground(value);
         this._views.pn_body.setBackground(value);
         return this;
+    }
+
+    saveStateAndClose() {
+        this.getParentView().getDOM().removeChild(this.getDOM());
+    }
+
+    restore() {
+        this.getParentView().getDOM().appendChild(this.getDOM());
     }
 }

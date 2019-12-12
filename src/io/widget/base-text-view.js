@@ -17,7 +17,8 @@ export class BaseTextView extends View {
     constructor(htmlElement) {
         super(htmlElement);
         this.setTextSize(app_size.font.normal);
-        this.setLineHeight("1.3em")
+        this
+            // .setLineHeight("1.3em")
             .setMinHeight("1.1em");
     }
 
@@ -203,10 +204,12 @@ export class BaseTextView extends View {
      * @param {string} text 
      */
     setTooltip(text) {
-        // if (this.__tips_uitl == undefined) {
-        //     this.__tips_uitl = new ToolTipUtils(this);
-        // }
-        // this.__tips_uitl.setTips(text);
+        if (this.__tips_uitl == undefined) {
+            this.__tips_uitl = new ToolTipUtils(this);
+        }
+        if (text != null && text.length > 0) {
+            this.__tips_uitl.setTips(text);
+        }
         return this;
     }
 }
@@ -270,7 +273,7 @@ class ToolTipUtils {
                         _tips_instance = null;
                     }
                 });
-            }, 400);
+            }, 50);
         }
     }
 

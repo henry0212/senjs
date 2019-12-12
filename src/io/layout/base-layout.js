@@ -25,15 +25,20 @@ export class BaseLayout extends View {
             this._cache.loadingView = new senjs.widget.LoadingView().toFillParent();
             this._cache.loadingView.setCircleColor(senjs.res.material_colors.Blue.g500).setBackground("rgba(255,255,255,0.1)");
             this.addView(this._cache.loadingView);
+            this._cache.loadingView.events.override.onDestroy(() => {
+                this._cache.loadingView = null;
+            })
         }
         return this;
     }
 
     hideLoading() {
-        if (this._cache.loadingView != null) {
-            this._cache.loadingView.destroy();
-            this._cache.loadingView = null;
-        }
+        setTimeout(() => {
+            if (this._cache.loadingView != null) {
+                this._cache.loadingView.destroy();
+            }
+        }, 50);
+
         return this;
     }
 
@@ -95,7 +100,6 @@ class QuiclyLayout extends BaseLayout {
         this.btnBelow.setOnClick(this.onClicked.bind(this));
         this.setZIndex(10001);
         this.setBackground("#fff");
-       
     }
 
     onCreated() {

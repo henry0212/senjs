@@ -6,7 +6,7 @@ import { senjs } from "../../index.js";
 
 export class LinearLayout extends BaseLayout {
 
-    static get GRAVITY(){
+    static get GRAVITY() {
         return senjs.constant.Gravity;
     }
 

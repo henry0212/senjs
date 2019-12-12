@@ -90,6 +90,11 @@ export class Combobox extends LinearLayout {
         return this;
     }
 
+    setList(list) {
+        this._meta.pickerData = new List(list);
+        return this;
+    }
+
     showSelectBox() {
         if (this._meta.adapter_view == null) {
             var error = new Error();
@@ -103,11 +108,11 @@ export class Combobox extends LinearLayout {
         switch (this._meta.picker_box_type) {
             case Combobox.PICKER_BOX_TYPE.DROP_DOWN:
                 stickyList = new StickyLayout(this)
+                    .setAnimation('combobox-dropdown-open')
                     .setShadow("rgba(0,0,0,0.2)", 0, 0, 4)
                     .setMaxHeight(this._senjs.app.info.display.SCREEN_HEIGHT - (this.getRelativeTop() + this.getHeight() + 10))
                     .setScrollType(app_constant.ScrollType.VERTICAL)
                     .setMinWidth(100);
-                console.log(this._senjs.app.info.display.SCREEN_HEIGHT - this.getRelativeTop() + this.getHeight() + 10);
                 break;
             case Combobox.PICKER_BOX_TYPE.DIALOG:
                 stickyList = new BaseDialog()
@@ -185,9 +190,12 @@ export class Combobox extends LinearLayout {
      * @param {number} index 
      */
     setSelectedIndex(index) {
-
         if (this._meta.pickerData.size() - 1 < index) {
             throw new Error("Index must lower data size");
+        } else if (index == -1) {
+            this._meta.selected_index = index;
+            this._view.label.removeAllView();
+            return this;
         }
         this._meta.selected_index = index;
         this._view.label.removeAllView();
@@ -197,6 +205,10 @@ export class Combobox extends LinearLayout {
 
     getSelectedIndex() {
         return this._meta.selected_index;
+    }
+
+    getSelectedItem() {
+        return this._meta.pickerData.get(this._meta.selected_index);
     }
 
     setDefaultText(text) {
@@ -213,6 +225,7 @@ export class Combobox extends LinearLayout {
             this._view.label
                 .removeAllView()
                 .addView(view);
+            console.log(view);
         }
         return this;
     }

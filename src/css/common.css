@@ -75,37 +75,37 @@ textarea, input[type=text] {
     -o-user-select: text;
 }
 
-::-webkit-scrollbar {
+.senjs-scroller::-webkit-scrollbar {
     width: 5px;
     left: 1px;
     margin-left: 1px;
     display: block;
     position: absolute;
-    background: rgba(255,255,255,0.5) !important;
+    background: rgba(255, 255, 255, 0.5) !important;
 }
 
-::-webkit-scrollbar:hover {
-    width: 12px !important;
+.senjs-scroller::-webkit-scrollbar:hover {
+    /* width: 12px !important; */
     display: block;
     position: absolute;
 }
 
-::-webkit-scrollbar-track {
+.senjs-scroller::-webkit-scrollbar-track {
     border-radius: 3px;
     position: absolute;
     right: 0px;
     background: transparent;
 }
 
-::-webkit-scrollbar-thumb {
+.senjs-scroller::-webkit-scrollbar-thumb {
     background: rgba(0, 0, 0, 0.5);
 }
 
-::-webkit-scrollbar:horizontal {
+.senjs-scroller::-webkit-scrollbar:horizontal {
     height: 5px;
 }
 
-::-webkit-scrollbar:horizontal:hover {
+.senjs-scroller::-webkit-scrollbar:horizontal:hover {
     height: 12px;
 }
 
@@ -135,7 +135,7 @@ textarea, input[type=text] {
 }
 
 @media only screen and (max-width: 480px) {
-    ::-webkit-scrollbar {
+    .senjs-scroller::-webkit-scrollbar {
         width: 1px;
     }
 }

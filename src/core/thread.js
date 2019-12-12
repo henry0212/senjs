@@ -118,6 +118,7 @@ var _initWorker = (callback, thread) => {
     worker.onmessage = function (e) {
         if (thread == undefined || callback == undefined) {
             worker.terminate();
+            window.URL.revokeObjectURL(blobURL);
             return;
         }
         callback(thread);

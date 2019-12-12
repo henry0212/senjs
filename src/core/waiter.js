@@ -24,7 +24,7 @@ export class Waiter {
             try{
                 callback();
             }catch(e){
-
+                console.warn(e);
             }
             this.remove();
         }, duration);

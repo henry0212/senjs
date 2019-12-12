@@ -9,6 +9,83 @@ import { ClickListener, ScrollListener, TouchListener, FocusChangeListener, Doub
 
 var countAnimation = 0;
 
+
+function initTouch() {
+    var enableSwipeLeft = false;
+    if (this.info.onSwipeLeftListener != null || this.info.allowDragRemoveItem) {
+        enableSwipeLeft = true;
+    }
+    var enableSwipeRight = (this.info.onSwipeRightListener == null) ? false : true;
+    var enableDragHor = (this.info.dragHorCallBack == null) ? false : true;
+    var enableDragVer = (this.info.dragVerCallBack == null) ? false : true;
+    if (!this.info.isEnableTouch) {
+        var oldX = -1;
+        var oldY = -1;
+        var currentX = 0;
+        var currentY = 0;
+        var limitWidth = calculator.sizeWidth(3);
+        this.info.isEnableTouch = true;
+        this._dom.addEventListener("touchmove", function (e) {
+            currentX = e.changedTouches[0].pageX;
+            currentY = e.changedTouches[0].pageY;
+            if (enableSwipeLeft || enableSwipeRight) {
+                if (oldX == -1) {
+                    oldX = e.changedTouches[0].pageX;
+                    oldY = e.changedTouches[0].pageY;
+                    new Waiter(function () {
+                        currentY = currentY - oldY;
+                        currentX = currentX - oldX;
+                        oldX = -1;
+                        if (currentX > 80 && currentY < 35 && this.info.onSwipeLeftListener != null) {
+                            this.info.onSwipeLeftListener(this);
+                        }
+                        else if (currentX < -80 && currentY > -35 && this.info.onSwipeRightListener != null) {
+                            this.info.onSwipeRightListener(this);
+                            if (this.info.allowDragRemoveItem) {
+                                this.events.system.destroy();
+                            }
+                        }
+                    }, 70);
+                }
+                else {
+                    if (this.info.allowDragRemoveItem) {
+                        currentX = currentX - oldX;
+                        if (currentX < -30) {
+                            this.info.allowDragRemoveItem = false;
+                            this.setAnimation(senjsKey.anims.CLOSE_PAGE_DEFUALT_LEFT);
+                            new Waiter(function () {
+                                this.info.allowDragRemoveItem = true;
+                                this.events.system.destroy();
+                            }
+                                , 300);
+                        }
+                        else if (currentX < -20) {
+/* this.setLeft(currentX);
+*/ }
+                    }
+                }
+            }
+            else {
+                if (oldX == -1) {
+                    oldX = currentX;
+                }
+                if (oldY == -1) oldY = currentY;
+            }
+            if (enableDragHor) {
+                view.setTranslateX(currentX - oldX);
+                this.info.dragHorCallBack(this, oldX, currentX, currentX - oldX);
+            }
+            if (enableDragVer) {
+                this.setTranslateY(currentY - oldY);
+                this.info.dragVerCallBack(this, oldY, currentY, currentY - oldY);
+            }
+        }
+            , true);
+    }
+    return this;
+}
+
+
 /**
  * @typedef {Object} View
  * 
@@ -451,6 +528,7 @@ export class View {
                 },
                 created: function () {
                     var parent = self.getParentView();
+
                     if (parent != null) {
                         self.info.parents = parent.info.parents.slice(0);
                         self.info.parents.push(parent.info.id);
@@ -458,7 +536,6 @@ export class View {
                         self.info.state = parent.info.state;
                     }
                     self.events.system.init.focusChanged();
-                    self._dom.id = "view" + self.info.id;
                     if (!isMobile.any()) {
                         self.events.system.init.mouseChanged();
                     }
@@ -515,10 +592,10 @@ export class View {
                         if (p.info.childControls.indexOf(self.info.id) > -1) {
                             p.info.childControls.splice(p.info.childControls.indexOf(self.info.id), 1);
                         }
-                        if (p._dom.contains(self._dom)) {
-                            p._dom.removeChild(self._dom);
-                        } else if (self._dom && typeof (self._dom.remove) === 'function') {
+                        if (self._dom && self._dom.remove) {
                             self._dom.remove();
+                        } else if (p._dom.contains(self._dom)) {
+                            p._dom.removeChild(self._dom);
                         }
 
                         p.events.override.variables.onRemovedChild.foreach(function (call, position) {
@@ -739,6 +816,7 @@ export class View {
         else {
             this.info.isModifiedId = true;
         }
+        this._dom.setAttribute("id", id);
         return this;
     }
 
@@ -796,15 +874,19 @@ export class View {
     }
 
     setGravity(gravity) {
-        this._dom.style.display = "inline-flex";
+        if (this._dom.style.display !== 'none') {
+            this._dom.style.display = "inline-flex";
+        }
         switch (gravity) {
             case app_constant.Gravity.TOP_LEFT:
                 this._dom.style.justifyContent = "flex-start";
                 this._dom.style.alignItems = "flex-start";
                 break;
             case app_constant.Gravity.TOP_CENTER:
-                this._dom.style.justifyContent = "flex-start";
-                this._dom.style.alignItems = "center";
+                // this._dom.style.justifyContent = "flex-start";
+                // this._dom.style.alignItems = "center";
+                this._dom.style.justifyContent = "center";
+                this._dom.style.alignItems = "flex-start";
                 break;
             case app_constant.Gravity.TOP_RIGHT:
                 this._dom.style.justifyContent = "flex-start";
@@ -1154,30 +1236,44 @@ export class View {
     }
 
     setScrollType(type) {
+        let css_scroll = 'auto';
+        if (brownserType.isSafari() || isMobile.iOS()) {
+            css_scroll = "scroll";
+        }
+        else if (brownserType.isChrome() || isMobile.Android()) {
+            css_scroll = "overlay";
+        }
+        else {
+            css_scroll = "auto";
+        }
         this.info.scrollType = type;
         switch (type) {
             case app_constant.ScrollType.VERTICAL:
                 this._dom.style.overflowX = "hidden";
-                this._dom.style.overflowY = "auto";
+                this._dom.style.overflowY = css_scroll;
                 this.info.isScrollX = false;
                 this.info.isScrollY = true;
+                this.setClassName("senjs-scroller");
                 break;
             case app_constant.ScrollType.HORIZONTAL:
-                this._dom.style.overflowX = "auto";
+                this._dom.style.overflowX = css_scroll;
                 this._dom.style.overflowY = "hidden";
                 this.info.isScrollY = false;
                 this.info.isScrollX = true;
+                this.setClassName("senjs-scroller");
                 break;
             case app_constant.ScrollType.NONE:
                 this._dom.style.overflow = "hidden";
                 this.info.isScrollY = false;
                 this.info.isScrollX = false;
+                this.removeClassName("senjs-scroller");
                 break;
             case app_constant.ScrollType.BOTH:
-                this._dom.style.overflowX = "auto";
-                this._dom.style.overflowY = "auto";
+                this._dom.style.overflowX = css_scroll;
+                this._dom.style.overflowY = css_scroll;
                 this.info.isScrollY = true;
                 this.info.isScrollX = true;
+                this.setClassName("senjs-scroller");
                 break;
         }
         return this;
@@ -1204,7 +1300,6 @@ export class View {
             app.idPool.add(view.info.uid, view.info.id);
             view.info.isModifiedId = false;
         }
-        this._dom.setAttribute("id", this.info.id);
         this._dom.appendChild(view._dom);
         if (view.info.zIndex == -1) {
             view.setZIndex(this.info.childControlId);
@@ -1365,10 +1460,10 @@ export class View {
         this._cache.anim = new Object();
 
         this._cache.anim.setDuration = (duration) => {
-            this._dom.style.animationDuration = (duration / 1000) + "s";
+            this._dom.style.animationDuration = duration + "ms";
         }
         this._cache.anim.setDelay = (delay) => {
-            this._dom.style.animationDelay = (delay / 1000) + "s";
+            this._dom.style.animationDelay = delay + "ms";
         }
         this._cache.anim.stop = () => {
             this._dom.style.animation = "";
@@ -2204,7 +2299,7 @@ export class View {
             senjs.event.setOnMouseDown(this);
             return this;
         }
-        this.initTouch();
+        initTouch.call(this);
         return this;
     }
 
@@ -2311,81 +2406,6 @@ export class View {
         return this;
     }
 
-
-    initTouch() {
-        var enableSwipeLeft = false;
-        if (this.info.onSwipeLeftListener != null || this.info.allowDragRemoveItem) {
-            enableSwipeLeft = true;
-        }
-        var enableSwipeRight = (this.info.onSwipeRightListener == null) ? false : true;
-        var enableDragHor = (this.info.dragHorCallBack == null) ? false : true;
-        var enableDragVer = (this.info.dragVerCallBack == null) ? false : true;
-        if (!this.info.isEnableTouch) {
-            var oldX = -1;
-            var oldY = -1;
-            var currentX = 0;
-            var currentY = 0;
-            var limitWidth = calculator.sizeWidth(3);
-            this.info.isEnableTouch = true;
-            this._dom.addEventListener("touchmove", function (e) {
-                currentX = e.changedTouches[0].pageX;
-                currentY = e.changedTouches[0].pageY;
-                if (enableSwipeLeft || enableSwipeRight) {
-                    if (oldX == -1) {
-                        oldX = e.changedTouches[0].pageX;
-                        oldY = e.changedTouches[0].pageY;
-                        new Waiter(function () {
-                            currentY = currentY - oldY;
-                            currentX = currentX - oldX;
-                            oldX = -1;
-                            if (currentX > 80 && currentY < 35 && this.info.onSwipeLeftListener != null) {
-                                this.info.onSwipeLeftListener(this);
-                            }
-                            else if (currentX < -80 && currentY > -35 && this.info.onSwipeRightListener != null) {
-                                this.info.onSwipeRightListener(this);
-                                if (this.info.allowDragRemoveItem) {
-                                    this.events.system.destroy();
-                                }
-                            }
-                        }, 70);
-                    }
-                    else {
-                        if (this.info.allowDragRemoveItem) {
-                            currentX = currentX - oldX;
-                            if (currentX < -30) {
-                                this.info.allowDragRemoveItem = false;
-                                this.setAnimation(senjsKey.anims.CLOSE_PAGE_DEFUALT_LEFT);
-                                new Waiter(function () {
-                                    this.info.allowDragRemoveItem = true;
-                                    this.events.system.destroy();
-                                }
-                                    , 300);
-                            }
-                            else if (currentX < -20) {
-    /* this.setLeft(currentX);
-    */ }
-                        }
-                    }
-                }
-                else {
-                    if (oldX == -1) {
-                        oldX = currentX;
-                    }
-                    if (oldY == -1) oldY = currentY;
-                }
-                if (enableDragHor) {
-                    view.setTranslateX(currentX - oldX);
-                    this.info.dragHorCallBack(this, oldX, currentX, currentX - oldX);
-                }
-                if (enableDragVer) {
-                    this.setTranslateY(currentY - oldY);
-                    this.info.dragVerCallBack(this, oldY, currentY, currentY - oldY);
-                }
-            }
-                , true);
-        }
-        return this;
-    }
 
 
     getScrollY() {
@@ -2619,6 +2639,11 @@ export class View {
         return this;
     }
 
+    removeAttribute(key) {
+        this._dom.removeAttribute(key);
+        return this;
+    }
+
     showPinnerPanel() {
         var btnHidden = senjs.IO.buttonNonTextView("").setPosition(app_constant.Position.FIXED).zIndex(1001).toFillParent();
         var pinContainer = senjs.IO.sticky(this).zIndex(1002).background(color.TRANSPARENT);
@@ -2765,8 +2790,12 @@ export class View {
         return this;
     }
 
+    /**
+     * 
+     * @param {import('./event-v2.js').focus_change_listener} listener 
+     */
     setOnFocusChange(listener) {
-        if (listener instanceof TouchListener) {
+        if (listener instanceof FocusChangeListener) {
             listener.bindToView(this);
         } else {
             // Listener - function for old version
@@ -2804,47 +2833,55 @@ export class View {
         if (this._meta.__hasSavedState) {
             return this;
         }
-        new Waiter(() => {
-            this._meta.__hasSavedState = true;
-            senjsCts.allRootChilds(this.info.id).foreach(function (view_child) {
-                if (view_child._cache == null) {
-                    view_child._cache = {
-                        __state: {}
+        this._meta.__hasSavedState = true;
+        this.__wt_saveState = new Waiter(() => {
+            if (this._meta.__hasSavedState && this.__wt_saveState != null) {
+                senjsCts.allRootChilds(this.info.id).foreach(function (view_child) {
+                    if (view_child._cache == null) {
+                        view_child._cache = {
+                            __state: {}
+                        }
+                    } else if (view_child.__state && view_child._cache.__state == null) {
+                        view_child._cache.__state = {};
                     }
-                } else if (view_child.__state && view_child._cache.__state == null) {
-                    view_child._cache.__state = {};
-                }
-                view_child._cache.__state.scrollY = view_child._dom.scrollTop;
-                view_child._cache.__state.scrollX = view_child.getScrollX();
-            }, () => {
-                if (this.info.isPaused || this.info.state == senjs.constant.VIEW_STATE.pause) {
-                    this._dom.innerHTML = "";
-                }
-            });
-            if (this.info.isPaused || this.info.state == senjs.constant.VIEW_STATE.pause) {
-                this._dom.innerHTML = "";
+                    view_child._cache.__state.scrollY = view_child._dom.scrollTop;
+                    view_child._cache.__state.scrollX = view_child.getScrollX();
+                });
+                // if (this.info.isPaused || this.info.state == senjs.constant.VIEW_STATE.pause) {
+                //     this._dom.innerHTML = "";
+                // }
+                this.getParentView().getDOM().removeChild(this.getDOM());
+                this.__wt_saveState = null;
             }
-        }, this.getAnimationDuration() + 50);
+        }, this.getAnimationDuration() + 30);
         return this;
     }
 
     /** Restore the state has been saved 'saveState()' of view before display it to screen */
     restoreState() {
+
         if (!this._meta.__hasSavedState) {
             return this;
         }
+        if (this.__wt_saveState == null) {
+
+            // senjsCts.allChilds(this.info.id).foreach((child, position) => {
+            //     this._dom.appendChild(child._dom);
+            // });
+            this.getParentView().getDOM().appendChild(this.getDOM());
+            senjsCts.allRootChilds(this.info.id).filter(child => {
+                return child._cache != undefined
+                    && child._cache.__state != undefined
+                    && (((child._cache.__state.scrollX || 0) > 0 || (child._cache.__state.scrollY || 0) > 0) || false);
+            }).foreach(child => {
+                child.setScrollX(child._cache.__state.scrollX);
+                child.setScrollY(child._cache.__state.scrollY);
+            });
+        } else {
+            this.__wt_saveState.remove();
+            this.__wt_saveState = null;
+        }
         this._meta.__hasSavedState = false;
-        senjsCts.allChilds(this.info.id).foreach((child, position) => {
-            this._dom.appendChild(child._dom);
-        });
-        senjsCts.allRootChilds(this.info.id).filter(child => {
-            return child._cache != undefined
-                && child._cache.__state != undefined
-                && (((child._cache.__state.scrollX || 0) > 0 || (child._cache.__state.scrollY || 0) > 0) || false);
-        }).foreach(child => {
-            child.setScrollX(child._cache.__state.scrollX);
-            child.setScrollY(child._cache.__state.scrollY);
-        });
         return this;
     }
 }
@@ -3005,6 +3042,8 @@ var orderControl = {
         }
     },
     performOrder: function (item) {
+        // setTimeout(() => {
+
         var parent = item.fView.getParentView();
         item.fView.setPosition(app_constant.Position.ABSOLUTE);
         if (parent.info.position != app_constant.Position.ABSOLUTE
@@ -3036,6 +3075,8 @@ var orderControl = {
         }
         item.fView.info.state = app_constant.VIEW_STATE.running;
         item.fView.setOpacity(1);
+        // }, 50);
+
     }
 }
 
@@ -3156,6 +3197,48 @@ var _bindOnViewCreated = (control, callback) => {
         callback(control);
     }
 }
+
+
+let css_pools = {};
+let css_has_built = {};
+
+let _link_dynamic_css = document.createElement("link");
+_link_dynamic_css.rel = "stylesheet";
+_link_dynamic_css.type = "text/css";
+document.head.appendChild(_link_dynamic_css);
+
+let _style_dom = document.createElement("style");
+_style_dom.type = "text/css";
+_style_dom.id = "sen-dynamic-style";
+document.head.appendChild(_style_dom);
+
+let class_id = 0, wt_rebuild_css, str_css = "";
+/**
+ * 
+ * @param {View} view 
+ */
+function _convertStyleAsCss(view) {
+    let new_item = {};
+    class_id++;
+    new_item['id'] = view.info.id;
+    new_item['class_name'] = 'sen-class-' + class_id;
+    new_item['style_value'] = view._dom.getAttribute("style");
+    css_pools[view.info.id] = new_item;
+    str_css += `.${new_item.class_name} { ${new_item.style_value} }`;
+    view.setClassName(new_item.class_name).setAttribute("style", "");
+    _style_dom.innerHTML = str_css;
+
+    view.events.override.onDestroy((view) => {
+        str_css.replace(`.${new_item.class_name} { ${new_item.style_value} }`, "");
+        clearTimeout(wt_rebuild_css);
+        wt_rebuild_css = setTimeout(() => {
+            _style_dom.innerHTML = str_css;
+            wt_rebuild_css = null;
+        }, 20);
+    });
+}
+
+
 
 function getViewportOffset(element) {
     var node = element
