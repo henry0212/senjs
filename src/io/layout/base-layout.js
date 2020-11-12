@@ -10,6 +10,10 @@ export class BaseLayout extends View {
         super(document.createElement("div"));
         this.setWidth(width);
         this.setHeight(height);
+    }
+
+    onInit() {
+        super.onInit();
         this._cache.listQuicklyLayout = new List();
         this._cache.loadingView = null;
 

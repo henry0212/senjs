@@ -2,6 +2,7 @@ import { senjs } from "../../index.js";
 import { BaseLayout } from "./base-layout.js";
 import { MouseChangeListener } from "../../core/event-v2.js";
 import { List } from "../../util/list-util.js";
+import { View } from "../../core/view.js";
 
 var _pool_windows = new List();
 var _window_focusing = null;
@@ -225,6 +226,10 @@ var _WINDOW_ACTION = {
 export class WindowLayout extends BaseLayout {
     constructor() {
         super('100%', '100%');
+    }
+
+    onInit() {
+        super.onInit();
         this.setAnimation('window-open')
             .setScrollType(senjs.constant.ScrollType.NONE);
         this.toTopParent().toLeftParent();
@@ -504,6 +509,13 @@ export class WindowLayout extends BaseLayout {
 
     childCount() {
         return this._views.pn_body.childCount();
+    }
+
+    /**
+     * @returns {View}
+     */
+    getBody(){
+        return this._views.pn_body;
     }
 
     setWidth(val) {

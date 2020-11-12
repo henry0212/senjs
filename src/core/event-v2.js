@@ -97,7 +97,9 @@ class BaseListener {
     }
 
     _callListener(view) {
-        this._listener.call(this._listener, view, this._args);
+        requestAnimationFrame(() => {
+            this._listener.call(this._listener, view, this._args);
+        })
         return true;
     }
 

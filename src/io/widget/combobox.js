@@ -21,6 +21,14 @@ export class Combobox extends LinearLayout {
     */
 
     /**
+     * Callback when user select a item
+     * @callback onSelected 
+     * @param {View} view 
+     * @param {*} selectedItem
+     * @param {number} position
+     */
+
+    /**
      * @returns {PickerBoxType}
      */
     static get PICKER_BOX_TYPE() {
@@ -32,6 +40,10 @@ export class Combobox extends LinearLayout {
 
     constructor() {
         super();
+    }
+
+    onInit() {
+        super.onInit();
         this.setWidth("max-content");
         this._view = {};
         this._meta = {
@@ -159,16 +171,9 @@ export class Combobox extends LinearLayout {
         return this;
     }
 
-    /**
-     * Triggered when user select a item
-     * @callback onSelected 
-     * @param {View} view 
-     * @param {*} selectedItem
-     * @param {number} position
-     */
 
     /**
-     * l when user select a item
+     *  when user select a item
      * @param {onSelected} cb 
      */
     setOnSelected(cb) {

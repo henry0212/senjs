@@ -11,6 +11,11 @@ import { senjs } from "../../index.js";
 export class TabButton extends FrameLayout {
     constructor() {
         super();
+
+    }
+
+    onInit() {
+        super.onInit();
         this._view = {
             cursor: null,
             button_container: null

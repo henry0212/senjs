@@ -15,9 +15,13 @@ export class IconView extends BaseTextView {
 
     constructor(icon_name) {
         super(document.createElement("i"));
+        this.setHTML(icon_name ? icon_name : "");
+    }
+
+    onInit() {
+        super.onInit();
         this.iconClassKey = iconClassKey;
-        this.setHTML(icon_name ? icon_name : "")
-            .setClassName(this.iconClassKey)
+        this.setClassName(this.iconClassKey)
             .setDisplayType(app_constant.Display.INLINE_FLEX)
             .setGravity(senjs.constant.Gravity.CENTER)
         this.setIconSize(app_size.icon.normal);

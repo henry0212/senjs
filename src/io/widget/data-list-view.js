@@ -17,6 +17,10 @@ const __config = {
 export class DataListView extends BaseList {
     constructor() {
         super();
+    }
+
+    onInit() {
+        super.onInit();
         this.adapter = new DataListAdapter();
         super.setAdapter(this.adapter);
 
@@ -155,6 +159,7 @@ export class DataListView extends BaseList {
             this.view.frame_header.addView(col_head);
 
         });
+        this.adapter.setNumberCol(values.length)
         return this;
     }
 
@@ -808,12 +813,17 @@ class DataListAdapter extends BaseAdapterV2 {
     constructor(list) {
         super(list);
         this.colPadding = 5;
+        this.number_of_col = 0;
         // this._adapterUtil.onScrolling = this.onScrolling.bind(this._adapterUtil);
         // this._adapterUtil.checkScrollCondition = this.checkScrollCondition.bind(this._adapterUtil);
     }
 
     getCount() {
         return super.getCount();
+    }
+
+    setNumberCol(number) {
+        this.number_of_col = number;
     }
 
     /**
@@ -824,11 +834,13 @@ class DataListAdapter extends BaseAdapterV2 {
      */
     getView(rowItems, position, convertView) {
         if (convertView == null) {
-            convertView = new ViewRowDataItem(rowItems.length);
+            convertView = new ViewRowDataItem((this.number_of_col > rowItems.length) ? this.number_of_col : rowItems.length);
             convertView.setColPadding(this.colPadding);
         }
         convertView.setBackground(position % 2 == 0 ? '#fff' : '#f9f9f9');
-        convertView.setRowData(rowItems, position);
+        requestAnimationFrame(() => {
+            convertView.setRowData(rowItems, position);
+        })
         return convertView;
     }
 
@@ -848,20 +860,26 @@ class DataListAdapter extends BaseAdapterV2 {
             this.view_listview.view.listview_number.setBorderRight(scroll_x > 0 ? 1 : 0, "#dddddd");
             this.view_listview.view.frame_header.setBorderBottom(scroll_y > 0 ? 1 : 0, "#dddddd");
 
-            clearTimeout(waiter_is_scrolling);
-            waiter_is_scrolling = setTimeout(() => {
+            // clearTimeout(waiter_is_scrolling);
+            // waiter_is_scrolling = setTimeout(() => {
+            //     this.view_listview.view.listview_number.setScrollY(scroll_y);
+            // }, 66);
+
+            requestAnimationFrame(() => {
                 this.view_listview.view.listview_number.setScrollY(scroll_y);
-            }, 66);
+            })
 
             if (scroll_y % this._adapterDirector._meta.est_view_height > 5) {
                 return;
             }
-            clearTimeout(waiter);
-            waiter = setTimeout(() => {
+            // clearTimeout(waiter);
+            // waiter = setTimeout(() => {
+            //     this.view_listview.view.listview_number.setScrollY(scroll_y);
+            //     waiter = null
+            // }, 50);
+            requestAnimationFrame(() => {
                 this.view_listview.view.listview_number.setScrollY(scroll_y);
-                waiter = null
-            }, 10);
-
+            })
 
         })
         return this;
@@ -893,7 +911,8 @@ class ViewRowDataItem extends View {
             td.setCss({
                 'min-width': __config.min_col_width_em + 'em',
                 'white-space': 'nowrap',
-                'text-overflow': 'ellipsis'
+                'text-overflow': 'ellipsis',
+                'overflow': 'hidden'
             });
             td.setOnClick(this.onClicked.bind(this));
             td.setOnDoubleClick(this.onDblClicked.bind(this));
@@ -942,7 +961,11 @@ class ViewRowDataItem extends View {
         var i = row.length;
         while (i--) {
             var text = row[i];
-            this.array_col[i].setHtml(text + "").setTitle(text);
+            if (this.array_col[i]) {
+                this.array_col[i].setHtml(text + "").setTitle(text);
+            } else {
+                console.warn('DataListview', 'The length of row is not same headers')
+            }
         }
         return this;
     }

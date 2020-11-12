@@ -129,7 +129,7 @@
 
 @keyframes storyBoardOpen {
     0% {
-        transform: translateX(50%);
+        transform: translateX(60%);
     }
     100% {
         transform: translateX(0);
@@ -138,7 +138,7 @@
 
 @-webkit-keyframes storyBoardOpen {
     0% {
-        -webkit-transform: translateX(50%);
+        -webkit-transform: translateX(60%);
     }
     100% {
         -webkit-transform: translateX(0);
@@ -147,7 +147,7 @@
 
 @keyframes storyBoardOpenBelow {
     0% {
-        transform: translateX(-10%);
+        transform: translateX(-15%);
     }
     100% {
         transform: translateX(0%);
@@ -156,7 +156,7 @@
 
 @-webkit-keyframes storyBoardOpenBelow {
     0% {
-        -webkit-transform: translateX(-10%);
+        -webkit-transform: translateX(-15%);
     }
     100% {
         -webkit-transform: translateX(0%);
@@ -183,7 +183,7 @@
         -webkit-transform: translateX(95%);
     }
     100% {
-        -webkit-transform: translateX(101%);
+        -webkit-transform: translateX(100%);
     }
 }
 
@@ -192,7 +192,7 @@
         transform: translateX(0%);
     }
     100% {
-        transform: translateX(-30%);
+        transform: translateX(-15%);
     }
 }
 
@@ -201,7 +201,7 @@
         -webkit-transform: translateX(0%);
     }
     100% {
-        -webkit-transform: translateX(-30%);
+        -webkit-transform: translateX(-15%);
     }
 }
 
@@ -2799,7 +2799,7 @@
     -webkit-animation-duration: 400ms;
     -webkit-animation-fill-mode: forwards;
     /* animation-timing-function: cubic-bezier(0,0.2,0.1,1); */
-    box-shadow: rgba(0, 0, 0, 0.2) 0px 0px 20px;
+    /* box-shadow: rgba(0, 0, 0, 0.2) 0px 0px 20px; */
     animation-timing-function: cubic-bezier(0, 0, 0.1, 1);
     -webkit-animation-timing-function: cubic-bezier(0, 0, 0.1, 1);
 }
@@ -2826,7 +2826,7 @@
     -webkit-animation-duration: 400ms;
     -webkit-animation-fill-mode: forwards;
     -webkit-animation-timing-function: cubic-bezier(0.4, 0.2, 0.1, 1);
-    box-shadow: rgba(0, 0, 0, 0.1) 0px 0px 40px;
+    /* box-shadow: rgba(0, 0, 0, 0.1) 0px 0px 40px; */
     animation-timing-function: cubic-bezier(0.1, 0.3, .3, 1);
     -webkit-animation-timing-function: cubic-bezier(0.1, 0.3, .3, 1);
 }

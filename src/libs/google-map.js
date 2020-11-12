@@ -29,6 +29,8 @@ export class GoogleMap extends FrameLayout {
             ia_markers: new List()
         }
         this._meta._google_map = null;
+        this._meta._direction_service = null;
+        this._meta._direction_renderer = null;
         this._meta._map_service = null;
         this.renderMap();
     }
@@ -41,6 +43,7 @@ export class GoogleMap extends FrameLayout {
             center: { lat: lat, lng: lng },
             streetViewControl: false,
             mapTypeId: google.maps.MapTypeId.ROADMAP,
+            gestureHandling: 'greedy',
             styles: [{
                 featureType: "poi",
                 elementType: "labels",
@@ -99,6 +102,19 @@ export class GoogleMap extends FrameLayout {
             marker.remove();
         }
         return this;
+    }
+
+    autoCompleteSearch(options) {
+        return new Promise((next, reject) => {
+            var service = new google.maps.places.AutocompleteService();
+            service.getQueryPredictions(options, (predictions, status) => {
+                if (status != google.maps.places.PlacesServiceStatus.OK) {
+                    reject()
+                    return;
+                }
+                next(predictions);
+            });
+        })
     }
 
     findNearByPlaces(request) {
@@ -166,6 +182,31 @@ export class GoogleMap extends FrameLayout {
                 }
             });
         })
+    }
+
+    setDirection(options) {
+        if (this._meta._direction_service == null) {
+            this._meta._direction_service = new google.maps.DirectionsService();
+            this._meta._direction_renderer = new google.maps.DirectionsRenderer();
+        }
+        this._meta._direction_renderer.setMap(this._meta._google_map);
+        return new Promise((next, reject) => {
+            this._meta._direction_service.route(options, (response, status) => {
+                if (status == 'OK') {
+                    this._meta._direction_renderer.setDirections(response);
+                    next(response);
+                } else {
+                    reject()
+                }
+            });
+        });
+
+    }
+
+    clearDirection() {
+        if (this._meta._direction_renderer != null) {
+            this._meta._direction_renderer.setMap(null);
+        }
     }
 
     getGoogleMapService() {

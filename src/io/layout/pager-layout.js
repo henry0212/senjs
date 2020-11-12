@@ -9,6 +9,10 @@ import { BaseAdapter } from '../../adapter/base-adapter.js';
 export class PagerLayout extends BaseLayout {
     constructor(width, height) {
         super(width, height);
+    }
+
+    onInit() {
+        super.onInit();
         this._view = {};
         this._listener = {
             onPageChanged: null
@@ -23,7 +27,6 @@ export class PagerLayout extends BaseLayout {
         this.setScrollType(app_constant.ScrollType.HORIZONTAL);
         this.addView(this._view.frame_dataList);
     }
-
 
     override_onAddView(view, child) {
         if (child.info.scrollType != app_constant.ScrollType.NONE) {

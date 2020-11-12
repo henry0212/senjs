@@ -5,6 +5,11 @@ import app_resource from "../../res/index.js";
 export class FloatingButton extends IconView {
     constructor(icon_name) {
         super(icon_name);
+
+    }
+
+    onInit() {
+        super.onInit();
         this.setRadius('50%')
             .setIconSize(app_resource.app_size.icon.s32)
             .setShadow("rgba(0,0,0,0.4)", 0, 0, 4)

@@ -4,6 +4,11 @@ import { senjs } from "../../index.js";
 export class ProgressingBar extends FrameLayout {
     constructor() {
         super();
+
+    }
+
+    onInit() {
+        super.onInit();
         this.__views = {
             percent_bar: new senjs.layout.LinearLayout('0%').setGravity(senjs.constant.Gravity.CENTER)
                 .toTopParent().toBottomParent().toLeftParent().setTransitionAll('0.1', 'linear')

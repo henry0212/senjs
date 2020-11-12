@@ -121,7 +121,7 @@ export class FilePicker {
         });
     }
 
-    static loadFileToBlob(file) {
+    static loadFileToBlob(file, minetype) {
         return new Promise(next => {
             var reader = new FileReader();
             reader.onloadend = function () {
@@ -131,7 +131,7 @@ export class FilePicker {
                     byteNumbers[i] = byteCharacters.charCodeAt(i);
                 }
                 var byteArray = new Uint8Array(byteNumbers);
-                var blob = new Blob([byteArray], { type: 'video/mp4' });
+                var blob = new Blob([byteArray], { type: minetype });
                 var url = URL.createObjectURL(blob);
                 next(url);
             }

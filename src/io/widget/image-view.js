@@ -8,6 +8,12 @@ export class ImageView extends View {
     constructor(src) {
         super(document.createElement("div"));
         this._cache.imageSrc = src;
+        this._view.view_image.src = src;
+        this.setImage(this._cache.imageSrc);
+    }
+
+    onInit() {
+        super.onInit();
         this._meta = {
             scaleType: app_constant.ImageScale.AUTO
         }
@@ -16,7 +22,6 @@ export class ImageView extends View {
             view_image: null
         }
         this._view.view_image = new Image();
-        this._view.view_image.src = src;
         this._view.pn_thum = new View(document.createElement("span"))
             .setOpacity(0)
             .toFillParent();
@@ -28,12 +33,11 @@ export class ImageView extends View {
         }
 
         this.addView(this._view.pn_thum);
-        this.setImage(this._cache.imageSrc);
+
 
         this._view.view_image.onload = () => {
             this.setScaleType(this._meta.scaleType);
         }
-
     }
 
     override_onResume() {

@@ -12,6 +12,10 @@ export class LinearLayout extends BaseLayout {
 
     constructor(width, height) {
         super(width, height);
+    }
+
+    onInit() {
+        super.onInit();
         this._meta.gravity = app_constant.Gravity.TOP_LEFT;
         this.setOrientation(app_constant.Orientation.HORIZONTAL);
     }

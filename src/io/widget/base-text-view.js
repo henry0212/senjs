@@ -16,12 +16,15 @@ export class BaseTextView extends View {
 
     constructor(htmlElement) {
         super(htmlElement);
+    }
+
+    onInit() {
+        super.onInit();
         this.setTextSize(app_size.font.normal);
         this
             // .setLineHeight("1.3em")
             .setMinHeight("1.1em");
     }
-
 
     setText(text) {
         this.setHTML(text);

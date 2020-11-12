@@ -13,6 +13,11 @@ const icon_state = {
 export class Checkbox extends BaseTextView {
     constructor() {
         super(document.createElement("div"));
+
+    }
+
+    onInit() {
+        super.onInit();
         this._meta = {
             isChecked: false
         }

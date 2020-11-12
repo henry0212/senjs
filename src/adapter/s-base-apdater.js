@@ -29,7 +29,7 @@ let debug_tool = {
     adapters: []
 }
 
-const PRE_RENDER_ITEM = 6;
+const PRE_RENDER_ITEM = 2;
 
 export class BaseAdapterV2 {
 
@@ -172,9 +172,24 @@ export class BaseAdapterV2 {
 
     addItem(dataItem) {
         this._data.list.add(dataItem);
+        // var meta = this._adapterDirector.generateMetaItem(this.getCount() - 1);
+        // console.log("meta", meta);
+        // this._adapterDirector.updateContainerSize();
+        // this._adapterDirector.scroll2Rendering();
+        // this._adapterDirector.detectRealSize(meta);
         this.notifyDataSetChanged();
         return this;
     }
+
+
+    // addItems(items) {
+    //     if (Array.isArray(items)) {
+    //         items.forEach((item) => {
+
+    //             this.generateMetaItem();
+    //         });
+    //     }
+    // }
 
     /**
      * @returns {View}
@@ -200,9 +215,10 @@ export class BaseAdapterV2 {
     get hasCreated() {
         let is_created = true;
         if (this.view_container) {
+
             is_created =
                 !(this.view_container.info.state == senjs.constant.VIEW_STATE.renderring
-                    || this.view_container.info.state == senjs.constant.VIEW_STATE.pause
+                    //          || this.view_container.info.state == senjs.constant.VIEW_STATE.pause
                     || this.view_container.info.state == senjs.constant.VIEW_STATE.destroy
                 );
         }
@@ -266,7 +282,7 @@ export class BaseAdapterV2 {
 class AdapterDirector {
     /**
      * 
-     * @param { SBaseAdapter } adapter 
+     * @param { BaseAdapterV2 } adapter 
      */
     constructor(adapter) {
         this.base_adapter = adapter;
@@ -284,7 +300,8 @@ class AdapterDirector {
             smallest_view_height: 0,
             no_of_col: this.getNumberOfColumn(),
             holder_width: '100%',
-            is_convert_view_fix_size: true
+            is_convert_view_fix_size: true,
+            flag_need_render_when_resume: false
         }
 
         this._pool = {
@@ -294,7 +311,7 @@ class AdapterDirector {
             array_est_container_height: [],
             group_view_busy: new List(),
             group_view_free: new List(),
-            remeasure_list: new List()
+            remeasure_list: new List(),
         }
 
         this._cache = {
@@ -354,7 +371,7 @@ class AdapterDirector {
                     // this.__group_view.root_view = null;
                     // this.__group_view.convert_view = null;
                     if (this.__group_view.root_view) {
-                        this.__group_view.root_view._dom.style.display = 'none';
+                        // this.__group_view.root_view._dom.style.display = 'none';
                     }
                     this.__group_view = {
                         root_view: null,
@@ -423,6 +440,8 @@ class AdapterDirector {
         return this.base_adapter.getColumn();
     }
 
+
+
     ready() {
         return new Promise((next, reject) => {
             if (this.base_adapter._listener.onRootViewRendering == null) {
@@ -446,8 +465,9 @@ class AdapterDirector {
         return new Promise(next => {
             if (this.base_adapter.getCount() > 0 && this._meta.est_view_height > 0) {
                 let meta = this.generateMetaItem(0);
-                let group_view = this.renderRootView(meta)
-                this._meta.est_view_height = group_view.root_view.getHeight();
+                let group_view = this.renderRootView(meta);
+                var temp = group_view.root_view.getHeight();
+                this._meta.est_view_height = temp > this._meta.est_view_height ? temp : this._meta.est_view_height;
                 this._meta.est_view_width = group_view.root_view.getWidth();
                 next();
             } else if (this.base_adapter.getCount() > 0) {
@@ -455,9 +475,11 @@ class AdapterDirector {
                 let group_view = this.renderRootView(meta);
                 group_view.root_view.setOpacity(0);
                 group_view.root_view.events.override.onCreated((view) => {
-                    this._meta.est_view_height = view.getHeight();
-                    this._meta.est_view_width = view.getWidth();
-                    next();
+                    setTimeout(() => {
+                        this._meta.est_view_height = view.getHeight();
+                        this._meta.est_view_width = view.getWidth();
+                        next();
+                    }, 50);
                 });
             }
         });
@@ -514,13 +536,18 @@ class AdapterDirector {
         //  else if (this.reRender()) {
         //     return;
         // }
-        this.ready().then(() => {
-            this.reset();
+        return this.ready().then(() => {
             if (this._tracking.has_bind_destroy == false) {
-                let tv_detect_size = setInterval(this.calcViewportLimit.bind(this), 2000);
+                let tv_detect_size = setInterval(() => {
+                    try {
+                        this.calcViewportLimit();
+                    } catch (err) {
+                        clearInterval(tv_detect_size);
+                    }
+                }, 2000);
                 this.base_adapter.view_listview.events.override.onDestroy(() => {
                     if (this._tracking.thread_measure) {
-                        this._tracking.thread_measure.remove();
+                        cancelAnimationFrame(this._tracking.thread_measure)
                     }
                     clearInterval(tv_detect_size);
                     this.reset();
@@ -537,9 +564,30 @@ class AdapterDirector {
                         }
                     }
                     keys = null;
-                })
+                });
+                this.base_adapter.view_listview.events.override.onResume((view) => {
+                    if (this._meta.flag_need_render_when_resume) {
+                        this._meta.flag_need_render_when_resume = false;
+                        var old_scroll_x = this._tracking.scroll_x,
+                            old_scroll_y = this._tracking.scroll_y;
+                        this.render().then(() => {
+                            this.base_adapter.view_scroller.setScrollY(old_scroll_y).setScrollX(old_scroll_x);
+                        });
+                    } else {
+                        this._pool.meta_list_showing.foreach((meta) => {
+                            meta.group_view.root_view.setTop(meta.anchor_y).setLeft(meta.anchor_x);
+                            meta.group_view.root_view._dom.style.display = 'block';
+                        });
+                    }
+                });
                 this._tracking.has_bind_destroy = true;
             }
+
+            if (this.base_adapter.view_listview.info.state == senjs.constant.VIEW_STATE.pause) {
+                this._meta.flag_need_render_when_resume = true;
+                return Promise.reject(new Error('this._meta.flag_need_render_when_resume: ' + this._meta.flag_need_render_when_resume));
+            }
+            this.reset();
             this.onBeginRender();
             return this.renderFirstMeta();
         }).then(() => {
@@ -548,9 +596,11 @@ class AdapterDirector {
         }).then(() => {
             new ScrollListener(this.onScrolling.bind(this)).bindToView(this.base_adapter.view_scroller);
             this.onRenderFinished();
+            return Promise.resolve();
         }).catch((err) => {
-            console.log(err);
+            console.error(err);
             console.warn("Adapter was not initial");
+            // return Promise.reject();
         });
     }
 
@@ -619,7 +669,7 @@ class AdapterDirector {
         if (no_need_render) {
             this._pool.remeasure_list.clear();
             if (this._tracking.thread_measure) {
-                this._tracking.thread_measure.remove();
+                cancelAnimationFrame(this._tracking.thread_measure);
             }
             this._pool.meta_list.filter(item => {
                 return item.has_rendered && item.position > 0;
@@ -713,9 +763,7 @@ class AdapterDirector {
         } else {
             group_view.root_view.setTop(0).setLeft(0).setPosition(senjs.constant.Position.RELATIVE);
         }
-
         return group_view;
-
     }
 
     /**
@@ -746,7 +794,7 @@ class AdapterDirector {
         this._tracking.scroll_arg = args;
         this._tracking.scroll_x = args.scrollX;
         this._tracking.scroll_y = args.scrollY;
-        if (this.checkScrollCondition(view_scroller, args) == false) {
+        if (this.checkScrollCondition(view_scroller, args) == false || this.base_adapter.view_scroller.isNotShowOnUI()) {
             return;
         }
         this._tracking.est_showing_index = Math.round(args.scrollY / this._meta.est_view_height) - 2;
@@ -755,7 +803,8 @@ class AdapterDirector {
         this._tracking.expected_scroll = this._tracking.expected_scroll < 0 ? 0 : this._tracking.expected_scroll;
         // clearTimeout(this._tracking.wt_pain);
         //     this._tracking.wt_pain = setTimeout(() => {
-        this.scroll2Rendering();
+        // this.scroll2Rendering();
+        requestAnimationFrame(this.scroll2Rendering.bind(this));
         // this._tracking.wt_pain = null;
         //   }, 1);
 
@@ -837,7 +886,7 @@ class AdapterDirector {
             max = null;
             meta = null;
         } else if (this._meta.is_convert_view_fix_size) {
-            this._pool.array_meta_col_index.forEach(array_col => {
+            this._pool.ƒarray_meta_col_index.forEach(array_col => {
                 array_col.slice(this._tracking.est_showing_index, this._tracking.est_showing_index + this._meta.est_no_item_in_view_port)
                     .forEach((meta) => {
                         if (!meta.is_outside && meta.has_rendered == false) {
@@ -850,7 +899,7 @@ class AdapterDirector {
                 return !meta.is_outside && meta.has_rendered == false;
             }).forEach((meta) => {
                 this.renderRootView(meta);
-            })
+            });
         }
     }
 
@@ -862,7 +911,8 @@ class AdapterDirector {
             return;
         }
         this._pool.remeasure_list.add(meta);
-        this._tracking.thread_measure = new Thread(() => {
+
+        var loop = () => () => {
             let meta = this._pool.remeasure_list.shift();
             if (meta && meta.group_view.root_view != null) {
                 let _real_height = meta.group_view.root_view._dom.offsetHeight;
@@ -887,10 +937,16 @@ class AdapterDirector {
                     this.base_adapter.view_container.setMinHeight(this._meta.est_container_height);
                 }
             }
-            if (this._pool.remeasure_list.size() == 0) {
-                this._tracking.thread_measure.stop();
+            if (this._pool.remeasure_list.size() == 0 && this.base_adapter.view_listview != null) {
+                cancelAnimationFrame(this._tracking.thread_measure);
                 this._tracking.thread_measure = null;
+            } else {
+                requestAnimationFrame(loop);
             }
-        }, 2, Thread.POOL_EXECUTOR);
+        }
+
+        this._tracking.thread_measure = requestAnimationFrame(loop);
+
+        // this._tracking.thread_measure = new Thread(, 2, Thread.POOL_EXECUTOR);
     }
 }

@@ -5,6 +5,11 @@ import { app_theme } from "../../res/theme.js";
 export class SliderButton extends View {
     constructor() {
         super(document.createElement("div"));
+
+    }
+
+    onInit() {
+        super.onInit();
         this.listener = {
             onClicked: null,
             onStateChanged: null
@@ -17,7 +22,7 @@ export class SliderButton extends View {
         var view_thum = new View(document.createElement("a"));
         this.addView(view_thum);
         this.setBackground(app_theme.sliderButton.status_default.background)
-            .setShadow("rgba(0,0,0,0.2)",0,0,2,true)
+            .setShadow("rgba(0,0,0,0.2)", 0, 0, 2, true)
             .setHeight(24).setWidth(48).setFloat("left")
             .setTransitionAll(".1");
 
@@ -41,8 +46,6 @@ export class SliderButton extends View {
             if (this.listener.onStateChanged) {
                 this.listener.onStateChanged(this, this.meta_data.isSliderEnable);
             }
-
-
         })
     }
 
@@ -78,5 +81,9 @@ export class SliderButton extends View {
             this.getViewAt(0).setLeft(2).setBackground(app_theme.sliderButton.status_default.thum);
             this.setBackground(app_theme.sliderButton.status_default.background);
         }
+    }
+
+    isSliderEnable() {
+        return this.meta_data.isSliderEnable;
     }
 }

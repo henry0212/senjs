@@ -141,9 +141,11 @@ export class RouterUtil {
         var path = getCurrentRouting().path;
         path = path.charAt(0) === "/" ? path.substring(1) : path;
         if (strParam.length > 0) {
-            window.history.pushState(null, "", "/#/" + path + "?" + strParam);
+            window.location.hash = path + "?" + strParam
+            // window.history.pushState(null, "", "/#/" + path + "?" + strParam);
         } else {
-            window.history.pushState(null, "", "/#/" + path);
+            // window.history.pushState(null, "", "#/" + path);
+            window.location.hash = path;
         }
         return this;
     }

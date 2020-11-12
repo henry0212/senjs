@@ -18,12 +18,16 @@ const _view_config = {
     limit_text_toolbar_left: 10,
     icon_back: "arrow_back_ios",
     icon_color: "#222",
-    default_toolbar_height: '4em'
+    default_toolbar_height: '35pt'
 }
 
 export class StoryLayout extends BaseLayout {
     constructor(width, height) {
         super(width, height);
+    }
+
+    onInit() {
+        super.onInit();
         this._view = {};
         this._meta = {
             pages: new List(),
@@ -201,18 +205,7 @@ export class StoryLayout extends BaseLayout {
             this._view.toolbar_lb_left.setVisibility(app_constant.Visibility.GONE);
         }
         this.hasRegisterRouting = false;
-        var service_back = app.service.register.onBackPress(null, null, () => {
-            try {
-                if (this._meta.pages.size() == 1 && this._meta.instances.size() > 0) {
-                    this._meta.instances.pop().destroyWithCustomAnimation("storyBoard_instance_out");
-                } else {
-                    this.backPage();
-                }
-            } catch (err) { }
-        });
-        this.events.override.onDestroy(() => {
-            service_back.remove();
-        });
+
         this._meta.toolbarVisibilityState.add(senjs.constant.Visibility.VISIBLE);
         this._meta.toolbarOffsetTop.add(0);
         this.setToolbarVisibility(senjs.constant.Visibility.VISIBLE);
@@ -501,9 +494,8 @@ export class StoryLayout extends BaseLayout {
      * @param {string} title 
      */
     newInstance(title, path) {
-        this._meta.pages.last().events.system.pause();
         var hiddenPage = this._meta.pages.last();
-
+        hiddenPage.events.system.pause();
         var layer_black = new FrameLayout().toFillParent().setBackground("rgba(0,0,0,0.2)");
         layer_black.setAnimation("fadeIn");
 
@@ -535,8 +527,7 @@ export class StoryLayout extends BaseLayout {
         });
         new_story_instance.events.override.onDestroy((new_story_instance) => {
             this._meta.instances.remove(new_story_instance);
-
-            this._meta.pages.last().events.system.resume();
+            hiddenPage.events.system.resume();
         });
         return new_story_instance;
     }

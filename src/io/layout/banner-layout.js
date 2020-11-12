@@ -7,6 +7,13 @@ import { senjsCts } from "../../core/app-context.js";
 export class BannerLayout extends FrameLayout {
     constructor(width, height) {
         super(width, height);
+
+        // this._views.root.setScrollType(senjs.constant.ScrollType.VERTICAL);
+
+    }
+
+    onInit() {
+        super.onInit();
         this._views = {
             imv_banner: new senjs.widget.ImageView()
                 .setMinWidth("100%")
@@ -97,16 +104,17 @@ export class BannerLayout extends FrameLayout {
 
         this._views.root.events.override.onAddView(onAddView)
 
-
         this._views.root
             .addView(this._views.wrapper_banner)
             .addView(this._views.wrapper_toolbar)
             .addView(this._views.wrapper_content);
 
         super.addView(this._views.root);
-        super.addView(this._views.imv_banner)
-        // this._views.root.setScrollType(senjs.constant.ScrollType.VERTICAL);
+        super.addView(this._views.imv_banner);
+    }
 
+    declareUI() {
+        super.declareUI();
     }
 
     addViewToBanner(view) {

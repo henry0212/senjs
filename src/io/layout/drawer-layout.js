@@ -18,6 +18,10 @@ export class DrawerLayout extends BaseLayout {
 
     constructor(width, height) {
         super(width, height);
+    }
+
+    onInit() {
+        super.onInit();
         this._view = {
             parentView: null,
             root_view: null,
@@ -46,7 +50,6 @@ export class DrawerLayout extends BaseLayout {
 
         this.events.override.onCreated(this.overr_onCreated.bind(this));
         this.events.override.onMeasured(this.overr_onMeasured.bind(this));
-
     }
 
     overr_onCreated(view) {
@@ -443,7 +446,7 @@ function newDimView(drawerLayout) {
 
     dim.events.override.onDestroy(() => {
         drawerLayout._view.dim_view = null;
-        console.log("backEvent",backEvent);
+        console.log("backEvent", backEvent);
         if (backEvent) {
             backEvent.remove();
         }

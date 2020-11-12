@@ -6,8 +6,10 @@ import { List } from '../util/list-util.js';
 import { StringUtil } from '../util/string-util.js';
 import { senjs } from '../index.js';
 import { ClickListener, ScrollListener, TouchListener, FocusChangeListener, DoubleClickListener } from './event-v2.js';
+import res from '../res/index.js';
 
 var countAnimation = 0;
+
 
 
 function initTouch() {
@@ -93,27 +95,17 @@ function initTouch() {
 export class View {
     constructor(htmlElement) {
         this.TAG = this.constructor.name;
-
-        this._dom = htmlElement || document.createElement("div");
+        if (typeof htmlElement === 'string') {
+            this._dom = document.createElement(htmlElement);
+        } else {
+            this._dom = htmlElement || document.createElement("div");
+        }
         this._super = {};
         this._addViews = null;
         Object.defineProperty(this, "__meta", { value: {}, writable: false });
         Object.defineProperty(this, "_senjs", { value: senjs, writable: false });
-        //var self = this;
-        // var obj_keys = Object.getOwnPropertyNames(Object.getPrototypeOf(this));
-        // for (var i = 0; i < obj_keys.length; i++) {
-        //     if (this[obj_keys[i]]) {
-        //         this[obj_keys[i]] = (this[obj_keys[i]]).bind(self);
-        //     } else {
-        //         console.log(obj_keys[i])
-        //     }
-        // }
         this._init_();
-        this.setDisplayType(app_constant.Display.BLOCK)
-            .setBoxSizing("border-box");
-        if (this.info.id == -1) {
-            senjsCts.add(this);
-        }
+        this.onInit();
     }
 
     _init_() {
@@ -127,11 +119,13 @@ export class View {
         this._cache = {
             __state: {
 
-            }
+            },
+            _query_selector_map: new Map()
         }
-        this.setScrollType(app_constant.ScrollType.NONE)
+        this.setScrollType(app_constant.ScrollType.INITIAL)
             .setPosition(app_constant.Position.RELATIVE);
 
+        // Call the method that have override_ pattern: override_created, override_resume...
         Object.getOwnPropertyNames(Object.getPrototypeOf(this)).filter((item) => {
             return item.indexOf("override_") > -1;
         }).forEach(ovr_func => {
@@ -140,12 +134,53 @@ export class View {
                 this.events.override[real_func](this[ovr_func].bind(this));
             }
         });
+        var html_template = this.template() || '';
+        if (html_template.length > 0) {
+            _TemplateBuilder(this, html_template);
+            this.dynamicTemplate();
+        }
+
         if (this._addviews) {
             Object.keys(this._addviews).forEach(key => {
                 this.addView(this._addviews[key]);
             });
         }
+
+        // this.setDisplayType(app_constant.Display.BLOCK)
+        this.setBoxSizing("border-box");
+        if (this.info.id == -1) {
+            senjsCts.add(this);
+        }
+        this.getDOM().setAttribute('sen-vid', this.info.id);
+        // let temp = this.declareUI();
+
+        // this.children = Object.keys(temp).reduce((out, k) => {
+        //     out[k] = temp[k];
+        //     return out;
+        // }, {})
+
+
+
+        this.children = this.declareUI();
+        if (this.children) {
+            Object.values(this.children).forEach((child) => {
+                if (child.info.estimate_parent == -1) {
+                    this.addView(child);
+                }
+            });
+        }
+
+        // this.children.find
+        // next();
     }
+
+    /**
+     * Abstract - call when the View has initialized
+     */
+    onInit() {
+
+    }
+
     /**
      * Call when the view have been created
      * @param {View} view
@@ -193,6 +228,60 @@ export class View {
 
     }
 
+    declareUI() {
+
+    }
+
+    /**
+     * 
+     * @param {string} selector 
+     * @returns {View}
+     */
+    querySelectorAsView(selector) {
+        if (this._cache._query_selector_map.has(selector)) {
+            return senjsCts.get(this._cache._query_selector_map.get(selector));
+        }
+
+        let child = this.getDOM().querySelector(selector),
+            idx;
+
+        if (child && isNaN(idx = child.getAttribute('sen-vid')) == false) {
+            idx = parseInt(idx);
+            this._cache._query_selector_map.set(selector, idx);
+            return senjsCts.get(idx);
+        }
+        return null;
+    }
+
+
+    callNativeFunction(function_name) {
+        this.getDOM()[function_name].call(null);
+    }
+
+    getNativeValue(name) {
+        return this.getDOM()[name];
+    }
+
+    /**
+    * 
+    * @param {string} selector 
+    * @returns {[View]}
+    */
+    querySelectorAllAsViews(selector) {
+        let childs = this.getDOM().querySelectorAll(selector);
+        var result = [];
+
+        if (childs.length > 0) {
+            childs.forEach((element) => {
+                var idx = element.getAttribute('sen-vid');
+                if (isNaN(idx) == false) {
+                    result.push(senjsCts.get(idx))
+                }
+            });
+        }
+        console.log("querySelectorAllAsViews", result);
+        return result;
+    }
 
     _prepare() {
         var self = this;
@@ -207,7 +296,6 @@ export class View {
             resumseChilds: new List(),
             pauseChilds: new List()
         }
-
         var _info = {
             arrangeLayoutType: -1,
             absoluteZindex: -1,
@@ -691,7 +779,6 @@ export class View {
                         return item.events.override.variables.resumeCallback.size() > 0;
                     });
 
-                    console.log("resume", allRootChilds.size());
                     allRootChilds.foreach(function (viewChild, position) {
                         viewChild.info.state = app_constant.VIEW_STATE.running;
                         viewChild.info.isPaused = false;
@@ -782,8 +869,21 @@ export class View {
                 return self;
             }
         }
-
         Object.defineProperty(this, "info", { value: _info, writable: false });
+    }
+
+    /**
+     * @returns {string}
+     */
+    template() {
+        return null;
+    }
+
+    /**
+     * 
+     */
+    dynamicTemplate() {
+
     }
 
     get _meta() {
@@ -1236,7 +1336,7 @@ export class View {
     }
 
     setScrollType(type) {
-        let css_scroll = 'auto';
+        let css_scroll = 'initial';
         if (brownserType.isSafari() || isMobile.iOS()) {
             css_scroll = "scroll";
         }
@@ -1286,6 +1386,8 @@ export class View {
     addView(view) {
         if (view == null || this.info.isDestroy) {
             return;
+        } else if (view == this) {
+            throw "Cannot addView by itself";
         }
         var self = this;
         if (this.info.childControls == null) {
@@ -1426,6 +1528,9 @@ export class View {
         return this;
     }
 
+    hasClassName(className) {
+        return this.info.classNames.indexOf(className) > -1;
+    }
 
     setAnimation(anim) {
         this._cache.current_anim = anim;
@@ -2262,7 +2367,7 @@ export class View {
 
 
     setHtml(html) {
-        this._dom.innerHTML = html || "";
+        this._dom.innerHTML = html != undefined ? html : "";
         return this;
     }
 
@@ -2846,6 +2951,8 @@ export class View {
                     }
                     view_child._cache.__state.scrollY = view_child._dom.scrollTop;
                     view_child._cache.__state.scrollX = view_child.getScrollX();
+                    view_child._cache.__state.isExisted = true;
+
                 });
                 // if (this.info.isPaused || this.info.state == senjs.constant.VIEW_STATE.pause) {
                 //     this._dom.innerHTML = "";
@@ -2876,6 +2983,9 @@ export class View {
             }).foreach(child => {
                 child.setScrollX(child._cache.__state.scrollX);
                 child.setScrollY(child._cache.__state.scrollY);
+                child._cache.__state.scrollY = null;
+                child._cache.__state.scrollX = null;
+                child._cache.__state.isStateSaved = false;
             });
         } else {
             this.__wt_saveState.remove();
@@ -2883,6 +2993,10 @@ export class View {
         }
         this._meta.__hasSavedState = false;
         return this;
+    }
+
+    isNotShowOnUI() {
+        return this._cache.__state.isStateSaved;
     }
 }
 
@@ -3273,4 +3387,56 @@ function getViewportOffset(element) {
     } while (node);
 
     return { left: left, top: top };
+}
+
+/**
+ * 
+ * @param {View} view 
+ * @param {string} html_template 
+ */
+const _TemplateBuilder = function (view, html_template) {
+    view.setHtml(html_template);
+    var child_nodes = view._dom.querySelectorAll(":scope>*");
+    var c_node;
+    for (c_node of child_nodes) {
+        _RecursiveMapping(c_node, view);
+    }
+}
+
+/**
+ * 
+ * @param {HTMLElement} parent_node 
+ * @param {View} parent_view 
+ */
+const _RecursiveMapping = function (current_node, parent_view) {
+    var view = new View(current_node);
+    if (parent_view.info.childControls == null) {
+        parent_view.info.childControls = new Array();
+    }
+    parent_view.info.childControlId++;
+    view.info.estimate_parent = parent_view.info.id;
+    view.info.prevent_trash_cleaner = parent_view.info.prevent_trash_cleaner;
+
+    parent_view.info.childControls.push(view.info.id);
+    if (view.info.isModifiedId) {
+        app.idPool.add(view.info.uid, view.info.id);
+        view.info.isModifiedId = false;
+    }
+
+    /* make sure id existed in parent control if not it will wait util have id*/
+    view.info.isDestroy = parent_view.info.isDestroy;
+    view.info.parent = parent_view.info.id;
+
+    _bindOnViewCreated(view, function (v) {
+        v.events.system.created();
+    });
+
+    let child_nodes = view._dom.querySelectorAll(":scope>*");
+    if (child_nodes.length > 0) {
+        var c_node;
+        for (c_node of child_nodes) {
+            _RecursiveMapping(c_node, view);
+        }
+    }
+
 }

@@ -9,7 +9,7 @@ import dialog from './io/dialog/index.js';
 import './css/index.js';
 import { SandBoxAplication } from './core/application.js';
 
-export const senjs = {
+const senjs = {
     app: core.app,
     core: core,
     dialog: dialog,
@@ -29,5 +29,9 @@ export const senjs = {
     },
     sandbox: {
         Application: SandBoxAplication
-    }
+    },
+    onReady: core.app.onStart
 }
+
+export { senjs };
+export default senjs;

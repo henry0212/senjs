@@ -10,6 +10,10 @@ import { BaseAdapterV2 } from "../../adapter/base-adapter-v2.js";
 export class BaseList extends View {
     constructor() {
         super(document.createElement("div"));
+    }
+
+    onInit() {
+        super.onInit();
         if (this.view == undefined) {
             this.__render_wrapper();
         }

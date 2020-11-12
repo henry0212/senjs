@@ -6,6 +6,11 @@ import { KeyChangeListener } from "../../core/event-v2.js";
 export class TextArea extends BaseTextView {
     constructor() {
         super(document.createElement("textarea"));
+
+    }
+
+    onInit() {
+        super.onInit();
         this.setPaddingTop(5)
             .setPaddingBottom(5)
             .setBorder(0, "transparent")

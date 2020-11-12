@@ -5,6 +5,11 @@ import { senjs } from "../../index.js";
 export class RatioLayout extends BaseLayout {
     constructor(width, ratio_prefix) {
         super(width);
+
+    }
+
+    onInit() {
+        super.onInit();
         this._view = {
             root: new senjs.layout.FrameLayout().toFillParent()
         }
@@ -61,7 +66,7 @@ export class RatioLayout extends BaseLayout {
         return this;
     }
 
-    getAllViews(){
+    getAllViews() {
         return this._view.root.getAllViews();
     }
 }

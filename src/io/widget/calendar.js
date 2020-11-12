@@ -8,7 +8,8 @@ export class Calendar extends FrameLayout {
         super();
     }
 
-    _initViews() {
+    onInit() {
+        super.onInit();
         this._views = {
             wrapper: new senjs.layout.FrameLayout(),
             lsv_date: new senjs.widget.ListView(),

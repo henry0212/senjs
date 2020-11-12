@@ -5,8 +5,10 @@ export class ImageRefactor {
         this.canvas = document.createElement("canvas");
         document.body.appendChild(this.canvas);
         this.canvas.style.position = 'fixed';
-        this.canvas.style.visibility = 'hidden';
-        this.canvas.style.zIndex = -1;
+        this.canvas.style.right = 0;
+        this.canvas.style.bottom = 0;
+        // this.canvas.style.visibility = 'hidden';
+        this.canvas.style.zIndex = 1000;
         this.ctx = this.canvas.getContext("2d");
         this._meta = {
             translate: {
@@ -50,16 +52,17 @@ export class ImageRefactor {
         image.crossOrigin = "anonymous";
         this._meta.image = image;
         image.onload = () => {
-            var canvasSize = this._meta.imageWidth > this._meta.imageHeight ? this._meta.imageWidth : this._meta.imageHeight;
+            var canvasSize = Math.max(this._meta.imageWidth, this._meta.imageHeight);
             this.canvas.width = canvasSize;
             this.canvas.height = canvasSize;
             this.ctx.drawImage(this._meta.image, 0, 0);
             this._meta.isLoaded = true;
         }
         image.src = src;
-        var canvasSize = this._meta.imageWidth > this._meta.imageHeight ? this._meta.imageWidth : this._meta.imageHeight;
+        var canvasSize = Math.max(this._meta.imageWidth, this._meta.imageHeight);
         this.canvas.width = canvasSize;
         this.canvas.height = canvasSize;
+        return this;
     }
 
     begin() {
@@ -95,6 +98,8 @@ export class ImageRefactor {
                     if (this._meta.rotate != 0) {
                         this.ctx.translate(translatex = this._meta.imageWidth / 2, translatey = this._meta.imageHeight / 2);
                         this.ctx.rotate(this._meta.rotate * Math.PI / 180);
+                        translatex = -translatex;
+                        translatey = -translatey;
                     }
                     /** Resize */
                     if ((this._meta.resize.max_height > -1 && this._meta.resize.max_height < this._meta.imageHeight)
@@ -136,7 +141,7 @@ export class ImageRefactor {
                     if (mineType) {
                         next(trimCanvas(self.canvas).toDataURL(mineType, quality / 100 || 1));
                     } else {
-                        next(trimCanvas(self.canvas).toDataURL("image/jpeg", quality / 100 || 1));
+                        next(trimCanvas(self.canvas).toDataURL("image/png", quality / 100 || 1));
                     }
                     clearInterval(tv);
                 }

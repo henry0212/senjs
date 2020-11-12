@@ -5,10 +5,10 @@ import { senjs } from "../../index.js";
 export class LoadingView extends LinearLayout {
     constructor() {
         super();
-        this._initView();
     }
 
-    _initView() {
+    onInit() {
+        super.onInit();
         for (var i = 0; i < 4; i++) {
             this.addView(new senjs.widget.TextView().setClassName('anim-loading-view')
                 .setCss({

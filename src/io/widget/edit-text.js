@@ -6,6 +6,10 @@ import { KeyChangeListener } from "../../core/event-v2.js";
 export class EditText extends BaseTextView {
     constructor() {
         super(document.createElement("input"));
+    }
+
+    onInit() {
+        super.onInit();
         this.getDOM().type = "text";
         this.setPaddingTop(5)
             .setPaddingBottom(5)

@@ -104,6 +104,7 @@ export const app_constant = {
         orderring: 4
     },
     ScrollType: {
+        INITIAL: -1,
         NONE: 0,
         VERTICAL: 1,
         HORIZONTAL: 2,

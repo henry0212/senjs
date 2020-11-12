@@ -39,26 +39,29 @@ export class StickyLayout extends BaseLayout {
             focusView: focusView
         };
         direction = direction != undefined ? direction : __sticky_direction.INSIDE;
+        this._meta.direction = direction;
+        this.setDirection(this._meta.direction)
+            .setWidth(focusView.getWidth())
+    }
 
+    onInit() {
+        super.onInit();
         this._meta = {
             left: 0,
             top: 0,
             isMouseOut: false,
             mouseDownService: null,
-            preventDismiss: false,
-            direction: direction
+            preventDismiss: false
         }
 
         this.setPosition(app_constant.Position.FIXED)
-            .setWidth(focusView.getWidth())
             .setMinHeight(10)
             .setBackground(app_theme.stickyLayout.background)
             .setRadius(app_theme.stickyLayout.radius)
             .setShadow(app_theme.stickyLayout.shadow)
             .setScrollType(app_constant.ScrollType.VERTICAL)
             .setDisplayType(senjs.constant.Display.INLINE_BLOCK)
-            .setAnimation(app_animation.STICKY_LAYOUT_SHOW)
-            .setDirection(this._meta.direction);
+            .setAnimation(app_animation.STICKY_LAYOUT_SHOW);
 
         // var button_dismiss = new BaseLayout().toFillParent()
         // // .setAbsoluteZIndex(40000);
