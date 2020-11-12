@@ -2,12 +2,8 @@ import { BaseList } from "./base-list.js";
 import { View } from "../../core/view.js";
 import { senjs } from "../../index.js";
 import { BaseAdapterV2 } from "../../adapter/s-base-apdater.js";
-import { StringUtil } from "../../util/string-util.js";
-import { BaseHorizontalAdapter } from "../../adapter/s-base-horz-adapter.js";
 import * as fileSaver from 'file-saver';
 import * as XLSX from 'xlsx';
-
-var _text_selection = "";
 
 const __config = {
     min_col_width_em: 12

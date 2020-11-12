@@ -1,10 +1,12 @@
 {
   "name": "senjs",
   "version": "1.0.1",
-  "description": "",
-  "main": "index.js",
+  "description": "Demo version",
+  "main": "./src/index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "pkg-dev": "webpack --mode development",
+    "pkg-prd": "webpack --mode production"
   },
   "repository": {
     "type": "git",
@@ -20,5 +22,24 @@
   "bugs": {
     "url": "https://github.com/henry0212/senjs/issues"
   },
-  "homepage": "https://github.com/henry0212/senjs#readme"
+  "homepage": "https://github.com/henry0212/senjs#readme",
+  "devDependencies": {
+    "@babel/cli": "^7.2.3",
+    "@babel/core": "^7.3.4",
+    "@babel/polyfill": "^7.12.1",
+    "@babel/preset-env": "^7.3.4",
+    "@babel/register": "^7.0.0",
+    "babel-loader": "^8.0.5",
+    "babel-polyfill": "^6.26.0",
+    "css-loader": "^2.1.0",
+    "file-saver": "^2.0.2",
+    "senjs": "^1.0.1",
+    "source-map-loader": "^0.2.4",
+    "style-loader": "^0.23.1",
+    "terser-webpack-plugin": "^1.2.2",
+    "webpack": "^4.29.0",
+    "webpack-cli": "^3.2.1",
+    "webpack-dev-server": "^3.1.14",
+    "xlsx": "^0.16.8"
+  }
 }

@@ -4,8 +4,6 @@ import { View } from "../core/view.js"
 import { senjsCts, Thread } from "../core/app-context.js";
 import { List } from "../util/list-util.js";
 import { ScrollListener } from "../core/event-v2.js";
-import { SSL_OP_SSLEAY_080_CLIENT_DH_BUG } from "constants";
-import { SERIAL_EXECUTOR } from "../core/thread.js";
 
 
 /**
@@ -886,7 +884,7 @@ class AdapterDirector {
             max = null;
             meta = null;
         } else if (this._meta.is_convert_view_fix_size) {
-            this._pool.ƒarray_meta_col_index.forEach(array_col => {
+            this._pool.array_meta_col_index.forEach(array_col => {
                 array_col.slice(this._tracking.est_showing_index, this._tracking.est_showing_index + this._meta.est_no_item_in_view_port)
                     .forEach((meta) => {
                         if (!meta.is_outside && meta.has_rendered == false) {

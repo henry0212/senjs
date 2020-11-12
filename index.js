@@ -1,5 +1,3 @@
-import { senjs } from './src/index.js';
+import { senjs } from './senjs/index.js';
 
-export default {
-    senjs
-}
+export default senjs;
